@@ -133,100 +133,102 @@ class KStreamS[K, V](val inner: KStream[K, V]) {
   }
 
   def join[VO, VR](otherStream: KStreamS[K, VO],
-                   joiner: (V, VO) => VR,
-                   windows: JoinWindows): KStreamS[K, VR] = {
+    joiner: (V, VO) => VR,
+    windows: JoinWindows): KStreamS[K, VR] = {
+
     val joinerJ: ValueJoiner[V, VO, VR] = (v1, v2) => joiner(v1, v2)
     inner.join[VO, VR](otherStream.inner, joinerJ, windows)
   }
 
   def join[VO, VR](otherStream: KStreamS[K, VO],
-                   joiner: (V, VO) => VR,
-                   windows: JoinWindows,
-                   keySerde: Serde[K],
-                   thisValueSerde: Serde[V],
-                   otherValueSerde: Serde[VO]): KStreamS[K, VR] = {
+    joiner: (V, VO) => VR,
+    windows: JoinWindows,
+    joined: Joined[K, V, VO]): KStreamS[K, VR] = {
+
     val joinerJ: ValueJoiner[V, VO, VR] = (v1, v2) => joiner(v1, v2)
-    inner.join[VO, VR](otherStream.inner, joinerJ, windows, keySerde, thisValueSerde, otherValueSerde)
+    inner.join[VO, VR](otherStream.inner, joinerJ, windows, joined)
+  }
+
+  def join[VT, VR, SV >: V, SVT >: VT, EVR <: VR](table: KTableS[K, VT],
+    joiner: (SV, SVT) => EVR): KStreamS[K, VR] = {
+
+    val joinerJ: ValueJoiner[SV, SVT, EVR] = (v1, v2) => joiner(v1, v2)
+    inner.join[VT, VR](table.inner, joinerJ)
+  }
+
+  def join[VT, VR, SV >: V, SVT >: VT, EVR <: VR](table: KTableS[K, VT],
+    joiner: (SV, SVT) => EVR,
+    joined: Joined[K, V, VT]): KStreamS[K, VR] = {
+
+    val joinerJ: ValueJoiner[SV, SVT, EVR] = (v1, v2) => joiner(v1, v2)
+    inner.join[VT, VR](table.inner, joinerJ, joined)
+  }
+
+  def join[GK, GV, RV, SK >: K, SV >: V, EGK <: GK, SGV >: GV, ERV <: RV](globalKTable: GlobalKTable[GK, GV],
+    keyValueMapper: (SK, SV) => EGK,
+    joiner: (SV, SGV) => ERV): KStreamS[K, RV] = {
+
+    val joinerJ: ValueJoiner[SV, SGV, ERV] = (v1, v2) => joiner(v1, v2)
+    val keyValueMapperJ: KeyValueMapper[SK, SV, EGK] = (k, v) => keyValueMapper(k, v)
+    inner.join[GK, GV, RV](globalKTable, keyValueMapperJ, joinerJ)
   }
 
   def leftJoin[VO, VR](otherStream: KStreamS[K, VO],
-                       joiner: ValueJoiner[_ >: V, _ >: VO, _ <: VR],
-                       windows: JoinWindows): KStreamS[K, VR] = {
+    joiner: (V, VO) => VR,
+    windows: JoinWindows): KStreamS[K, VR] = {
+
     val joinerJ: ValueJoiner[V, VO, VR] = (v1, v2) => joiner(v1, v2)
     inner.leftJoin[VO, VR](otherStream.inner, joinerJ, windows)
   }
 
   def leftJoin[VO, VR](otherStream: KStreamS[K, VO],
-                       joiner: ValueJoiner[_ >: V, _ >: VO, _ <: VR],
-                       windows: JoinWindows,
-                       keySerde: Serde[K],
-                       thisValSerde: Serde[V],
-                       otherValueSerde: Serde[VO]): KStreamS[K, VR] = {
+    joiner: (V, VO) => VR,
+    windows: JoinWindows,
+    joined: Joined[K, V, VO]): KStreamS[K, VR] = {
+
     val joinerJ: ValueJoiner[V, VO, VR] = (v1, v2) => joiner(v1, v2)
-    inner.leftJoin[VO, VR](otherStream.inner, joinerJ, windows, keySerde, thisValSerde, otherValueSerde)
+    inner.leftJoin[VO, VR](otherStream.inner, joinerJ, windows, joined)
+  }
+
+  def leftJoin[VT, VR, SV >: V, SVT >: VT, EVR <: VR](table: KTableS[K, VT],
+    joiner: (SV, SVT) => EVR): KStreamS[K, VR] = {
+
+    val joinerJ: ValueJoiner[SV, SVT, EVR] = (v1, v2) => joiner(v1, v2)
+    inner.leftJoin[VT, VR](table.inner, joinerJ)
+  }
+
+  def leftJoin[VT, VR, SV >: V, SVT >: VT, EVR <: VR](table: KTableS[K, VT],
+    joiner: (SV, SVT) => EVR,
+    joined: Joined[K, V, VT]): KStreamS[K, VR] = {
+
+    val joinerJ: ValueJoiner[SV, SVT, EVR] = (v1, v2) => joiner(v1, v2)
+    inner.leftJoin[VT, VR](table.inner, joinerJ, joined)
+  }
+
+  def leftJoin[GK, GV, RV, SK >: K, SV >: V, EGK <: GK, SGV >: GV, ERV <: RV](globalKTable: GlobalKTable[GK, GV],
+    keyValueMapper: (SK, SV) => EGK,
+    joiner: (SV, SGV) => ERV): KStreamS[K, RV] = {
+
+    val joinerJ: ValueJoiner[SV, SGV, ERV] = (v1, v2) => joiner(v1, v2)
+    val keyValueMapperJ: KeyValueMapper[SK, SV, EGK] = (k, v) => keyValueMapper(k, v)
+    inner.leftJoin[GK, GV, RV](globalKTable, keyValueMapperJ, joinerJ)
   }
 
   def outerJoin[VO, VR](otherStream: KStreamS[K, VO],
-                        joiner: ValueJoiner[_ >: V, _ >: VO, _ <: VR],
-                        windows: JoinWindows): KStreamS[K, VR] = {
+    joiner: (_ >: V, _ >: VO) => _ <: VR,
+    windows: JoinWindows): KStreamS[K, VR] = {
+
     val joinerJ: ValueJoiner[V, VO, VR] = (v1, v2) => joiner(v1, v2)
     inner.outerJoin[VO, VR](otherStream.inner, joinerJ, windows)
   }
 
   def outerJoin[VO, VR](otherStream: KStreamS[K, VO],
-                        joiner: ValueJoiner[_ >: V, _ >: VO, _ <: VR],
-                        windows: JoinWindows,
-                        keySerde: Serde[K],
-                        thisValueSerde: Serde[V],
-                        otherValueSerde: Serde[VO]): KStreamS[K, VR] = {
+    joiner: (_ >: V, _ >: VO) => _ <: VR,
+    windows: JoinWindows,
+    joined: Joined[K, V, VO]): KStreamS[K, VR] = {
+
     val joinerJ: ValueJoiner[V, VO, VR] = (v1, v2) => joiner(v1, v2)
-    inner.outerJoin[VO, VR](otherStream.inner, joinerJ, windows, keySerde, thisValueSerde, otherValueSerde)
-  }
-
-  def join[VT, VR](table: KTableS[K, VT],
-                   joiner: (V, VT) => VR): KStreamS[K, VR] = {
-    val joinerJ: ValueJoiner[V, VT, VR] = (v1, v2) => joiner(v1, v2)
-    inner.join[VT, VR](table.inner, joinerJ)
-  }
-
-  def join[VT, VR](table: KTableS[K, VT],
-                   joiner: (V, VT) => VR,
-                   keySerde: Serde[K],
-                   valSerde: Serde[V]): KStreamS[K, VR] = {
-    val joinerJ: ValueJoiner[V, VT, VR] = (v1, v2) => joiner(v1, v2)
-    inner.join[VT, VR](table.inner, joinerJ, keySerde, valSerde)
-  }
-
-  def leftJoin[VT, VR](table: KTableS[K, VT],
-                       joiner: (V, VT) => VR): KStreamS[K, VR] = {
-    val joinerJ: ValueJoiner[V, VT, VR] = (v1, v2) => joiner(v1, v2)
-    inner.leftJoin[VT, VR](table.inner, joinerJ)
-  }
-
-  def leftJoin[VT, VR](table: KTableS[K, VT],
-                       joiner: (V, VT) => VR,
-                       keySerde: Serde[K],
-                       valSerde: Serde[V]): KStreamS[K, VR] = {
-    val joinerJ: ValueJoiner[V, VT, VR] = (v1, v2) => joiner(v1, v2)
-    inner.leftJoin[VT, VR](table.inner, joinerJ, keySerde, valSerde)
-  }
-
-  def join[GK, GV, RV](globalKTable: GlobalKTable[GK, GV],
-                       keyValueMapper: (K, V) => GK,
-                       joiner: ValueJoiner[_ >: V, _ >: GV, _ <: RV]): KStreamS[K, RV] = {
-
-    val keyValueMapperJ: KeyValueMapper[K, V, GK] = (k: K, v: V) => keyValueMapper(k, v)
-    val joinerJ: ValueJoiner[V, GV, RV] = (v1, v2) => joiner(v1, v2)
-    inner.join[GK, GV, RV](globalKTable, keyValueMapperJ, joinerJ)
-  }
-
-  def leftJoin[GK, GV, RV](globalKTable: GlobalKTable[GK, GV],
-                           keyValueMapper: KeyValueMapper[_ >: K, _ >: V, _ <: GK],
-                           valueJoiner: ValueJoiner[_ >: V, _ >: GV, _ <: RV]): KStreamS[K, RV] = {
-
-    val keyValueMapperJ: KeyValueMapper[K, V, GK] = (k: K, v: V) => keyValueMapper(k, v)
-    val valueJoinerJ: ValueJoiner[V, GV, RV] = (v1, v2) => valueJoiner(v1, v2)
-    inner.leftJoin[GK, GV, RV](globalKTable, keyValueMapperJ, valueJoinerJ)
+    inner.outerJoin[VO, VR](otherStream.inner, joinerJ, windows, joined)
   }
 
   // -- EXTENSIONS TO KAFKA STREAMS --

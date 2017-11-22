@@ -4,7 +4,6 @@ import org.apache.kafka.streams.kstream._
 import org.apache.kafka.streams.state.KeyValueStore
 import org.apache.kafka.common.utils.Bytes
 import ImplicitConversions._
-import Predef._
 
 
 class KGroupedStreamS[K, V](inner: KGroupedStream[K, V]) {

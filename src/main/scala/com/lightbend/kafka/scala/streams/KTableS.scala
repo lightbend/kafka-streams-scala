@@ -29,31 +29,6 @@ class KTableS[K, V](val inner: KTable[K, V]) {
     inner.mapValues(mapperJ)
   }
 
-  def print() = inner.print()
-
-  def print(streamName: String) = inner.print(streamName)
-
-  def print(keySerde: Serde[K], valSerde: Serde[V]) = inner.print(keySerde, valSerde)
-
-  def print(keySerde: Serde[K], valSerde: Serde[V], streamName: String) =
-    inner.print(keySerde, valSerde, streamName)
-
-  def writeAsText(filePath: String, keySerde: Serde[K], valSerde: Serde[V]) = {
-    inner.writeAsText(filePath, keySerde, valSerde)
-  }
-
-  def writeAsText(filePath: String,
-                  streamName: String, keySerde: Serde[K], valSerde: Serde[V]) = {
-    inner.writeAsText(filePath, streamName, keySerde, valSerde)
-  }
-
-  def foreach(action: (K, V) => Unit): Unit = {
-    val actionJ: ForeachAction[K, V] = new ForeachAction[K, V]{
-      override def apply(key: K, value: V): Unit = action(key, value)
-    }
-    inner.foreach(actionJ)
-  }
-
   def toStream: KStreamS[K, V] =
     inner.toStream
 
@@ -64,35 +39,6 @@ class KTableS[K, V](val inner: KTable[K, V]) {
     inner.toStream[KR](mapperJ)
   }
 
-  def through(topic: String,
-              storeName: String)
-             (implicit keySerde: Serde[K], valSerde: Serde[V]): KTableS[K, V] = {
-    inner.through(keySerde, valSerde, topic, storeName)
-  }
-
-  def through(partitioner: (K, V, Int) => Int,
-              topic: String,
-              storeName: String,
-              keySerde: Serde[K],
-              valSerde: Serde[V]): KTableS[K, V] = {
-    val partitionerJ: StreamPartitioner[K, V] = new StreamPartitioner[K,V] {
-      override def partition(key: K, value: V, numPartitions: Int): Integer = partitioner(key, value, numPartitions)
-    }
-    inner.through(keySerde, valSerde, partitionerJ, topic, storeName)
-  }
-
-  def to(topic: String, keySerde: Serde[K], valSerde: Serde[V]) = {
-    inner.to(keySerde, valSerde, topic)
-  }
-
-  def to(partitioner: (K, V, Int) => Int,
-         topic: String, keySerde: Serde[K], valSerde: Serde[V]) = {
-    val partitionerJ: StreamPartitioner[K, V] = new StreamPartitioner[K, V]{
-      override def partition(key: K, value: V, numPartitions: Int): Integer = partitioner(key, value, numPartitions)
-    }
-    inner.to(keySerde, valSerde, partitionerJ, topic)
-  }
-
   def groupBy[KR, VR](selector: (K, V) => (KR, VR)): KGroupedTableS[KR, VR] = {
     val selectorJ: KeyValueMapper[K, V, KeyValue[KR, VR]] = new KeyValueMapper[K, V, KeyValue[KR, VR]]{
       override def apply(key: K, value: V): KeyValue[KR, VR] = {
@@ -101,18 +47,6 @@ class KTableS[K, V](val inner: KTable[K, V]) {
       }
     }
     inner.groupBy(selectorJ)
-  }
-
-  def groupBy[KR, VR](selector: (K, V) => (KR, VR),
-                      keySerde: Serde[KR],
-                      valueSerde: Serde[VR]): KGroupedTableS[KR, VR] = {
-    val selectorJ: KeyValueMapper[K, V, KeyValue[KR, VR]] = new KeyValueMapper[K, V, KeyValue[KR, VR]]{
-      override def apply(key: K, value: V): KeyValue[KR, VR] = {
-        val res = selector(key, value)
-        new KeyValue[KR, VR](res._1, res._2)
-      }
-    }
-    inner.groupBy(selectorJ, keySerde, valueSerde)
   }
 
   def join[VO, VR](other: KTableS[K, VO],
