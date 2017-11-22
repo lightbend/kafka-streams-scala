@@ -24,10 +24,8 @@ class KTableS[K, V](val inner: KTable[K, V]) {
     inner.filterNot(predicateJ)
   }
 
-  def mapValues[VR](mapper: (V) => VR): KTable[K, VR] = {
-    def mapperJ: ValueMapper[V, VR] = new ValueMapper[V, VR]{
-      override def apply(value: V): VR = mapper(value)
-    }
+  def mapValues[VR, A >: V, B <: VR](mapper: (A) => B): KTable[K, VR] = {
+    def mapperJ: ValueMapper[V, VR] = (v) => mapper(v)
     inner.mapValues(mapperJ)
   }
 
