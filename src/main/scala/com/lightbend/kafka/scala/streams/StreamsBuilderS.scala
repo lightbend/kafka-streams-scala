@@ -16,12 +16,12 @@ class StreamsBuilderS {
   val inner = new StreamsBuilder
 
   def streamS[K, V](topics: String*) : KStreamS[K, V] = {
-     inner.stream[K, V](seqAsJavaList(topics))
+     inner.stream[K, V](topics.asJava)
   }
 
   def streamS[K, V](offsetReset: Topology.AutoOffsetReset,
                    topics: String*) : KStreamS[K, V] =
-    inner.stream[K, V](seqAsJavaList(topics), Consumed.`with`[K,V](offsetReset))
+    inner.stream[K, V](topics.asJava, Consumed.`with`[K,V](offsetReset))
 
   def streamS[K, V](topicPattern: Pattern) : KStreamS[K, V] =
     inner.stream[K, V](topicPattern)

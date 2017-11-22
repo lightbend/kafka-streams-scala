@@ -44,7 +44,7 @@ class KStreamS[K, V](val inner: KStream[K, V]) {
     val mapperJ: KeyValueMapper[K, V, java.lang.Iterable[KeyValue[KR, VR]]] = (k: K, v: V) => {
       val resTuples: Iterable[(KR, VR)] = mapper(k, v)
       val res: Iterable[KeyValue[KR, VR]] = resTuples.map(t => new KeyValue[KR, VR](t._1, t._2))
-      asJavaIterable(res)
+      res.asJava
     }
     inner.flatMap[KR, VR](mapperJ)
   }
@@ -52,7 +52,7 @@ class KStreamS[K, V](val inner: KStream[K, V]) {
   def flatMapValues[VR](processor: V => Iterable[VR]): KStreamS[K, VR] = {
     val processorJ: ValueMapper[V, java.lang.Iterable[VR]] = (v: V) => {
       val res: Iterable[VR] = processor(v)
-      asJavaIterable(res)
+      res.asJava
     }
     inner.flatMapValues[VR](processorJ)
   }
