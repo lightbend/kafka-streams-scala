@@ -11,22 +11,26 @@ import org.apache.kafka.streams.{Consumed, StreamsBuilder, Topology}
 
 import scala.collection.JavaConverters._
 
-class StreamsBuilderS {
+object StreamsBuilderS {
 
   val inner = new StreamsBuilder
 
-  def streamS[K, V](topics: String*) : KStreamS[K, V] = {
+  def stream[K, V](topics: String*) : KStreamS[K, V] = {
      inner.stream[K, V](topics.asJava)
   }
 
-  def streamS[K, V](offsetReset: Topology.AutoOffsetReset,
+  def stream[K, V](topics: List[String], consumed: Consumed[K, V]) : KStreamS[K, V] = {
+     inner.stream[K, V](topics.asJava, consumed)
+  }
+
+  def stream[K, V](offsetReset: Topology.AutoOffsetReset,
                    topics: String*) : KStreamS[K, V] =
     inner.stream[K, V](topics.asJava, Consumed.`with`[K,V](offsetReset))
 
-  def streamS[K, V](topicPattern: Pattern) : KStreamS[K, V] =
+  def stream[K, V](topicPattern: Pattern) : KStreamS[K, V] =
     inner.stream[K, V](topicPattern)
 
-  def streamS[K, V](offsetReset: Topology.AutoOffsetReset, topicPattern: Pattern): KStreamS[K, V] =
+  def stream[K, V](offsetReset: Topology.AutoOffsetReset, topicPattern: Pattern): KStreamS[K, V] =
     inner.stream[K, V](topicPattern, Consumed.`with`[K,V](offsetReset))
 
   def table[K, V](topic: String) : KTableS[K, V] = inner.table[K, V](topic)
@@ -47,3 +51,5 @@ class StreamsBuilderS {
 
   def build() : Topology = inner.build()
 }
+
+

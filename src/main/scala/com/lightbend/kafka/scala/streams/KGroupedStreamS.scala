@@ -51,4 +51,10 @@ class KGroupedStreamS[K, V](inner: KGroupedStream[K, V]) {
     val aggregatorJ: Aggregator[K, V, VR] = (k: K, v: V, va: VR) => aggregator(k, v, va)
     inner.aggregate(initializerJ, aggregatorJ, materialized)
   }
+
+  def windowedBy(windows: SessionWindows): SessionWindowedKStreamS[K, V] =
+    inner.windowedBy(windows)
+
+  def windowedBy[W <: Window](windows: Windows[W]): TimeWindowedKStreamS[K, V] =
+    inner.windowedBy(windows)
 }
