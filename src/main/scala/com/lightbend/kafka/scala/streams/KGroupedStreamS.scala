@@ -10,7 +10,7 @@ class KGroupedStreamS[K, V](inner: KGroupedStream[K, V]) {
 
   def count(): KTableS[K, Long] = {
     val c: KTableS[K, java.lang.Long] = inner.count()
-    c.mapValues[Long, java.lang.Long, Long](Long2long(_))
+    c.mapValues[Long](Long2long(_))
   }
 
   def count(materialized: Materialized[K, Long, KeyValueStore[Bytes, Array[Byte]]]): KTableS[K, Long] = 
@@ -35,16 +35,16 @@ class KGroupedStreamS[K, V](inner: KGroupedStream[K, V]) {
     inner.reduce(reducerJ, Materialized.as[K, V, KeyValueStore[Bytes, Array[Byte]]](storeName))
   }
 
-  def aggregate[VR, SK >: K, SV >: V](initializer: () => VR,
-    aggregator: (SK, SV, VR) => VR): KTableS[K, VR] = {
+  def aggregate[VR](initializer: () => VR,
+    aggregator: (K, V, VR) => VR): KTableS[K, VR] = {
 
     val initializerJ: Initializer[VR] = () => initializer()
     val aggregatorJ: Aggregator[K, V, VR] = (k: K, v: V, va: VR) => aggregator(k, v, va)
     inner.aggregate(initializerJ, aggregatorJ)
   }
 
-  def aggregate[VR, SK >: K, SV >: V](initializer: () => VR,
-    aggregator: (SK, SV, VR) => VR,
+  def aggregate[VR](initializer: () => VR,
+    aggregator: (K, V, VR) => VR,
     materialized: Materialized[K, VR, KeyValueStore[Bytes, Array[Byte]]]): KTableS[K, VR] = {
 
     val initializerJ: Initializer[VR] = () => initializer()

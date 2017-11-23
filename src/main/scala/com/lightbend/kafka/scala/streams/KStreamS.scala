@@ -1,9 +1,6 @@
 package com.lightbend.kafka.scala.streams
 
-import java.lang
-
 import ImplicitConversions._
-import org.apache.kafka.common.serialization.Serde
 import org.apache.kafka.streams.KeyValue
 import org.apache.kafka.streams.kstream._
 import org.apache.kafka.streams.processor.{Processor, ProcessorContext, ProcessorSupplier, StreamPartitioner}
@@ -13,37 +10,35 @@ import scala.collection.JavaConverters._
 class KStreamS[K, V](val inner: KStream[K, V]) {
 
   def filter(predicate: (K, V) => Boolean): KStreamS[K, V] = {
-    val predicateJ: Predicate[K, V] = (k, v) => predicate(k, v)
-    inner.filter(predicateJ)
+    inner.filter(predicate(_, _))
   }
 
   def filterNot(predicate: (K, V) => Boolean): KStreamS[K, V] = {
-    val predicateJ: Predicate[K, V] = (k, v) => predicate(k, v)
-    inner.filterNot(predicateJ)
+    inner.filterNot(predicate(_, _))
   }
 
   def selectKey[KR](mapper: (K, V) => KR): KStreamS[KR, V] = {
-    val mapperJ: KeyValueMapper[K, V, KR] = (k: K, v: V) => mapper(k, v)
+    val mapperJ: KeyValueMapper[_ >: K, _ >: V, KR] = mapper(_, _)
     inner.selectKey[KR](mapperJ)
   }
 
   def map[KR, VR](mapper: (K, V) => (KR, VR)): KStreamS[KR, VR] = {
-    val mapperJ: KeyValueMapper[K, V, KeyValue[KR, VR]] = (k: K, v: V) => {
+
+    val mapperJ: KeyValueMapper[K, V, KeyValue[KR, VR]] = (k, v) => {
       val res = mapper(k, v)
-      new KeyValue[KR, VR](res._1, res._2)
+      new KeyValue(res._1, res._2)
     }
     inner.map[KR, VR](mapperJ)
   }
 
-  def mapValues[VR](mapper: (V => VR)): KStreamS[K, VR] = {
-    val mapperJ: ValueMapper[V, VR] = (v: V) => mapper(v)
-    inner.mapValues[VR](mapperJ)
+  def mapValues[VR](mapper: V => VR): KStreamS[K, VR] = {
+    inner.mapValues[VR](mapper(_))
   }
 
   def flatMap[KR, VR](mapper: (K, V) => Iterable[(KR, VR)]): KStreamS[KR, VR] = {
-    val mapperJ: KeyValueMapper[K, V, java.lang.Iterable[KeyValue[KR, VR]]] = (k: K, v: V) => {
+    val mapperJ: KeyValueMapper[K, V, java.lang.Iterable[KeyValue[KR, VR]]] = (k, v) => {
       val resTuples: Iterable[(KR, VR)] = mapper(k, v)
-      val res: Iterable[KeyValue[KR, VR]] = resTuples.map(t => new KeyValue[KR, VR](t._1, t._2))
+      val res: Iterable[KeyValue[KR, VR]] = resTuples.map(t => new KeyValue(t._1, t._2))
       res.asJava
     }
     inner.flatMap[KR, VR](mapperJ)
@@ -66,7 +61,7 @@ class KStreamS[K, V](val inner: KStream[K, V]) {
 
   def branch(predicates: ((K, V) => Boolean)*): Array[KStreamS[K, V]] = {
     val predicatesJ = predicates.map(predicate => {
-      val predicateJ: Predicate[K, V] = (k, v) => predicate(k, v)
+        val predicateJ: Predicate[K, V] = (k, v) => predicate(k, v)
       predicateJ
     })
     inner.branch(predicatesJ: _*)
@@ -84,7 +79,7 @@ class KStreamS[K, V](val inner: KStream[K, V]) {
     produced: Produced[K, V]): Unit = inner.to(topic, produced)
 
   def transform[K1, V1](transformerSupplier: () => Transformer[K, V, (K1, V1)],
-                        stateStoreNames: String*): KStreamS[K1, V1] = {
+    stateStoreNames: String*): KStreamS[K1, V1] = {
 
     val transformerSupplierJ: TransformerSupplier[K, V, KeyValue[K1, V1]] = () => {
       val transformerS: Transformer[K, V, (K1, V1)] = transformerSupplier()
@@ -108,13 +103,15 @@ class KStreamS[K, V](val inner: KStream[K, V]) {
   }
 
   def transformValues[VR](valueTransformerSupplier: () => ValueTransformer[V, VR],
-                          stateStoreNames: String*): KStreamS[K, VR] = {
+    stateStoreNames: String*): KStreamS[K, VR] = {
+
     val valueTransformerSupplierJ: ValueTransformerSupplier[V, VR] = () => valueTransformerSupplier()
     inner.transformValues[VR](valueTransformerSupplierJ, stateStoreNames: _*)
   }
 
   def process(processorSupplier: () => Processor[K, V],
-              stateStoreNames: String*) = {
+    stateStoreNames: String*) = {
+
     val processorSupplierJ: ProcessorSupplier[K, V] = () => processorSupplier()
     inner.process(processorSupplierJ, stateStoreNames: _*)
   }
@@ -125,13 +122,13 @@ class KStreamS[K, V](val inner: KStream[K, V]) {
   def groupByKey(serialized: Serialized[K, V]): KGroupedStreamS[K, V] =
     inner.groupByKey(serialized)
 
-  def groupBy[KR, SK >: K, SV >: V](selector: (SK, SV) => KR): KGroupedStreamS[KR, V] = {
-    val selectorJ: KeyValueMapper[SK, SV, KR] = (k: SK, v: SV) => selector(k, v)
+  def groupBy[KR](selector: (K, V) => KR): KGroupedStreamS[KR, V] = {
+    val selectorJ: KeyValueMapper[K, V, KR] = (k, v) => selector(k, v)
     inner.groupBy(selectorJ)
   }
 
-  def groupBy[KR, SK >: K, SV >: V](selector: (SK, SV) => KR, serialized: Serialized[KR, V]): KGroupedStreamS[KR, V] = {
-    val selectorJ: KeyValueMapper[SK, SV, KR] = (k: SK, v: SV) => selector(k, v)
+  def groupBy[KR](selector: (K, V) => KR, serialized: Serialized[KR, V]): KGroupedStreamS[KR, V] = {
+    val selectorJ: KeyValueMapper[K, V, KR] = (k, v) => selector(k, v)
     inner.groupBy(selectorJ, serialized)
   }
 
@@ -152,27 +149,27 @@ class KStreamS[K, V](val inner: KStream[K, V]) {
     inner.join[VO, VR](otherStream.inner, joinerJ, windows, joined)
   }
 
-  def join[VT, VR, SV >: V, SVT >: VT, EVR <: VR](table: KTableS[K, VT],
-    joiner: (SV, SVT) => EVR): KStreamS[K, VR] = {
+  def join[VT, VR](table: KTableS[K, VT],
+    joiner: (V, VT) => VR): KStreamS[K, VR] = {
 
-    val joinerJ: ValueJoiner[SV, SVT, EVR] = (v1, v2) => joiner(v1, v2)
+    val joinerJ: ValueJoiner[V, VT, VR] = (v1, v2) => joiner(v1, v2)
     inner.join[VT, VR](table.inner, joinerJ)
   }
 
-  def join[VT, VR, SV >: V, SVT >: VT, EVR <: VR](table: KTableS[K, VT],
-    joiner: (SV, SVT) => EVR,
+  def join[VT, VR](table: KTableS[K, VT],
+    joiner: (V, VT) => VR,
     joined: Joined[K, V, VT]): KStreamS[K, VR] = {
 
-    val joinerJ: ValueJoiner[SV, SVT, EVR] = (v1, v2) => joiner(v1, v2)
+    val joinerJ: ValueJoiner[V, VT, VR] = (v1, v2) => joiner(v1, v2)
     inner.join[VT, VR](table.inner, joinerJ, joined)
   }
 
-  def join[GK, GV, RV, SK >: K, SV >: V, EGK <: GK, SGV >: GV, ERV <: RV](globalKTable: GlobalKTable[GK, GV],
-    keyValueMapper: (SK, SV) => EGK,
-    joiner: (SV, SGV) => ERV): KStreamS[K, RV] = {
+  def join[GK, GV, RV](globalKTable: GlobalKTable[GK, GV],
+    keyValueMapper: (K, V) => GK,
+    joiner: (V, GV) => RV): KStreamS[K, RV] = {
 
-    val joinerJ: ValueJoiner[SV, SGV, ERV] = (v1, v2) => joiner(v1, v2)
-    val keyValueMapperJ: KeyValueMapper[SK, SV, EGK] = (k, v) => keyValueMapper(k, v)
+    val joinerJ: ValueJoiner[V, GV, RV] = (v1, v2) => joiner(v1, v2)
+      val keyValueMapperJ: KeyValueMapper[K, V, GK] = (k, v) => keyValueMapper(k, v)
     inner.join[GK, GV, RV](globalKTable, keyValueMapperJ, joinerJ)
   }
 
@@ -193,32 +190,32 @@ class KStreamS[K, V](val inner: KStream[K, V]) {
     inner.leftJoin[VO, VR](otherStream.inner, joinerJ, windows, joined)
   }
 
-  def leftJoin[VT, VR, SV >: V, SVT >: VT, EVR <: VR](table: KTableS[K, VT],
-    joiner: (SV, SVT) => EVR): KStreamS[K, VR] = {
+  def leftJoin[VT, VR](table: KTableS[K, VT],
+    joiner: (V, VT) => VR): KStreamS[K, VR] = {
 
-    val joinerJ: ValueJoiner[SV, SVT, EVR] = (v1, v2) => joiner(v1, v2)
+    val joinerJ: ValueJoiner[V, VT, VR] = (v1, v2) => joiner(v1, v2)
     inner.leftJoin[VT, VR](table.inner, joinerJ)
   }
 
-  def leftJoin[VT, VR, SV >: V, SVT >: VT, EVR <: VR](table: KTableS[K, VT],
-    joiner: (SV, SVT) => EVR,
+  def leftJoin[VT, VR](table: KTableS[K, VT],
+    joiner: (V, VT) => VR,
     joined: Joined[K, V, VT]): KStreamS[K, VR] = {
 
-    val joinerJ: ValueJoiner[SV, SVT, EVR] = (v1, v2) => joiner(v1, v2)
+    val joinerJ: ValueJoiner[V, VT, VR] = (v1, v2) => joiner(v1, v2)
     inner.leftJoin[VT, VR](table.inner, joinerJ, joined)
   }
 
-  def leftJoin[GK, GV, RV, SK >: K, SV >: V, EGK <: GK, SGV >: GV, ERV <: RV](globalKTable: GlobalKTable[GK, GV],
-    keyValueMapper: (SK, SV) => EGK,
-    joiner: (SV, SGV) => ERV): KStreamS[K, RV] = {
+  def leftJoin[GK, GV, RV](globalKTable: GlobalKTable[GK, GV],
+    keyValueMapper: (K, V) => GK,
+    joiner: (V, GV) => RV): KStreamS[K, RV] = {
 
-    val joinerJ: ValueJoiner[SV, SGV, ERV] = (v1, v2) => joiner(v1, v2)
-    val keyValueMapperJ: KeyValueMapper[SK, SV, EGK] = (k, v) => keyValueMapper(k, v)
+    val joinerJ: ValueJoiner[V, GV, RV] = (v1, v2) => joiner(v1, v2)
+      val keyValueMapperJ: KeyValueMapper[K, V, GK] = (k, v) => keyValueMapper(k, v)
     inner.leftJoin[GK, GV, RV](globalKTable, keyValueMapperJ, joinerJ)
   }
 
   def outerJoin[VO, VR](otherStream: KStreamS[K, VO],
-    joiner: (_ >: V, _ >: VO) => _ <: VR,
+    joiner: (V, VO) => VR,
     windows: JoinWindows): KStreamS[K, VR] = {
 
     val joinerJ: ValueJoiner[V, VO, VR] = (v1, v2) => joiner(v1, v2)
@@ -226,12 +223,19 @@ class KStreamS[K, V](val inner: KStream[K, V]) {
   }
 
   def outerJoin[VO, VR](otherStream: KStreamS[K, VO],
-    joiner: (_ >: V, _ >: VO) => _ <: VR,
+    joiner: (V, VO) => VR,
     windows: JoinWindows,
     joined: Joined[K, V, VO]): KStreamS[K, VR] = {
 
     val joinerJ: ValueJoiner[V, VO, VR] = (v1, v2) => joiner(v1, v2)
     inner.outerJoin[VO, VR](otherStream.inner, joinerJ, windows, joined)
+  }
+
+  def merge(stream: KStreamS[K, V]): KStreamS[K, V] = inner.merge(stream)
+
+  def peek(action: (K, V) => Unit): KStream[K, V] = {
+    val actionJ: ForeachAction[_ >: K, _ >: V] = (k, v) => action(k, v)
+    inner.peek(actionJ)
   }
 
   // -- EXTENSIONS TO KAFKA STREAMS --

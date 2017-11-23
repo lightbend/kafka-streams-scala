@@ -9,7 +9,7 @@ class KGroupedTableS[K, V](inner: KGroupedTable[K, V]) {
 
   def count(): KTableS[K, Long] = {
     val c: KTableS[K, java.lang.Long] = inner.count()
-    c.mapValues[Long, java.lang.Long, Long](Long2long(_))
+    c.mapValues[Long](Long2long(_))
   }
 
   def count(materialized: Materialized[K, Long, KeyValueStore[Bytes, Array[Byte]]]): KTableS[K, Long] = 
@@ -32,9 +32,9 @@ class KGroupedTableS[K, V](inner: KGroupedTable[K, V]) {
     inner.reduce(adderJ, subtractorJ, materialized)
   }
 
-  def aggregate[VR, SK >: K, SV >: V](initializer: () => VR,
-    adder: (SK, SV, VR) => VR,
-    subtractor: (SK, SV, VR) => VR): KTableS[K, VR] = {
+  def aggregate[VR](initializer: () => VR,
+    adder: (K, V, VR) => VR,
+    subtractor: (K, V, VR) => VR): KTableS[K, VR] = {
 
     val initializerJ: Initializer[VR] = () => initializer()
     val adderJ: Aggregator[K, V, VR] = (k: K, v: V, va: VR) => adder(k, v, va)
@@ -42,9 +42,9 @@ class KGroupedTableS[K, V](inner: KGroupedTable[K, V]) {
     inner.aggregate(initializerJ, adderJ, subtractorJ)
   }
 
-  def aggregate[VR, SK >: K, SV >: V](initializer: () => VR,
-    adder: (SK, SV, VR) => VR,
-    subtractor: (SK, SV, VR) => VR,
+  def aggregate[VR](initializer: () => VR,
+    adder: (K, V, VR) => VR,
+    subtractor: (K, V, VR) => VR,
     materialized: Materialized[K, VR, KeyValueStore[Bytes, Array[Byte]]]): KTableS[K, VR] = {
 
     val initializerJ: Initializer[VR] = () => initializer()

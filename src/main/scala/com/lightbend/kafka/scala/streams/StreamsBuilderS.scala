@@ -11,7 +11,7 @@ import org.apache.kafka.streams.{Consumed, StreamsBuilder, Topology}
 
 import scala.collection.JavaConverters._
 
-object StreamsBuilderS {
+class StreamsBuilderS {
 
   val inner = new StreamsBuilder
 

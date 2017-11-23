@@ -9,30 +9,30 @@ import ImplicitConversions._
 
 class SessionWindowedKStreamS[K, V](val inner: SessionWindowedKStream[K, V]) {
 
-  def aggregate[VR, SK >: K, SV >: V](initializer: () => VR,
-    aggregator: (SK, SV, VR) => VR,
-    merger: (SK, VR, VR) => VR): KTableS[Windowed[K], VR] = {
+  def aggregate[VR](initializer: () => VR,
+    aggregator: (K, V, VR) => VR,
+    merger: (K, VR, VR) => VR): KTableS[Windowed[K], VR] = {
 
     val initializerJ: Initializer[VR] = () => initializer()
-    val aggregatorJ: Aggregator[K, V, VR] = (k: K, v: V, va: VR) => aggregator(k, v, va)
-    val mergerJ: Merger[SK, VR] = (k: SK, v1: VR, v2: VR) => merger(k, v1, v2)
+    val aggregatorJ: Aggregator[K, V, VR] = (k, v, va) => aggregator(k, v, va)
+    val mergerJ: Merger[K, VR] = (k, v1, v2) => merger(k, v1, v2)
     inner.aggregate(initializerJ, aggregatorJ, mergerJ)
   }
 
-  def aggregate[VR, SK >: K, SV >: V](initializer: () => VR,
-    aggregator: (SK, SV, VR) => VR,
-    merger: (SK, VR, VR) => VR,
+  def aggregate[VR](initializer: () => VR,
+    aggregator: (K, V, VR) => VR,
+    merger: (K, VR, VR) => VR,
     materialized: Materialized[K, VR, SessionStore[Bytes, Array[Byte]]]): KTableS[Windowed[K], VR] = {
 
     val initializerJ: Initializer[VR] = () => initializer()
-    val aggregatorJ: Aggregator[K, V, VR] = (k: K, v: V, va: VR) => aggregator(k, v, va)
-    val mergerJ: Merger[SK, VR] = (k: SK, v1: VR, v2: VR) => merger(k, v1, v2)
+    val aggregatorJ: Aggregator[K, V, VR] = (k, v, va) => aggregator(k, v, va)
+    val mergerJ: Merger[K, VR] = (k, v1, v2) => merger(k, v1, v2)
     inner.aggregate(initializerJ, aggregatorJ, mergerJ, materialized)
   }
 
   def count(): KTableS[Windowed[K], Long] = {
     val c: KTableS[Windowed[K], java.lang.Long] = inner.count()
-    c.mapValues[Long, java.lang.Long, Long](Long2long(_))
+    c.mapValues[Long](Long2long(_))
   }
 
   def count(materialized: Materialized[K, Long, SessionStore[Bytes, Array[Byte]]]): KTableS[Windowed[K], Long] = 
