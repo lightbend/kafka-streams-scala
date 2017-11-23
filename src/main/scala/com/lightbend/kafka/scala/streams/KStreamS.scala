@@ -78,10 +78,10 @@ class KStreamS[K, V](val inner: KStream[K, V]) {
   def through(topic: String,
     produced: Produced[K, V]): KStreamS[K, V] = inner.through(topic, produced)
 
-  def to(topic: String): KStreamS[K, V] = inner.through(topic)
+  def to(topic: String): Unit = inner.to(topic)
 
   def to(topic: String,
-    produced: Produced[K, V]): KStreamS[K, V] = inner.through(topic, produced)
+    produced: Produced[K, V]): Unit = inner.to(topic, produced)
 
   def transform[K1, V1](transformerSupplier: () => Transformer[K, V, (K1, V1)],
                         stateStoreNames: String*): KStreamS[K1, V1] = {
@@ -121,6 +121,9 @@ class KStreamS[K, V](val inner: KStream[K, V]) {
 
   def groupByKey(): KGroupedStreamS[K, V] =
     inner.groupByKey()
+
+  def groupByKey(serialized: Serialized[K, V]): KGroupedStreamS[K, V] =
+    inner.groupByKey(serialized)
 
   def groupBy[KR, SK >: K, SV >: V](selector: (SK, SV) => KR): KGroupedStreamS[KR, V] = {
     val selectorJ: KeyValueMapper[SK, SV, KR] = (k: SK, v: SV) => selector(k, v)
