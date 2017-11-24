@@ -9,38 +9,38 @@ import scala.collection.JavaConverters._
 
 class KStreamS[K, V](val inner: KStream[K, V]) {
 
-  def filter(predicate: (_ >: K, _ >: V) => Boolean): KStreamS[K, V] = {
-    val predicateJ: Predicate[_ >: K, _ >: V] = (k, v) => predicate(k, v)
+  def filter[SK >: K, SV >: V](predicate: (SK, SV) => Boolean): KStreamS[K, V] = {
+    val predicateJ: Predicate[SK, SV] = (k, v) => predicate(k, v)
     inner.filter(predicateJ)
   }
 
-  def filterNot(predicate: (_ >: K, _ >: V) => Boolean): KStreamS[K, V] = {
-    val predicateJ: Predicate[_ >: K, _ >: V] = (k, v) => predicate(k, v)
+  def filterNot[SK >: K, SV >: V](predicate: (SK, SV) => Boolean): KStreamS[K, V] = {
+    val predicateJ: Predicate[SK, SV] = (k, v) => predicate(k, v)
     inner.filterNot(predicateJ)
   }
 
-  def selectKey[KR](mapper: (_ >: K, _ >: V) => KR): KStreamS[KR, V] = {
+  def selectKey[KR, SK >: K, SV >: V](mapper: (SK, SV) => KR): KStreamS[KR, V] = {
     val mapperJ: KeyValueMapper[K, V, KR] = (k: K, v: V) => mapper(k, v)
     inner.selectKey[KR](mapperJ)
   }
 
-  def map[KR, VR](mapper: (_ >: K, _ >: V) => (_ <: KR, _ <: VR)): KStreamS[KR, VR] = {
-    val mapperJ: KeyValueMapper[K, V, KeyValue[KR, VR]] = (k: K, v: V) => {
+  def map[KR, VR, SK >: K, SV >: V, EKR <: KR, EVR <: VR](mapper: (SK, SV) => (EKR, EVR)): KStreamS[KR, VR] = {
+    val mapperJ: KeyValueMapper[SK, SV, KeyValue[EKR, EVR]] = (k: SK, v: SV) => {
       val res = mapper(k, v)
-      new KeyValue[KR, VR](res._1, res._2)
+      new KeyValue[EKR, EVR](res._1, res._2)
     }
     inner.map[KR, VR](mapperJ)
   }
 
-  def mapValues[VR](mapper: (V => VR)): KStreamS[K, VR] = {
-    val mapperJ: ValueMapper[V, VR] = (v: V) => mapper(v)
+  def mapValues[VR, SV >: V, EVR <: VR](mapper: SV => EVR): KStreamS[K, VR] = {
+    def mapperJ: ValueMapper[SV, EVR] = (v) => mapper(v)
     inner.mapValues[VR](mapperJ)
   }
 
-  def flatMap[KR, VR](mapper: (_ >: K, _ >: V) => Iterable[(_ <: KR, _ <: VR)]): KStreamS[KR, VR] = {
-    val mapperJ: KeyValueMapper[_ >: K, _ >: V, java.lang.Iterable[KeyValue[_ <: KR, _ <: VR]]] = (k, v) => {
-      val resTuples: Iterable[(_ <: KR, _ <: VR)] = mapper(k, v)
-      val res: Iterable[KeyValue[_ <: KR, _ <: VR]] = resTuples.map(t => new KeyValue[KR, VR](t._1, t._2))
+  def flatMap[KR, VR, SK >: K, SV >: V, EKR <: KR, EVR <: VR](mapper: (SK, SV) => Iterable[(EKR, EVR)]): KStreamS[KR, VR] = {
+    val mapperJ: KeyValueMapper[SK, SV, java.lang.Iterable[KeyValue[EKR, EVR]]] = (k, v) => {
+      val resTuples: Iterable[(EKR, EVR)] = mapper(k, v)
+      val res: Iterable[KeyValue[EKR, EVR]] = resTuples.map(t => new KeyValue[EKR, EVR](t._1, t._2))
       res.asJava
     }
     inner.flatMap[KR, VR](mapperJ)
@@ -216,27 +216,27 @@ class KStreamS[K, V](val inner: KStream[K, V]) {
     inner.leftJoin[GK, GV, RV](globalKTable, keyValueMapperJ, joinerJ)
   }
 
-  def outerJoin[VO, VR](otherStream: KStreamS[K, VO],
-    joiner: (_ >: V, _ >: VO) => _ <: VR,
+  def outerJoin[VO, VR, SV >: V, SVO >: VO, EVR <: VR](otherStream: KStreamS[K, VO],
+    joiner: (SV, SVO) => EVR,
     windows: JoinWindows): KStreamS[K, VR] = {
 
-    val joinerJ: ValueJoiner[V, VO, VR] = (v1, v2) => joiner(v1, v2)
+    val joinerJ: ValueJoiner[SV, SVO, EVR] = (v1, v2) => joiner(v1, v2)
     inner.outerJoin[VO, VR](otherStream.inner, joinerJ, windows)
   }
 
-  def outerJoin[VO, VR](otherStream: KStreamS[K, VO],
-    joiner: (_ >: V, _ >: VO) => _ <: VR,
+  def outerJoin[VO, VR, SV >: V, SVO >: VO, EVR <: VR](otherStream: KStreamS[K, VO],
+    joiner: (SV, SVO) => EVR,
     windows: JoinWindows,
     joined: Joined[K, V, VO]): KStreamS[K, VR] = {
 
-    val joinerJ: ValueJoiner[V, VO, VR] = (v1, v2) => joiner(v1, v2)
+    val joinerJ: ValueJoiner[SV, SVO, EVR] = (v1, v2) => joiner(v1, v2)
     inner.outerJoin[VO, VR](otherStream.inner, joinerJ, windows, joined)
   }
 
   def merge(stream: KStreamS[K, V]): KStreamS[K, V] = inner.merge(stream)
 
-  def peek(action: (_ >: K, _ >: V) => Unit): KStream[K, V] = {
-    val actionJ: ForeachAction[_ >: K, _ >: V] = (k: K, v: V) => action(k, v)
+    def peek[SK >: K, SV >: V](action: (SK, SV) => Unit): KStream[K, V] = {
+    val actionJ: ForeachAction[SK, SV] = (k: SK, v: SV) => action(k, v)
     inner.peek(actionJ)
   }
 
