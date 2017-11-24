@@ -9,26 +9,26 @@ import ImplicitConversions._
 
 class TimeWindowedKStreamS[K, V](val inner: TimeWindowedKStream[K, V]) {
 
-  def aggregate[VR, SK >: K, SV >: V](initializer: () => VR,
-    aggregator: (SK, SV, VR) => VR): KTableS[Windowed[K], VR] = {
+  def aggregate[VR](initializer: () => VR,
+    aggregator: (K, V, VR) => VR): KTableS[Windowed[K], VR] = {
 
     val initializerJ: Initializer[VR] = () => initializer()
-    val aggregatorJ: Aggregator[K, V, VR] = (k: K, v: V, va: VR) => aggregator(k, v, va)
+    val aggregatorJ: Aggregator[K, V, VR] = (k, v, va) => aggregator(k, v, va)
     inner.aggregate(initializerJ, aggregatorJ)
   }
 
-  def aggregate[VR, SK >: K, SV >: V](initializer: () => VR,
-    aggregator: (SK, SV, VR) => VR,
+  def aggregate[VR](initializer: () => VR,
+    aggregator: (K, V, VR) => VR,
     materialized: Materialized[K, VR, WindowStore[Bytes, Array[Byte]]]): KTableS[Windowed[K], VR] = {
 
     val initializerJ: Initializer[VR] = () => initializer()
-    val aggregatorJ: Aggregator[K, V, VR] = (k: K, v: V, va: VR) => aggregator(k, v, va)
+    val aggregatorJ: Aggregator[K, V, VR] = (k, v, va) => aggregator(k, v, va)
     inner.aggregate(initializerJ, aggregatorJ, materialized)
   }
 
   def count(): KTableS[Windowed[K], Long] = {
     val c: KTableS[Windowed[K], java.lang.Long] = inner.count()
-    c.mapValues[Long, java.lang.Long, Long](Long2long(_))
+    c.mapValues[Long](Long2long(_))
   }
 
   def count(materialized: Materialized[K, Long, WindowStore[Bytes, Array[Byte]]]): KTableS[Windowed[K], Long] = 
