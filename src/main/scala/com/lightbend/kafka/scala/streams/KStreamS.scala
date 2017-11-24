@@ -1,9 +1,6 @@
 package com.lightbend.kafka.scala.streams
 
-import java.lang
-
 import ImplicitConversions._
-import org.apache.kafka.common.serialization.Serde
 import org.apache.kafka.streams.KeyValue
 import org.apache.kafka.streams.kstream._
 import org.apache.kafka.streams.processor.{Processor, ProcessorContext, ProcessorSupplier, StreamPartitioner}
@@ -12,46 +9,46 @@ import scala.collection.JavaConverters._
 
 class KStreamS[K, V](val inner: KStream[K, V]) {
 
-  def filter(predicate: (K, V) => Boolean): KStreamS[K, V] = {
-    val predicateJ: Predicate[K, V] = (k, v) => predicate(k, v)
+  def filter[SK >: K, SV >: V](predicate: (SK, SV) => Boolean): KStreamS[K, V] = {
+    val predicateJ: Predicate[SK, SV] = (k, v) => predicate(k, v)
     inner.filter(predicateJ)
   }
 
-  def filterNot(predicate: (K, V) => Boolean): KStreamS[K, V] = {
-    val predicateJ: Predicate[K, V] = (k, v) => predicate(k, v)
+  def filterNot[SK >: K, SV >: V](predicate: (SK, SV) => Boolean): KStreamS[K, V] = {
+    val predicateJ: Predicate[SK, SV] = (k, v) => predicate(k, v)
     inner.filterNot(predicateJ)
   }
 
-  def selectKey[KR](mapper: (K, V) => KR): KStreamS[KR, V] = {
+  def selectKey[KR, SK >: K, SV >: V](mapper: (SK, SV) => KR): KStreamS[KR, V] = {
     val mapperJ: KeyValueMapper[K, V, KR] = (k: K, v: V) => mapper(k, v)
     inner.selectKey[KR](mapperJ)
   }
 
-  def map[KR, VR](mapper: (K, V) => (KR, VR)): KStreamS[KR, VR] = {
-    val mapperJ: KeyValueMapper[K, V, KeyValue[KR, VR]] = (k: K, v: V) => {
+  def map[KR, VR, SK >: K, SV >: V, EKR <: KR, EVR <: VR](mapper: (SK, SV) => (EKR, EVR)): KStreamS[KR, VR] = {
+    val mapperJ: KeyValueMapper[SK, SV, KeyValue[EKR, EVR]] = (k: SK, v: SV) => {
       val res = mapper(k, v)
-      new KeyValue[KR, VR](res._1, res._2)
+      new KeyValue[EKR, EVR](res._1, res._2)
     }
     inner.map[KR, VR](mapperJ)
   }
 
-  def mapValues[VR](mapper: (V => VR)): KStreamS[K, VR] = {
-    val mapperJ: ValueMapper[V, VR] = (v: V) => mapper(v)
+  def mapValues[VR, SV >: V, EVR <: VR](mapper: SV => EVR): KStreamS[K, VR] = {
+    def mapperJ: ValueMapper[SV, EVR] = (v) => mapper(v)
     inner.mapValues[VR](mapperJ)
   }
 
-  def flatMap[KR, VR](mapper: (K, V) => Iterable[(KR, VR)]): KStreamS[KR, VR] = {
-    val mapperJ: KeyValueMapper[K, V, java.lang.Iterable[KeyValue[KR, VR]]] = (k: K, v: V) => {
-      val resTuples: Iterable[(KR, VR)] = mapper(k, v)
-      val res: Iterable[KeyValue[KR, VR]] = resTuples.map(t => new KeyValue[KR, VR](t._1, t._2))
+  def flatMap[KR, VR, SK >: K, SV >: V, EKR <: KR, EVR <: VR](mapper: (SK, SV) => Iterable[(EKR, EVR)]): KStreamS[KR, VR] = {
+    val mapperJ: KeyValueMapper[SK, SV, java.lang.Iterable[KeyValue[EKR, EVR]]] = (k, v) => {
+      val resTuples: Iterable[(EKR, EVR)] = mapper(k, v)
+      val res: Iterable[KeyValue[EKR, EVR]] = resTuples.map(t => new KeyValue[EKR, EVR](t._1, t._2))
       res.asJava
     }
     inner.flatMap[KR, VR](mapperJ)
   }
 
-  def flatMapValues[VR](processor: V => Iterable[VR]): KStreamS[K, VR] = {
-    val processorJ: ValueMapper[V, java.lang.Iterable[VR]] = (v: V) => {
-      val res: Iterable[VR] = processor(v)
+  def flatMapValues[VR](processor: (_ >: V) => Iterable[_ <: VR]): KStreamS[K, VR] = {
+    val processorJ: ValueMapper[_ >: V, java.lang.Iterable[_ <: VR]] = (v: V) => {
+      val res: Iterable[_ <: VR] = processor(v)
       res.asJava
     }
     inner.flatMapValues[VR](processorJ)
@@ -59,14 +56,14 @@ class KStreamS[K, V](val inner: KStream[K, V]) {
 
   def print(printed: Printed[K, V]) = inner.print(printed)
 
-  def foreach(action: (K, V) => Unit): Unit = {
+  def foreach(action: (_ >: K, _ >: V) => Unit): Unit = {
     val actionJ: ForeachAction[_ >: K, _ >: V] = (k: K, v: V) => action(k, v)
     inner.foreach(actionJ)
   }
 
-  def branch(predicates: ((K, V) => Boolean)*): Array[KStreamS[K, V]] = {
+  def branch(predicates: ((_ >: K, _ >: V) => Boolean)*): Array[KStreamS[K, V]] = {
     val predicatesJ = predicates.map(predicate => {
-      val predicateJ: Predicate[K, V] = (k, v) => predicate(k, v)
+        val predicateJ: Predicate[_ >: K, _ >: V] = (k, v) => predicate(k, v)
       predicateJ
     })
     inner.branch(predicatesJ: _*)
@@ -83,11 +80,11 @@ class KStreamS[K, V](val inner: KStream[K, V]) {
   def to(topic: String,
     produced: Produced[K, V]): Unit = inner.to(topic, produced)
 
-  def transform[K1, V1](transformerSupplier: () => Transformer[K, V, (K1, V1)],
-                        stateStoreNames: String*): KStreamS[K1, V1] = {
+  def transform[K1, V1](transformerSupplier: () => Transformer[_ >: K, _ >: V, (K1, V1)],
+    stateStoreNames: String*): KStreamS[K1, V1] = {
 
-    val transformerSupplierJ: TransformerSupplier[K, V, KeyValue[K1, V1]] = () => {
-      val transformerS: Transformer[K, V, (K1, V1)] = transformerSupplier()
+    val transformerSupplierJ: TransformerSupplier[_ >: K, _ >: V, KeyValue[K1, V1]] = () => {
+      val transformerS: Transformer[_ >: K, _ >: V, (K1, V1)] = transformerSupplier()
       new Transformer[K, V, KeyValue[K1, V1]] {
         override def transform(key: K, value: V): KeyValue[K1, V1] = {
           val res = transformerS.transform(key, value)
@@ -108,13 +105,15 @@ class KStreamS[K, V](val inner: KStream[K, V]) {
   }
 
   def transformValues[VR](valueTransformerSupplier: () => ValueTransformer[V, VR],
-                          stateStoreNames: String*): KStreamS[K, VR] = {
+    stateStoreNames: String*): KStreamS[K, VR] = {
+
     val valueTransformerSupplierJ: ValueTransformerSupplier[V, VR] = () => valueTransformerSupplier()
     inner.transformValues[VR](valueTransformerSupplierJ, stateStoreNames: _*)
   }
 
   def process(processorSupplier: () => Processor[K, V],
-              stateStoreNames: String*) = {
+    stateStoreNames: String*) = {
+
     val processorSupplierJ: ProcessorSupplier[K, V] = () => processorSupplier()
     inner.process(processorSupplierJ, stateStoreNames: _*)
   }
@@ -136,19 +135,19 @@ class KStreamS[K, V](val inner: KStream[K, V]) {
   }
 
   def join[VO, VR](otherStream: KStreamS[K, VO],
-    joiner: (V, VO) => VR,
+    joiner: (_ >: V, _ >: VO) => (_ <: VR),
     windows: JoinWindows): KStreamS[K, VR] = {
 
-    val joinerJ: ValueJoiner[V, VO, VR] = (v1, v2) => joiner(v1, v2)
+    val joinerJ: ValueJoiner[_ >: V, _ >: VO, _ <: VR] = (v1, v2) => joiner(v1, v2)
     inner.join[VO, VR](otherStream.inner, joinerJ, windows)
   }
 
   def join[VO, VR](otherStream: KStreamS[K, VO],
-    joiner: (V, VO) => VR,
+    joiner: (_ >: V, _ >: VO) => (_ <: VR),
     windows: JoinWindows,
     joined: Joined[K, V, VO]): KStreamS[K, VR] = {
 
-    val joinerJ: ValueJoiner[V, VO, VR] = (v1, v2) => joiner(v1, v2)
+    val joinerJ: ValueJoiner[_ >: V, _ >: VO, _ <: VR] = (v1, v2) => joiner(v1, v2)
     inner.join[VO, VR](otherStream.inner, joinerJ, windows, joined)
   }
 
@@ -217,21 +216,28 @@ class KStreamS[K, V](val inner: KStream[K, V]) {
     inner.leftJoin[GK, GV, RV](globalKTable, keyValueMapperJ, joinerJ)
   }
 
-  def outerJoin[VO, VR](otherStream: KStreamS[K, VO],
-    joiner: (_ >: V, _ >: VO) => _ <: VR,
+  def outerJoin[VO, VR, SV >: V, SVO >: VO, EVR <: VR](otherStream: KStreamS[K, VO],
+    joiner: (SV, SVO) => EVR,
     windows: JoinWindows): KStreamS[K, VR] = {
 
-    val joinerJ: ValueJoiner[V, VO, VR] = (v1, v2) => joiner(v1, v2)
+    val joinerJ: ValueJoiner[SV, SVO, EVR] = (v1, v2) => joiner(v1, v2)
     inner.outerJoin[VO, VR](otherStream.inner, joinerJ, windows)
   }
 
-  def outerJoin[VO, VR](otherStream: KStreamS[K, VO],
-    joiner: (_ >: V, _ >: VO) => _ <: VR,
+  def outerJoin[VO, VR, SV >: V, SVO >: VO, EVR <: VR](otherStream: KStreamS[K, VO],
+    joiner: (SV, SVO) => EVR,
     windows: JoinWindows,
     joined: Joined[K, V, VO]): KStreamS[K, VR] = {
 
-    val joinerJ: ValueJoiner[V, VO, VR] = (v1, v2) => joiner(v1, v2)
+    val joinerJ: ValueJoiner[SV, SVO, EVR] = (v1, v2) => joiner(v1, v2)
     inner.outerJoin[VO, VR](otherStream.inner, joinerJ, windows, joined)
+  }
+
+  def merge(stream: KStreamS[K, V]): KStreamS[K, V] = inner.merge(stream)
+
+    def peek[SK >: K, SV >: V](action: (SK, SV) => Unit): KStream[K, V] = {
+    val actionJ: ForeachAction[SK, SV] = (k: SK, v: SV) => action(k, v)
+    inner.peek(actionJ)
   }
 
   // -- EXTENSIONS TO KAFKA STREAMS --
