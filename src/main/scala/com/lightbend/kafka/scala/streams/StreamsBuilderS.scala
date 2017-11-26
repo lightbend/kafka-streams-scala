@@ -4,10 +4,11 @@ import java.util.regex.Pattern
 
 import ImplicitConversions._
 import org.apache.kafka.common.serialization.Serde
-import org.apache.kafka.streams.kstream.GlobalKTable
+import org.apache.kafka.streams.kstream.{ GlobalKTable, Materialized }
 import org.apache.kafka.streams.processor.{ProcessorSupplier, StateStore}
-import org.apache.kafka.streams.state.StoreBuilder
+import org.apache.kafka.streams.state.{ StoreBuilder, KeyValueStore }
 import org.apache.kafka.streams.{Consumed, StreamsBuilder, Topology}
+import org.apache.kafka.common.utils.Bytes
 
 import scala.collection.JavaConverters._
 
@@ -23,22 +24,21 @@ class StreamsBuilderS {
      inner.stream[K, V](topics.asJava, consumed)
   }
 
-  def stream[K, V](offsetReset: Topology.AutoOffsetReset,
-                   topics: String*) : KStreamS[K, V] =
-    inner.stream[K, V](topics.asJava, Consumed.`with`[K,V](offsetReset))
-
   def stream[K, V](topicPattern: Pattern) : KStreamS[K, V] =
     inner.stream[K, V](topicPattern)
 
-  def stream[K, V](offsetReset: Topology.AutoOffsetReset, topicPattern: Pattern): KStreamS[K, V] =
-    inner.stream[K, V](topicPattern, Consumed.`with`[K,V](offsetReset))
-
   def table[K, V](topic: String) : KTableS[K, V] = inner.table[K, V](topic)
 
-  def table[K, V](offsetReset: Topology.AutoOffsetReset,
-                  topic: String) : KTableS[K, V] =
-    inner.table[K, V](topic,  Consumed.`with`[K,V](offsetReset))
+  def table[K, V](topic: String, consumed: Consumed[K, V]) : KTableS[K, V] =
+    inner.table[K, V](topic, consumed)
 
+  def table[K, V](topic: String, consumed: Consumed[K, V],
+    materialized: Materialized[K, V, KeyValueStore[Bytes, Array[Byte]]]): KTableS[K, V] = 
+    inner.table[K, V](topic,  consumed, materialized)
+
+  def table[K, V](topic: String, 
+    materialized: Materialized[K, V, KeyValueStore[Bytes, Array[Byte]]]): KTableS[K, V] = 
+    inner.table[K, V](topic, materialized)
 
   def globalTable[K, V](topic: String): GlobalKTable[K, V] =
     inner.globalTable(topic)
