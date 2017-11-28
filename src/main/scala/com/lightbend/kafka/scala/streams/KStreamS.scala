@@ -61,7 +61,7 @@ class KStreamS[K, V](val inner: KStream[K, V]) {
 
   def branch(predicates: ((K, V) => Boolean)*): Array[KStreamS[K, V]] = {
     val predicatesJ = predicates.map(predicate => {
-        val predicateJ: Predicate[K, V] = (k, v) => predicate(k, v)
+      val predicateJ: Predicate[K, V] = (k, v) => predicate(k, v)
       predicateJ
     })
     inner.branch(predicatesJ: _*)

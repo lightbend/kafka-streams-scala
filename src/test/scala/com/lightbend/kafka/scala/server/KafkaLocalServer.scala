@@ -74,6 +74,8 @@ class KafkaLocalServer private (kafkaProperties: Properties, zooKeeperServer: Zo
   def createTopic(topic: String, partitions: Int, replication: Int, topicConfig: Properties): Unit = {
     AdminUtils.createTopic(zkUtils, topic, partitions, replication, topicConfig, RackAwareMode.Enforced)
   }
+
+  def deleteTopic(topic: String) = AdminUtils.deleteTopic(zkUtils, topic)
 }
 
 object KafkaLocalServer {
@@ -141,7 +143,9 @@ object KafkaLocalServer {
       files.foreach(Files.delete)
       Log.debug(s"Deleted ${directory.getAbsolutePath}.")
     } catch {
-      case e: Exception => Log.warn(s"Failed to delete directory ${directory.getAbsolutePath}.", e)
+      case e: Exception => { 
+        Log.warn(s"Failed to delete directory ${directory.getAbsolutePath}.", e)
+      }
     }
   }
 
