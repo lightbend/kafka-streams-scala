@@ -92,7 +92,7 @@ object StreamToTableJoinScalaIntegrationTest extends TestSuite[KafkaLocalServer]
         .leftJoin(userRegionsTable, (clicks: Long, region: String) => (if (region == null) "UNKNOWN" else region, clicks))
 
         // Change the stream from <user> -> <region, clicks> to <region> -> <clicks>
-        .map((_: String, regionWithClicks: (String, Long)) => regionWithClicks)
+        .map((_, regionWithClicks) => regionWithClicks)
 
         // Compute the total per region by summing the individual click counts per region.
         .groupByKey(Serialized.`with`(stringSerde, scalaLongSerde))

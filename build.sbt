@@ -10,7 +10,9 @@ crossScalaVersions := Seq("2.12.4", "2.11.11")
 
 scalacOptions := Seq("-Xexperimental", "-unchecked", "-deprecation")
 
-libraryDependencies += "org.apache.kafka" % "kafka-streams" % "1.0.0"
+parallelExecution in Test := false
+
+libraryDependencies += "org.apache.kafka" % "kafka-streams" % "1.0.0" exclude("org.apache.zookeeper", "zookeeper")
 libraryDependencies += "org.slf4j" % "slf4j-log4j12" % "1.7.25"
 libraryDependencies += "com.typesafe.scala-logging" %% "scala-logging" % "3.5.0"
 

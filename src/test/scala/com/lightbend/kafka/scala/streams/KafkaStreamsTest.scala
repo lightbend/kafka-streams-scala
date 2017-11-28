@@ -56,7 +56,6 @@ object KafkaStreamsTest extends TestSuite[KafkaLocalServer] with Serializers wit
 
     val wordCounts: KTableS[String, Long] = 
       textLines.flatMapValues(v => pattern.split(v.toLowerCase))
-        .map { (_, value) => (value, value) }
         .groupBy((k, v) => v)
         .count()
 
