@@ -4,6 +4,14 @@ organization := "com.lightbend"
 
 version := "0.0.1"
 
+val algebirdVersion = "0.13.0"
+val chillVersion = "0.9.2"
+val logbackVersion = "1.2.3"
+val kafkaVersion = "1.0.0"
+val scalaLoggingVersion = "3.5.0"
+val curatorVersion = "4.0.0"
+val minitestVersion = "2.0.0"
+
 scalaVersion := "2.12.4"
 
 crossScalaVersions := Seq("2.12.4", "2.11.11")
@@ -12,18 +20,29 @@ scalacOptions := Seq("-Xexperimental", "-unchecked", "-deprecation")
 
 parallelExecution in Test := false
 
-libraryDependencies += "org.apache.kafka" % "kafka-streams" % "1.0.0" exclude("org.apache.zookeeper", "zookeeper")
-libraryDependencies += "org.slf4j" % "slf4j-log4j12" % "1.7.25"
-libraryDependencies += "com.typesafe.scala-logging" %% "scala-logging" % "3.5.0"
+val kafkaStreams = "org.apache.kafka" % "kafka-streams" % kafkaVersion
+val scalaLogging = "com.typesafe.scala-logging" %% "scala-logging" % scalaLoggingVersion
+val logback = "ch.qos.logback" % "logback-classic" % logbackVersion
 
-libraryDependencies += "org.apache.kafka" % "kafka_2.12" % "1.0.0" % "test" exclude("org.apache.zookeeper", "zookeeper")
-libraryDependencies += "org.apache.curator" % "curator-test" % "4.0.0" % "test"
-libraryDependencies += "io.monix" %% "minitest" % "2.0.0" % "test"
-libraryDependencies += "io.monix" %% "minitest-laws" % "2.0.0" % "test"
+val kafka = "org.apache.kafka" % "kafka_2.12" % kafkaVersion
+val curator = "org.apache.curator" % "curator-test" % curatorVersion
+val minitest = "io.monix" %% "minitest" % minitestVersion
+val minitestLaws = "io.monix" %% "minitest-laws" % minitestVersion
 
-libraryDependencies += "io.circe" %% "circe-core"    % "0.8.0" % "test"
-libraryDependencies += "io.circe" %% "circe-generic" % "0.8.0" % "test"
-libraryDependencies += "io.circe" %% "circe-parser"  % "0.8.0" % "test"
+val algebird = "com.twitter" %% "algebird-core" % algebirdVersion 
+val chill = "com.twitter" %% "chill" % chillVersion 
+
+libraryDependencies ++= Seq(
+  kafkaStreams excludeAll(ExclusionRule("org.slf4j", "slf4j-log4j12"), ExclusionRule("org.apache.zookeeper", "zookeeper")),
+  scalaLogging % "test",
+  logback % "test",
+  kafka % "test" excludeAll(ExclusionRule("org.slf4j", "slf4j-log4j12"), ExclusionRule("org.apache.zookeeper", "zookeeper")),
+  curator % "test",
+  minitest % "test",
+  minitestLaws % "test",
+  algebird % "test",
+  chill % "test"
+)
 
 testFrameworks += new TestFramework("minitest.runner.Framework")
 
