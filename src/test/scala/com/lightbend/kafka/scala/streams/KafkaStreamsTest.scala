@@ -8,20 +8,17 @@ import java.util.regex.Pattern
 
 import org.apache.kafka.streams.{ KeyValue, StreamsConfig, KafkaStreams, Consumed }
 import org.apache.kafka.streams.kstream.{ Materialized, Produced, KeyValueMapper, Printed }
-import org.apache.kafka.common.serialization.{ Serdes, StringSerializer, StringDeserializer }
-import org.apache.kafka.clients.consumer.ConsumerConfig
-import org.apache.kafka.clients.producer.ProducerConfig
+import org.apache.kafka.common.serialization.{ Serdes, StringSerializer, StringDeserializer, Serde, LongDeserializer }
 import org.apache.kafka.clients.consumer.ConsumerRecord
 
 import scala.concurrent.duration._
-import com.lightbend.kafka.scala.util.{ Serializers, ScalaLongSerializer }
 
 import ImplicitConversions._
 
-object KafkaStreamsTest extends TestSuite[KafkaLocalServer] with Serializers with WordCountTestData {
+object KafkaStreamsTest extends TestSuite[KafkaLocalServer] with WordCountTestData {
 
   override def setup(): KafkaLocalServer = {
-    val s = KafkaLocalServer(true)
+    val s = KafkaLocalServer(true, Some(localStateDir))
     s.start()
     s
   }
@@ -39,6 +36,7 @@ object KafkaStreamsTest extends TestSuite[KafkaLocalServer] with Serializers wit
     // Step 1: Configure and start the processor topology.
     //
     val stringSerde = Serdes.String()
+    val longSerde: Serde[Long] = Serdes.Long().asInstanceOf[Serde[Long]]
 
     val streamsConfiguration = new Properties()
     streamsConfiguration.put(StreamsConfig.APPLICATION_ID_CONFIG, s"wordcount-${scala.util.Random.nextInt(100)}")
@@ -47,6 +45,7 @@ object KafkaStreamsTest extends TestSuite[KafkaLocalServer] with Serializers wit
     streamsConfiguration.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, brokers)
     streamsConfiguration.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.String().getClass().getName())
     streamsConfiguration.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, Serdes.String().getClass().getName())
+    streamsConfiguration.put(StreamsConfig.STATE_DIR_CONFIG, localStateDir)
 
     val builder = new StreamsBuilderS
 
@@ -59,7 +58,7 @@ object KafkaStreamsTest extends TestSuite[KafkaLocalServer] with Serializers wit
         .groupBy((k, v) => v)
         .count()
 
-    wordCounts.toStream.to(outputTopic, Produced.`with`(stringSerde, scalaLongSerde))
+    wordCounts.toStream.to(outputTopic, Produced.`with`(stringSerde, longSerde))
 
     val streams = new KafkaStreams(builder.build, streamsConfiguration)
     streams.start()
@@ -75,7 +74,7 @@ object KafkaStreamsTest extends TestSuite[KafkaLocalServer] with Serializers wit
     //
     val listener = MessageListener(brokers, outputTopic, "wordcountgroup", 
       classOf[StringDeserializer].getName, 
-      classOf[ScalaLongSerializer].getName, 
+      classOf[LongDeserializer].getName, 
       new RecordProcessor
     )
 
@@ -97,6 +96,7 @@ trait WordCountTestData {
   val inputTopic = "inputTopic"
   val outputTopic = "outputTopic"
   val brokers = "localhost:9092"
+  val localStateDir = "local_state_data"
 
   val inputValues = List(
     "Hello Kafka Streams",

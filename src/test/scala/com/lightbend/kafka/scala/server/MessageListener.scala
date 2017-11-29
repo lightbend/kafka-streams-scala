@@ -7,18 +7,18 @@ import scala.collection.mutable.ListBuffer
 
 
 object MessageListener {
-  private val AUTOCOMMITINTERVAL = "1000" // Frequency of offset commits
-  private val SESSIONTIMEOUT = "30000" // The timeout used to detect failures - should be greater then processing time
-  private val MAXPOLLRECORDS = "50" // Max number of records consumed in a single poll
+  private val AUTO_COMMIT_INTERVAL_MS_CONFIG = "1000" // Frequency of offset commits
+  private val SESSION_TIMEOUT_MS_CONFIG = "30000" // The timeout used to detect failures - should be greater then processing time
+  private val MAX_POLL_RECORDS_CONFIG = "50" // Max number of records consumed in a single poll
 
   def consumerProperties(brokers: String, group: String, keyDeserializer: String, valueDeserializer: String): Map[String, AnyRef] = {
     Map[String, AnyRef](
       ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG -> brokers,
       ConsumerConfig.GROUP_ID_CONFIG -> group,
       ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG -> "true",
-      ConsumerConfig.AUTO_COMMIT_INTERVAL_MS_CONFIG -> AUTOCOMMITINTERVAL,
-      ConsumerConfig.SESSION_TIMEOUT_MS_CONFIG -> SESSIONTIMEOUT,
-      ConsumerConfig.MAX_POLL_RECORDS_CONFIG -> MAXPOLLRECORDS,
+      ConsumerConfig.AUTO_COMMIT_INTERVAL_MS_CONFIG -> AUTO_COMMIT_INTERVAL_MS_CONFIG,
+      ConsumerConfig.SESSION_TIMEOUT_MS_CONFIG -> SESSION_TIMEOUT_MS_CONFIG,
+      ConsumerConfig.MAX_POLL_RECORDS_CONFIG -> MAX_POLL_RECORDS_CONFIG,
       ConsumerConfig.AUTO_OFFSET_RESET_CONFIG -> "latest",
       ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG -> keyDeserializer,
       ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG -> valueDeserializer

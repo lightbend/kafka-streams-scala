@@ -4,20 +4,25 @@ import org.apache.kafka.clients.producer.{ KafkaProducer, ProducerConfig, Produc
 import java.util.Properties
 
 object MessageSender {
-  private val ACKCONFIGURATION = "all" // Blocking on the full commit of the record
-  private val RETRYCOUNT = "1" // Number of retries on put
-  private val BATCHSIZE = "1024" // Buffers for unsent records for each partition - controlls batching
-  private val LINGERTIME = "1" // Timeout for more records to arive - controlls batching
-  private val BUFFERMEMORY = "1024000" // Controls the total amount of memory available to the producer for buffering. If records are sent faster than they can be transmitted to the server then this buffer space will be exhausted. When the buffer space is exhausted additional send calls will block. The threshold for time to block is determined by max.block.ms after which it throws a TimeoutException.
+  private val ACKS_CONFIG = "all" // Blocking on the full commit of the record
+  private val RETRIES_CONFIG = "1" // Number of retries on put
+  private val BATCH_SIZE_CONFIG = "1024" // Buffers for unsent records for each partition - controlls batching
+  private val LINGER_MS_CONFIG = "1" // Timeout for more records to arive - controlls batching
+
+  private val BUFFER_MEMORY_CONFIG = "1024000" // Controls the total amount of memory available to the producer for buffering. 
+                                               // If records are sent faster than they can be transmitted to the server then this 
+                                               // buffer space will be exhausted. When the buffer space is exhausted additional 
+                                               // send calls will block. The threshold for time to block is determined by max.block.ms 
+                                               // after which it throws a TimeoutException.
 
   def providerProperties(brokers: String, keySerializer: String, valueSerializer: String): Properties = {
     val props = new Properties
     props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, brokers)
-    props.put(ProducerConfig.ACKS_CONFIG, ACKCONFIGURATION)
-    props.put(ProducerConfig.RETRIES_CONFIG, RETRYCOUNT)
-    props.put(ProducerConfig.BATCH_SIZE_CONFIG, BATCHSIZE)
-    props.put(ProducerConfig.LINGER_MS_CONFIG, LINGERTIME)
-    props.put(ProducerConfig.BUFFER_MEMORY_CONFIG, BUFFERMEMORY)
+    props.put(ProducerConfig.ACKS_CONFIG, ACKS_CONFIG)
+    props.put(ProducerConfig.RETRIES_CONFIG, RETRIES_CONFIG)
+    props.put(ProducerConfig.BATCH_SIZE_CONFIG, BATCH_SIZE_CONFIG)
+    props.put(ProducerConfig.LINGER_MS_CONFIG, LINGER_MS_CONFIG)
+    props.put(ProducerConfig.BUFFER_MEMORY_CONFIG, BUFFER_MEMORY_CONFIG)
     props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, keySerializer)
     props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, valueSerializer)
     props

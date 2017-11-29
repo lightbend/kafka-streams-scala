@@ -19,13 +19,10 @@ import java.util.Properties
 import minitest.TestSuite
 import com.lightbend.kafka.scala.server.{ KafkaLocalServer, MessageSender, MessageListener, RecordProcessorTrait }
 
-import org.apache.kafka.clients.consumer.ConsumerConfig
-import org.apache.kafka.clients.producer.ProducerConfig
 import org.apache.kafka.common.serialization._
 import org.apache.kafka.streams.kstream._
 import org.apache.kafka.streams._
 
-import com.lightbend.kafka.scala.util.{ ScalaLongSerializer, Serializers }
 import org.apache.kafka.clients.consumer.ConsumerRecord
 import collection.JavaConverters._
 import ImplicitConversions._
@@ -43,10 +40,10 @@ import ImplicitConversions._
   * must be `static` and `public`) to a workaround combination of `@Rule def` and a `private val`.
   */
 
-object StreamToTableJoinScalaIntegrationTest extends TestSuite[KafkaLocalServer] with StreamToTableJoinTestData with Serializers {
+object StreamToTableJoinScalaIntegrationTest extends TestSuite[KafkaLocalServer] with StreamToTableJoinTestData {
 
   override def setup(): KafkaLocalServer = {
-    val s = KafkaLocalServer(true)
+    val s = KafkaLocalServer(true, Some(localStateDir))
     s.start()
     s
   }
@@ -65,6 +62,7 @@ object StreamToTableJoinScalaIntegrationTest extends TestSuite[KafkaLocalServer]
     // Step 1: Configure and start the processor topology.
     //
     val stringSerde: Serde[String] = Serdes.String()
+    val longSerde: Serde[Long] = Serdes.Long().asInstanceOf[Serde[Long]]
 
     val streamsConfiguration: Properties = {
       val p = new Properties()
@@ -74,13 +72,13 @@ object StreamToTableJoinScalaIntegrationTest extends TestSuite[KafkaLocalServer]
       p.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.String.getClass.getName)
       p.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, Serdes.String.getClass.getName)
       p.put(StreamsConfig.COMMIT_INTERVAL_MS_CONFIG, "100")
-      p.put(StreamsConfig.STATE_DIR_CONFIG, "local_state_data")
+      p.put(StreamsConfig.STATE_DIR_CONFIG, localStateDir)
       p
     }
 
     val builder = new StreamsBuilderS
 
-    val userClicksStream: KStreamS[String, Long] = builder.stream(List(userClicksTopic), Consumed.`with`(stringSerde, scalaLongSerde))
+    val userClicksStream: KStreamS[String, Long] = builder.stream(userClicksTopic, Consumed.`with`(stringSerde, longSerde))
 
     val userRegionsTable: KTableS[String, String] = builder.table(userRegionsTopic, Consumed.`with`(stringSerde, stringSerde))
 
@@ -95,11 +93,11 @@ object StreamToTableJoinScalaIntegrationTest extends TestSuite[KafkaLocalServer]
         .map((_, regionWithClicks) => regionWithClicks)
 
         // Compute the total per region by summing the individual click counts per region.
-        .groupByKey(Serialized.`with`(stringSerde, scalaLongSerde))
+        .groupByKey(Serialized.`with`(stringSerde, longSerde))
         .reduce(_ + _)
 
     // Write the (continuously updating) results to the output topic.
-    clicksPerRegion.toStream.to(outputTopic, Produced.`with`(stringSerde, scalaLongSerde))
+    clicksPerRegion.toStream.to(outputTopic, Produced.`with`(stringSerde, longSerde))
 
     val streams: KafkaStreams = new KafkaStreams(builder.build, streamsConfiguration)
 
@@ -131,7 +129,7 @@ object StreamToTableJoinScalaIntegrationTest extends TestSuite[KafkaLocalServer]
     //
     // Step 3: Publish some user click events.
     //
-    val sender2 = MessageSender[String, Long](brokers, classOf[StringSerializer].getName, classOf[ScalaLongSerializer].getName) 
+    val sender2 = MessageSender[String, Long](brokers, classOf[StringSerializer].getName, classOf[LongSerializer].getName) 
     userClicks.foreach(r => sender2.writeKeyValue(userClicksTopic, r.key, r.value))
 
     //
@@ -139,7 +137,7 @@ object StreamToTableJoinScalaIntegrationTest extends TestSuite[KafkaLocalServer]
     //
     val listener = MessageListener(brokers, outputTopic, "join-scala-integration-test-standard-consumer", 
       classOf[StringDeserializer].getName, 
-      classOf[ScalaLongSerializer].getName, 
+      classOf[LongDeserializer].getName, 
       new RecordProcessor
     )
 
@@ -161,6 +159,7 @@ trait StreamToTableJoinTestData {
   val userClicksTopic = "user-clicks"
   val userRegionsTopic = "user-regions"
   val outputTopic = "output-topic"
+  val localStateDir = "local_state_data"
 
   // Input 1: Clicks per user (multiple records allowed per user).
   val userClicks: Seq[KeyValue[String, Long]] = Seq(

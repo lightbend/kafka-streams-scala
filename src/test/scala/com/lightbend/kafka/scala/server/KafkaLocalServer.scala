@@ -3,25 +3,24 @@ package com.lightbend.kafka.scala.server
 // Loosely based on Lagom implementation at
 //  https://github.com/lagom/lagom/blob/master/dev/kafka-server/src/main/scala/com/lightbend/lagom/internal/kafka/KafkaLocalServer.scala
 
-import java.io.File
-import java.io.IOException
-import java.nio.file.FileVisitOption
-import java.nio.file.Files
-import java.nio.file.Paths
+import java.io.{ IOException, File }
+import java.nio.file.{ FileVisitOption, Files, Paths }
 import java.util.Properties
 
 import org.apache.curator.test.TestingServer
-import org.slf4j.LoggerFactory
+import com.typesafe.scalalogging.LazyLogging
 
 import kafka.server.{KafkaConfig, KafkaServerStartable}
 
 import scala.collection.JavaConverters._
+import scala.util.{ Try, Success, Failure }
 import java.util.Comparator
 
 import kafka.admin.{AdminUtils, RackAwareMode}
 import kafka.utils.ZkUtils
 
-class KafkaLocalServer private (kafkaProperties: Properties, zooKeeperServer: ZooKeeperLocalServer) {
+class KafkaLocalServer private (kafkaProperties: Properties, zooKeeperServer: ZooKeeperLocalServer)
+  extends LazyLogging {
 
   import KafkaLocalServer._
 
@@ -78,28 +77,45 @@ class KafkaLocalServer private (kafkaProperties: Properties, zooKeeperServer: Zo
   def deleteTopic(topic: String) = AdminUtils.deleteTopic(zkUtils, topic)
 }
 
-object KafkaLocalServer {
+import Utils._
+
+object KafkaLocalServer extends LazyLogging {
   final val DefaultPort = 9092
   final val DefaultResetOnStart = true
   private val DEFAULT_ZK_CONNECT = "localhost:2181"
   private val DEFAULT_ZK_SESSION_TIMEOUT_MS = 10 * 1000
   private val DEFAULT_ZK_CONNECTION_TIMEOUT_MS = 8 * 1000
 
-  private final val basDir = "tmp/"
+  final val basDir = "tmp/"
 
-  private final val KafkaDataFolderName = "kafka_data"
+  private final val kafkaDataFolderName = "kafka_data"
 
-  val Log = LoggerFactory.getLogger(classOf[KafkaLocalServer])
+  def apply(cleanOnStart: Boolean, localStateDir: Option[String] = None): KafkaLocalServer = 
+    this(DefaultPort, ZooKeeperLocalServer.DefaultPort, cleanOnStart, localStateDir)
 
-  def apply(cleanOnStart: Boolean): KafkaLocalServer = this(DefaultPort, ZooKeeperLocalServer.DefaultPort, cleanOnStart)
+  def apply(kafkaPort: Int, zookeeperServerPort: Int, cleanOnStart: Boolean, localStateDir: Option[String]): KafkaLocalServer = {
 
-  def apply(kafkaPort: Int, zookeeperServerPort: Int, cleanOnStart: Boolean): KafkaLocalServer = {
-    val kafkaDataDir = dataDirectory(KafkaDataFolderName)
-    Log.info(s"Kafka data directory is $kafkaDataDir.")
+    // delete kafka data dir on clean start
+    val kafkaDataDir: File = (for {
+      kdir <- dataDirectory(basDir, kafkaDataFolderName)
+      _    <- if (cleanOnStart) deleteDirectory(kdir) else Try(())
+    } yield kdir) match {
+      case Success(d) => d
+      case Failure(ex) => throw ex
+    }
+
+    // delete kafka local state dir on clean start
+    localStateDir.foreach { d =>
+      for {
+        kdir <- dataDirectory("", d)
+        _    <- if (cleanOnStart) deleteDirectory(kdir) else Try(())
+      } yield (())
+    }
+
+    logger.info(s"Kafka data directory is $kafkaDataDir.")
 
     val kafkaProperties = createKafkaProperties(kafkaPort, zookeeperServerPort, kafkaDataDir)
 
-    if (cleanOnStart) deleteDirectory(kafkaDataDir)
     val zk = new ZooKeeperLocalServer(zookeeperServerPort, cleanOnStart)
     zk.start()
     new KafkaLocalServer(kafkaProperties, zk)
@@ -134,32 +150,9 @@ object KafkaLocalServer {
 
     kafkaProperties
   }
-
-  def deleteDirectory(directory: File): Unit = {
-    if (directory.exists()) try {
-      val rootPath = Paths.get(directory.getAbsolutePath)
-
-      val files = Files.walk(rootPath, FileVisitOption.FOLLOW_LINKS).sorted(Comparator.reverseOrder()).iterator().asScala
-      files.foreach(Files.delete)
-      Log.debug(s"Deleted ${directory.getAbsolutePath}.")
-    } catch {
-      case e: Exception => { 
-        Log.warn(s"Failed to delete directory ${directory.getAbsolutePath}.", e)
-      }
-    }
-  }
-
-  def dataDirectory(directoryName: String): File = {
-
-    val dataDirectory = new File(basDir + directoryName)
-    if (dataDirectory.exists() && !dataDirectory.isDirectory())
-      throw new IllegalArgumentException(s"Cannot use $directoryName as a directory name because a file with that name already exists in $dataDirectory.")
-
-    dataDirectory
-  }
 }
 
-private class ZooKeeperLocalServer(port: Int, cleanOnStart: Boolean) {
+private class ZooKeeperLocalServer(port: Int, cleanOnStart: Boolean) extends LazyLogging {
 
   import KafkaLocalServer._
   import ZooKeeperLocalServer._
@@ -167,11 +160,17 @@ private class ZooKeeperLocalServer(port: Int, cleanOnStart: Boolean) {
   private var zooKeeper = null.asInstanceOf[TestingServer]
 
   def start(): Unit = {
-    val zookeeperDataDir = dataDirectory(ZookeeperDataFolderName)
-    zooKeeper = new TestingServer(port, zookeeperDataDir, false)
-    Log.info(s"Zookeeper data directory is $zookeeperDataDir.")
+    // delete kafka data dir on clean start
+    val zookeeperDataDir: File = (for {
+      zdir <- dataDirectory(basDir, zookeeperDataFolderName)
+      _    <- if (cleanOnStart) deleteDirectory(zdir) else Try(())
+    } yield zdir) match {
+      case Success(d) => d
+      case Failure(ex) => throw ex
+    }
+    logger.info(s"Zookeeper data directory is $zookeeperDataDir.")
 
-    if (cleanOnStart) deleteDirectory(zookeeperDataDir)
+    zooKeeper = new TestingServer(port, zookeeperDataDir, false)
 
     zooKeeper.start() // blocking operation
   }
@@ -192,5 +191,5 @@ private class ZooKeeperLocalServer(port: Int, cleanOnStart: Boolean) {
 
 object ZooKeeperLocalServer {
   final val DefaultPort = 2181
-  private final val ZookeeperDataFolderName = "zookeeper_data"
+  private final val zookeeperDataFolderName = "zookeeper_data"
 }

@@ -16,16 +16,23 @@ class StreamsBuilderS {
 
   val inner = new StreamsBuilder
 
-  def stream[K, V](topics: String*) : KStreamS[K, V] = {
-     inner.stream[K, V](topics.asJava)
-  }
+  def stream[K, V](topic: String) : KStreamS[K, V] =
+     inner.stream[K, V](topic)
 
-  def stream[K, V](topics: List[String], consumed: Consumed[K, V]) : KStreamS[K, V] = {
+  def stream[K, V](topic: String, consumed: Consumed[K, V]) : KStreamS[K, V] = 
+     inner.stream[K, V](topic, consumed)
+
+  def stream[K, V](topics: List[String]): KStreamS[K, V] = 
+     inner.stream[K, V](topics.asJava)
+
+  def stream[K, V](topics: List[String], consumed: Consumed[K, V]): KStreamS[K, V] =
      inner.stream[K, V](topics.asJava, consumed)
-  }
 
   def stream[K, V](topicPattern: Pattern) : KStreamS[K, V] =
     inner.stream[K, V](topicPattern)
+
+  def stream[K, V](topicPattern: Pattern, consumed: Consumed[K, V]) : KStreamS[K, V] =
+    inner.stream[K, V](topicPattern, consumed)
 
   def table[K, V](topic: String) : KTableS[K, V] = inner.table[K, V](topic)
 
@@ -47,7 +54,6 @@ class StreamsBuilderS {
 
   def addGlobalStore(storeBuilder: StoreBuilder[_ <: StateStore], topic: String, sourceName: String, consumed: Consumed[_, _], processorName: String, stateUpdateSupplier: ProcessorSupplier[_, _]): StreamsBuilder =
     inner.addGlobalStore(storeBuilder,topic,sourceName,consumed,processorName,stateUpdateSupplier)
-
 
   def build() : Topology = inner.build()
 }
