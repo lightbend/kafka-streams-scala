@@ -208,12 +208,11 @@ object WeblogProcessing extends WeblogWorkflow {
     // for a host will be the correct one - all earlier records will be considered out of date
     //
     // materialize the summarized information into a topic
-    // groupedStream.count(Materialized.as(ACCESS_COUNT_PER_HOST_STORE)
-    groupedStream.count(ACCESS_COUNT_PER_HOST_STORE, stringSerde)
+    groupedStream.count(ACCESS_COUNT_PER_HOST_STORE, Some(stringSerde))
       .toStream.to(config.summaryAccessTopic.get, Produced.`with`(stringSerde, longSerde))
 
     groupedStream.windowedBy(TimeWindows.of(60000))
-      .count(WINDOWED_ACCESS_COUNT_PER_HOST_STORE, stringSerde)
+      .count(WINDOWED_ACCESS_COUNT_PER_HOST_STORE, Some(stringSerde))
       .toStream.to(config.windowedSummaryAccessTopic.get, Produced.`with`(windowedStringSerde, longSerde))
 
     // print the topic info (for debugging)
