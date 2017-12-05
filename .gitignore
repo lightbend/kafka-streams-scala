@@ -28,3 +28,4 @@ bigdl/source/lib
 release/staging/
 deploy.conf
 kafka-stream-s/project/build.properties
+kafka-stream-q/project/build.properties
