@@ -29,3 +29,5 @@ release/staging/
 deploy.conf
 kafka-stream-s/project/build.properties
 kafka-stream-q/project/build.properties
+kafka-stream-q-example-proc/project/build.properties
+kafka-stream-q-example-proc/src/main/resources/application-proc.conf
