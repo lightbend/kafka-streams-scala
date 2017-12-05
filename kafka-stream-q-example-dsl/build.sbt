@@ -11,8 +11,8 @@ version in ThisBuild := "0.0.1"
 
 scalaVersion in ThisBuild := Versions.scalaVersion
 
-(sourceDirectory in avroConfig) := baseDirectory.value / "src/main/resources/com/lightbend/kafka/scala/iq/example"
-(stringType in avroConfig) := "String"
+(sourceDirectory in AvroConfig) := baseDirectory.value / "src/main/resources/com/lightbend/kafka/scala/iq/example"
+(stringType in AvroConfig) := "String"
 
 def appProject(id: String)(base:String = id) = Project(id, base = file(base))
   .enablePlugins(JavaAppPackaging)
@@ -21,7 +21,7 @@ lazy val app = appProject("app")(".")
   .settings(
     scalaVersion := Versions.scalaVersion,
     libraryDependencies ++= Seq(
-      ks, 
+      ks,
       kq,
       algebird,
       chill,
