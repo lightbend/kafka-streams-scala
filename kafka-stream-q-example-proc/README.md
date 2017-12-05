@@ -55,9 +55,9 @@ $ sbt
 This will start the application. Now you can query on the global state using `curl`:
 
 ```bash
-$ curl localhost:7071/weblog/access/check/world.std.com
+$ curl http://localhost:7071/weblog/access/check/world.std.com
 true
-$ curl localhost:7071/weblog/access/check/world.stx.co
+$ curl http://localhost:7071/weblog/access/check/world.stx.co
 false
 ```
 
