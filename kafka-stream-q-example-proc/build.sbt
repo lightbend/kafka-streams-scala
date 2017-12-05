@@ -3,16 +3,13 @@ import NativePackagerHelper._
 
 import Dependencies._
 
-name in ThisBuild := "iq-example-dsl"
+name in ThisBuild := "iq-example-proc"
 
 organization in ThisBuild := "com.lightbend"
 
 version in ThisBuild := "0.0.1"
 
 scalaVersion in ThisBuild := Versions.scalaVersion
-
-(sourceDirectory in avroConfig) := baseDirectory.value / "src/main/resources/com/lightbend/kafka/scala/iq/example"
-(stringType in avroConfig) := "String"
 
 def appProject(id: String)(base:String = id) = Project(id, base = file(base))
   .enablePlugins(JavaAppPackaging)
@@ -86,8 +83,8 @@ lazy val app = appProject("app")(".")
       "-Ywarn-value-discard"               // Warn when non-Unit expression results are unused.
     ),
     assemblyMergeStrategy in assembly := {
-      case PathList("application_dsl.conf") => MergeStrategy.discard
-      case PathList("logback-dsl.xml") => MergeStrategy.discard
+      case PathList("application_proc.conf") => MergeStrategy.discard
+      case PathList("logback-proc.xml") => MergeStrategy.discard
       case PathList("META-INF", "MANIFEST.MF") => MergeStrategy.discard
       case PathList("META-INF", xs @ _*) => MergeStrategy.last
       case PathList("META-INF", "io.netty.versions.properties") => MergeStrategy.last
@@ -97,29 +94,30 @@ lazy val app = appProject("app")(".")
     }
   )
 
-lazy val dslRun = project
-  .in(file("run/dsl"))
+lazy val procRun = project
+  .in(file("run/proc"))
   .settings (
+    scalaVersion := Versions.scalaVersion,
     fork in run := true,
-    mainClass in Compile := Some("com.lightbend.kafka.scala.iq.example.WeblogProcessing"),
+    mainClass in Compile := Some("com.lightbend.kafka.scala.iq.example.WeblogDriver"),
     resourceDirectory in Compile := (resourceDirectory in (app, Compile)).value,
     javaOptions in run ++= Seq(
-      "-Dconfig.file=" + (resourceDirectory in Compile).value / "application-dsl.conf",
-      "-Dlogback.configurationFile=" + (resourceDirectory in Compile).value / "logback-dsl.xml"),
-    addCommandAlias("dsl", "dslRun/run")
+      "-Dconfig.file=" + (resourceDirectory in Compile).value / "application-proc.conf",
+      "-Dlogback.configurationFile=" + (resourceDirectory in Compile).value / "logback-proc.xml"),
+    addCommandAlias("proc", "procRun/run")
   )
   .dependsOn(app)
 
-lazy val dslPackage = appProject("dslPackage")("build/dsl")
+lazy val procPackage = appProject("procPackage")("build/proc")
   .settings(
     scalaVersion := Versions.scalaVersion,
     resourceDirectory in Compile := (resourceDirectory in (app, Compile)).value,
     mappings in Universal ++= {
-      Seq(((resourceDirectory in Compile).value / "application-dsl.conf") -> "conf/application.conf") ++
-        Seq(((resourceDirectory in Compile).value / "logback-dsl.xml") -> "conf/logback.xml")
+      Seq(((resourceDirectory in Compile).value / "application-proc.conf") -> "conf/application.conf") ++
+        Seq(((resourceDirectory in Compile).value / "logback-proc.xml") -> "conf/logback.xml")
     },
     scriptClasspath := Seq("../conf/") ++ scriptClasspath.value,
-    mainClass in Compile := Some("com.lightbend.kafka.scala.iq.example.WeblogProcessing")
+    mainClass in Compile := Some("com.lightbend.kafka.scala.iq.example.WeblogDriver")
   )
   .dependsOn(app)
 

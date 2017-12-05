@@ -1,6 +1,13 @@
-## Example implementation of http based interactive query service
+## Example implementation of http based Interactive Query Service
 
-The implementation is absed on the [Clarknet dataset](http://ita.ee.lbl.gov/html/contrib/ClarkNet-HTTP.html), which has to be downloaded in a local folder.
+The current implementation demonstrates the following usages in Kafka Streams along with an http based interactive query service:
+
+1. Data ingestion
+2. Data transformation using Kafka Streams DSL based implementation
+3. Managing local state with key-value stores
+4. Interactive query service with http end points 
+
+The implementation is based on the [Clarknet dataset](http://ita.ee.lbl.gov/html/contrib/ClarkNet-HTTP.html), which has to be downloaded in a local folder.
 
 ## Build and run locally
 
