@@ -27,3 +27,4 @@ ingest-intrusion-data/ingest-intrusiondata-tmp/*
 bigdl/source/lib
 release/staging/
 deploy.conf
+kafka-stream-s/project/build.properties
