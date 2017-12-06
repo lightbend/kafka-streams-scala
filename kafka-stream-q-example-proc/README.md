@@ -57,10 +57,121 @@ This will start the application. Now you can query on the global state using `cu
 ```bash
 $ curl http://localhost:7071/weblog/access/check/world.std.com
 true
+$ ## We are querying against a bloom filter based store which checks membership. 
+$ ## Since world.std.com is a hostkey present in the dataset, we get true here.
+$
 $ curl http://localhost:7071/weblog/access/check/world.stx.co
-false
+$ false
+$ ## We are querying against a bloom filter based store which checks membership. 
+$ ## Since world.std.co is not a valid hostkey in the dataset, we get false
+$ ## here.
 ```
 
 ## Run in Distributed Mode
 
-@todo
+The http query layer is designed to work even when your application runs in the distributed mode. Running your Kafka Streams application in the distributed mode means that all the instances must have the same application id.
+
+Here are the steps that you need to follow to run the application in distributed mode. We assume here you are running both the instances in the same node with different port numbers. It's fairly easy to scale this on different nodes.
+
+### Step 1: Build and configure for distribution
+
+```bash
+$ sbt
+$ procPackage/universal:packageZipTarball
+```
+
+This creates a distribution under a folder `<project home>/build`.
+
+```bash
+$ pwd
+<project home>
+$ cd build/proc/target/universal
+$ ls
+procpackage-0.0.1.tgz
+$ tar xvfz procpackage-0.0.1.tgz
+## unpack the distribution
+$ cd procpackage-0.0.1
+$ ls
+bin	   conf	lib
+$ cd conf
+$ ls
+application.conf	logback.xml
+## change the above 2 files based on your requirements.
+$ cd ..
+$ pwd
+<...>/procpackage-0.0.1
+```
+
+### Step 2: Run the first instance of the application
+Ensure the following:
+
+1. Zookeeper and Kafka are running
+2. All topics mentioned above are created
+3. The folder mentioned in `directoyToWatch` in `application.conf` has the data file
+
+```bash
+$ pwd
+<...>/procpackage-0.0.1
+$ bin/dslpackage
+```
+
+This starts the single instance of the application. After some time you will see data printed in the console regarding the host access information as present from the data file.
+
+In the log file, created under `<...>/procpackage-0.0.1/logs`, check if the REST service has started and note the host and port details. It should be something like `localhost:7070` (the default setting in `application.conf`).
+
+### Step 3: Run the second instance of the application
+
+If you decide to run multiple instances of the application you may choose to split the dataset into 2 parts and keep them in different folders. Also you need to copy the current distribution in some other folder and start the seocnd instance from there, since you need to run it with changed settings in `application.conf`. Say we want to copy in a folder named `clarknet-2`.
+
+```bash
+$ cp <project home>/build/proc/target/universal/procpackage-0.0.1.tgz clarknet-2
+$ cd clarknet-2
+$ tar xvfz procpackage-0.0.1.tgz
+## unpack the distribution
+$ cd procpackage-0.0.1
+$ ls
+bin	   conf	lib
+$ cd conf
+$ ls
+application.conf	logback.xml
+## change the above 2 files based on your requirements.
+$ cd ..
+$ pwd
+<...>/procpackage-0.0.1
+```
+
+The following settings need to be changed in `application.conf` before you can run the second instance:
+
+1. `dcos.kafka.statestoredir` - This is the folder where the local state information gets persisted by Kafka streams. This has to be different for every new instance set up.
+2. `dcos.kafka.loader.directorytowatch` - The data folder because we would like to ingest different data for the 2 instances.
+3. `dcos.http.interface` and `dcos.http.port` - The REST service endpoints. If the node is not different then it can be `localhost` for both.
+
+```bash
+$ pwd
+<...>/procpackage-0.0.1
+$ bin/procpackage
+```
+
+This will start the second instance. Check the log file to verify that the REST endpoints are properly started.
+
+### Step 4: Do query
+
+The idea of a distributed interactive query interface is to allow the user to query for *all* keys using *any* of the end points where the REST service are running. Assume that the 2 instances are running at `localhost:7070` and `localhost:7071`. 
+
+Here are a few examples:
+
+```bash
+## world.std.com was loaded by the first instance of the app
+## Query using the end points corresponding to the first instance gives correct result
+$ curl localhost:7070/weblog/access/check/world.std.com
+true
+
+## we get correct result even if we query using the end points of of the second instance
+$ curl localhost:7071/weblog/access/check/world.std.com
+true
+
+## ppp19.glas.apc.org was loaded by the second instance of the app
+## Query using the end points corresponding to the first instance also gives correct result
+$ curl localhost:7070/weblog/access/check/ppp19.glas.apc.org
+true
+```

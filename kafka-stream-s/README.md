@@ -6,6 +6,8 @@ The library wraps Java APIs in Scala thereby providing:
 2. less boilerplate in application code
 3. the usual builder-style composition that developers get with the original Java API
 
+The design of the library was inspired by the work started by Alexis Seigneurin in [this repository](https://github.com/aseigneurin/kafka-streams-scala). 
+
 ## Type Inference and Composition
 
 Here's a sample code fragment using the Scala wrapper library. Compare this with the Scala code from the same [example](https://github.com/confluentinc/kafka-streams-examples/blob/4.0.0-post/src/test/scala/io/confluent/examples/streams/StreamToTableJoinScalaIntegrationTest.scala) in Confluent's repository.
