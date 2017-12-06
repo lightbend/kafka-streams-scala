@@ -1,4 +1,4 @@
-# Http layer for Interactive Queries in Kafka Streams
+# HTTP Layer for Interactive Queries in Kafka Streams
 
 Kafka Streams' stateful streaming creates and uses local state information in the node where the application is running. If the application runs in a distributed mode on multiple nodes, then each node contains the respective state information. Kafka Streams does not publish any unifying API that allows you to query across all the nodes for the state information. However it has a set of infrastructure components that can be used to implement a query service based on your favorite end points.
 
@@ -16,29 +16,29 @@ The goal of this small library is to offer such a query layer based on [akka-htt
 
 The library is organized around 3 main packages containing the following:
 
-1. `http`: The main end point implementations including a class `InteractiveQueryHttpService` that provides methods for starting and stopping the http service. The other classes provided are `HttpRequester` that handles the request, does some validations and forwards the request to `KeyValueFetcher` that invokes the actual service for fetching the state information.
+1. `http`: The main end point implementations including a class `InteractiveQueryHttpService` that provides methods for starting and stopping the HTTP service. The other classes provided are `HttpRequester` that handles the request, does some validations and forwards the request to `KeyValueFetcher` that invokes the actual service for fetching the state information.
 2. `services`: This layer interacts with the underlying Kafka Streams APIs to fetch data from the local state. The 2 classes in this layer are (a) `MetadataService` that uses Kafka Streams API to fetch the metadata for the state and (b) `LocalStateStoreQueryService` that does the actual query for the state.
-3. `serializers`: A bunch of serializers useful for application development that helps you serialize your model structures.
+3. `serializers`: A bunch of serializers useful for application development that help you serialize your model structures.
 
 ## Distributed Query
 
-If the pplication is run in distributed mode across multiple physical nodes, local state information are spread across all the nodes. The `http` services that the library offers can handle this nd provide with a unified view of the global application state. 
+If the application is run in a distributed mode across multiple physical nodes, local state information is spread across all the nodes. The `http` services that the library offers can handle this and provide a unified view of the global application state.
 
 Consider the following scenario:
 
-1. The application is deployed in 3 nodes with IPs, **ip1**, **ip2** and **ip3**. Assuming the application uses this library, the http services run on the port **7070** in each of the nodes. 
-2. The user queries for some information from `http://ip1:7070/<path>/<to>/<key>`. 
+1. The application is deployed in 3 nodes with IPs, `ip1`, `ip2` and `ip3`. Assuming the application uses this library, the HTTP services run on port `7070` in each of the nodes.
+2. The user queries for some information from `http://ip1:7070/<path>/<to>/<key>`.
 
-It may so happen that the `<key>` that she is looking for may not reside in host **ip1**. The query service handles such situation by interacting with the `MetadataService` as follows:
+It may so happen that the `<key>` that she is looking for may not reside in host `ip1`. The query service handles this situation by interacting with the `MetadataService` as follows:
 
-1. User queries from host **ip1**
+1. User queries from host `ip1`
 2. Check `MetadataService` to get information about the `key` that the user is looking for
-3. If the metadata for the key indicates that the data is part of the local state in **ip1**, then we are done. Return the query result.
-4. Otherwise, get the host information from the metadata where this state resides.
-5. Query the appropriate node by reissuing the http request and get the state information.
+3. If the metadata for the key indicates that the data is part of the local state in `ip1`, then we are done. Return the query result
+4. Otherwise, get the host information from the metadata where this state resides
+5. Query the appropriate node by reissuing the HTTP request to get the state information
 
-## Handling Rebalancing of Partitions 
+## Handling Rebalancing of Partitions
 
-It may so happen that when the user does the query, Kafka Streams may be doing a  partition rebalancing when states may migrate from one store (node) to another. During such situation Kafka Streams throws `InvalidStateStoreException`. 
+It may so happen that when the user does the query, Kafka Streams may be doing a partition rebalancing when states may migrate from one store (node) to another. During such a situation Kafka Streams throws `InvalidStateStoreException`.
 
-Migration is typically done when new instances of the application come up or Kafka Streams does a rebalancing. The library handles such situation through a retry semantics. The query API will continuw to retry till the rebalancing is complete or the retry count is exhausted.
+Migration is typically done when new instances of the application come up or Kafka Streams does a rebalancing. The library handles such situation through retry semantics. The query API will continue to retry until the rebalancing is complete or the retry count is exhausted.

@@ -1,9 +1,9 @@
-akka {                                                                         
-  loglevel = INFO                                                             
-  log-config-on-start = on                                                     
-  loggers = ["akka.event.slf4j.Slf4jLogger"]                                   
-  logging-filter = "akka.event.slf4j.Slf4jLoggingFilter"                       
-  event-handlers = ["akka.event.slf4j.Slf4jEventHandler"]                      
+akka {
+  loglevel = INFO
+  log-config-on-start = on
+  loggers = ["akka.event.slf4j.Slf4jLogger"]
+  logging-filter = "akka.event.slf4j.Slf4jLoggingFilter"
+  event-handlers = ["akka.event.slf4j.Slf4jEventHandler"]
 }
 
 dcos {
@@ -38,7 +38,7 @@ dcos {
       sourcetopic = ${dcos.kafka.fromtopic}
       sourcetopic = ${?KAFKA_FROM_TOPIC_PROC}
 
-      directorytowatch = "/Users/debasishghosh/tt"
+      directorytowatch = "/Users/myhome/ClarkNet-HTTP"
       directorytowatch = ${?DIRECTORY_TO_WATCH}
 
       pollinterval = 1 second
