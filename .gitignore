@@ -20,7 +20,7 @@ project/plugins/project/
 .idea_modules
 *.json
 *.json--
-
+tmp/
 *.swp
 .scala_dependencies
 .worksheet
