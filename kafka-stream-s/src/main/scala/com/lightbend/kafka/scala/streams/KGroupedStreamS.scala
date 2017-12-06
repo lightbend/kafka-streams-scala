@@ -11,7 +11,7 @@ class KGroupedStreamS[K, V](inner: KGroupedStream[K, V]) {
 
   def count(): KTableS[K, Long] = {
     val c: KTableS[K, java.lang.Long] = inner.count()
-    c.mapValues[Long](Long2long(_))
+    c.mapValues[Long](Long2long _)
   }
 
   def count(store: String, keySerde: Option[Serde[K]] = None): KTableS[K, Long] = { 
@@ -22,7 +22,7 @@ class KGroupedStreamS[K, V](inner: KGroupedStream[K, V]) {
     )
 
     val c: KTableS[K, java.lang.Long] = inner.count(materialized)
-    c.mapValues[Long](Long2long(_))
+    c.mapValues[Long](Long2long _)
   }
 
   def reduce(reducer: (V, V) => V): KTableS[K, V] = {
