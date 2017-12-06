@@ -40,7 +40,8 @@ trait WeblogWorkflow extends LazyLogging with AppSerializers {
     val restEndpoint = new HostInfo(restEndpointHostName, restEndpointPort)
     
     logger.info("Connecting to Kafka cluster via bootstrap servers " + config.brokers)
-    logger.info("REST endpoint at http://" + restEndpointHostName + ":" + restEndpointPort)
+    logger.warn("REST endpoint at http://" + restEndpointHostName + ":" + restEndpointPort)
+    println("REST endpoint at http://" + restEndpointHostName + ":" + restEndpointPort)
 
     implicit val system = ActorSystem()
     implicit val materializer = ActorMaterializer()
