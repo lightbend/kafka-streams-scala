@@ -47,6 +47,10 @@ object ImplicitConversions {
     def asValueMapper: ValueMapper[V, VR] = v => f(v)
   }
 
+  implicit class AggregatorFromFunction[K, V, VR](val f: (K, V, VR) => VR) extends AnyVal {
+    def asAggregator: Aggregator[K, V, VR] = (k,v,r) => f(k,v,r)
+  }
+
 
 }
 

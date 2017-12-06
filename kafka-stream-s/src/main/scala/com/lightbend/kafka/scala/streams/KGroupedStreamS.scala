@@ -39,19 +39,13 @@ class KGroupedStreamS[K, V](inner: KGroupedStream[K, V]) {
 
   def aggregate[VR](initializer: () => VR,
     aggregator: (K, V, VR) => VR): KTableS[K, VR] = {
-
-    val initializerJ: Initializer[VR] = () => initializer()
-    val aggregatorJ: Aggregator[K, V, VR] = (k: K, v: V, va: VR) => aggregator(k, v, va)
-    inner.aggregate(initializerJ, aggregatorJ)
+    inner.aggregate(() => initializer(), aggregator.asAggregator)
   }
 
   def aggregate[VR](initializer: () => VR,
     aggregator: (K, V, VR) => VR,
     materialized: Materialized[K, VR, KeyValueStore[Bytes, Array[Byte]]]): KTableS[K, VR] = {
-
-    val initializerJ: Initializer[VR] = () => initializer()
-    val aggregatorJ: Aggregator[K, V, VR] = (k: K, v: V, va: VR) => aggregator(k, v, va)
-    inner.aggregate(initializerJ, aggregatorJ, materialized)
+    inner.aggregate(() => initializer(), aggregator.asAggregator, materialized)
   }
 
   def windowedBy(windows: SessionWindows): SessionWindowedKStreamS[K, V] =

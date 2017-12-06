@@ -91,8 +91,7 @@ class KTableS[K, V](val inner: KTable[K, V]) {
     joiner: (V, VO) => VR,
     materialized: Materialized[K, VR, KeyValueStore[Bytes, Array[Byte]]]): KTableS[K, VR] = {
 
-    val joinerJ: ValueJoiner[V, VO, VR] = (v1, v2) => joiner(v1, v2)
-    inner.outerJoin[VO, VR](other.inner, joinerJ, materialized)
+    inner.outerJoin[VO, VR](other.inner, joiner.asValueJoiner, materialized)
   }
 
   def queryableStoreName: String =
