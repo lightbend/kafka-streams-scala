@@ -15,7 +15,7 @@ object Dependencies {
   val kafkaStreams = "org.apache.kafka"                % "kafka-streams"     % kafkaVersion
   val scalaLogging = "com.typesafe.scala-logging"     %% "scala-logging"     % scalaLoggingVersion
   val logback = "ch.qos.logback"                       % "logback-classic"   % logbackVersion
-  val kafka = "org.apache.kafka"                       % "kafka_2.12"        % kafkaVersion
+  val kafka = "org.apache.kafka"                      %% "kafka"             % kafkaVersion
   val curator = "org.apache.curator"                   % "curator-test"      % curatorVersion
   val minitest = "io.monix"                           %% "minitest"          % minitestVersion
   val minitestLaws = "io.monix"                       %% "minitest-laws"     % minitestVersion

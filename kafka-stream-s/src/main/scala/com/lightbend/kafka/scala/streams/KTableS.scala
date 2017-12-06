@@ -41,16 +41,14 @@ class KTableS[K, V](val inner: KTable[K, V]) {
     inner.toStream
 
   def toStream[KR](mapper: (K, V) => KR): KStreamS[KR, V] = {
-    val mapperJ: KeyValueMapper[K, V, KR] = new KeyValueMapper[K, V, KR]{
-      override def apply(k: K, v: V): KR = mapper(k, v)
-    }
+    val mapperJ: KeyValueMapper[K, V, KR] = (k: K, v: V) => mapper(k, v)
     inner.toStream[KR](mapperJ)
   }
 
   def groupBy[KR, VR](selector: (K, V) => (KR, VR)): KGroupedTableS[KR, VR] = {
     val selectorJ: KeyValueMapper[K, V, KeyValue[KR, VR]] = (k, v) => {
-      val res = selector(k, v)
-      new KeyValue[KR, VR](res._1, res._2)
+      val (kr, vr) = selector(k, v)
+      KeyValue.pair(kr, vr)
     }
     inner.groupBy(selectorJ)
   }
@@ -59,8 +57,8 @@ class KTableS[K, V](val inner: KTable[K, V]) {
     serialized: Serialized[KR, VR]): KGroupedTableS[KR, VR] = {
 
     val selectorJ: KeyValueMapper[K, V, KeyValue[KR, VR]] = (k, v) => {
-      val res = selector(k, v)
-      new KeyValue[KR, VR](res._1, res._2)
+      val (kr, vr) = selector(k, v)
+      KeyValue.pair(kr, vr)
     }
     inner.groupBy(selectorJ, serialized)
   }

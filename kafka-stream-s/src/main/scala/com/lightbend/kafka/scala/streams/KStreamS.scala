@@ -18,15 +18,14 @@ class KStreamS[K, V](val inner: KStream[K, V]) {
   }
 
   def selectKey[KR](mapper: (K, V) => KR): KStreamS[KR, V] = {
-    val mapperJ: KeyValueMapper[_ >: K, _ >: V, KR] = mapper(_, _)
+    val mapperJ: KeyValueMapper[_ >: K, _ >: V, KR] = (k: K, v: V) => mapper(k, v)
     inner.selectKey[KR](mapperJ)
   }
 
   def map[KR, VR](mapper: (K, V) => (KR, VR)): KStreamS[KR, VR] = {
-
     val mapperJ: KeyValueMapper[K, V, KeyValue[KR, VR]] = (k, v) => {
-      val res = mapper(k, v)
-      new KeyValue(res._1, res._2)
+      val (ks,vs) = mapper(k, v)
+      KeyValue.pair(ks, vs)
     }
     inner.map[KR, VR](mapperJ)
   }
@@ -38,7 +37,7 @@ class KStreamS[K, V](val inner: KStream[K, V]) {
   def flatMap[KR, VR](mapper: (K, V) => Iterable[(KR, VR)]): KStreamS[KR, VR] = {
     val mapperJ: KeyValueMapper[K, V, java.lang.Iterable[KeyValue[KR, VR]]] = (k, v) => {
       val resTuples: Iterable[(KR, VR)] = mapper(k, v)
-      val res: Iterable[KeyValue[KR, VR]] = resTuples.map(t => new KeyValue(t._1, t._2))
+      val res: Iterable[KeyValue[KR, VR]] = resTuples.map{case (kr, vr) => KeyValue.pair(kr, vr)}
       res.asJava
     }
     inner.flatMap[KR, VR](mapperJ)
@@ -85,15 +84,15 @@ class KStreamS[K, V](val inner: KStream[K, V]) {
       val transformerS: Transformer[K, V, (K1, V1)] = transformerSupplier()
       new Transformer[K, V, KeyValue[K1, V1]] {
         override def transform(key: K, value: V): KeyValue[K1, V1] = {
-          val res = transformerS.transform(key, value)
-          new KeyValue[K1, V1](res._1, res._2)
+          val (k1,v1) = transformerS.transform(key, value)
+          new KeyValue[K1, V1](k1, v1)
         }
 
         override def init(context: ProcessorContext): Unit = transformerS.init(context)
 
         override def punctuate(timestamp: Long): KeyValue[K1, V1] = {
-          val res = transformerS.punctuate(timestamp)
-          new KeyValue[K1, V1](res._1, res._2)
+          val (k1,v1) = transformerS.punctuate(timestamp)
+          new KeyValue[K1, V1](k1, v1)
         }
 
         override def close(): Unit = transformerS.close()
