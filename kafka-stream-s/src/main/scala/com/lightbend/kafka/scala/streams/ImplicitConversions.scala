@@ -1,6 +1,6 @@
 package com.lightbend.kafka.scala.streams
 
-import org.apache.kafka.streams.kstream.{KGroupedStream, KGroupedTable, KStream, KTable, SessionWindowedKStream, TimeWindowedKStream}
+import org.apache.kafka.streams.kstream._
 import org.apache.kafka.streams.KeyValue
 
 import scala.language.implicitConversions
@@ -26,4 +26,27 @@ object ImplicitConversions {
     new KGroupedTableS[K, V](inner)
 
   implicit def Tuple2ToKeyValue[K, V](tuple: (K, V)): KeyValue[K, V] = new KeyValue(tuple._1, tuple._2)
+
+  implicit class PredicateFromFunction[K, V](val test: (K, V) => Boolean) extends AnyVal {
+    def asPredicate: Predicate[K,V] = test(_,_)
+  }
+
+  implicit class MapperFromFunction[K, V, R](val f:(K,V) => R) extends AnyVal {
+    def asKeyValueMapper: KeyValueMapper[K, V, R] = (k: K, v: V) => f(k, v)
+    def asValueJoiner: ValueJoiner[K,V,R] = (v1, v2) => f(v1, v2)
+  }
+
+  implicit class KeyValueMapperFromFunction[K, V, KR, VR](val f:(K,V) => (KR, VR)) extends AnyVal {
+    def asKeyValueMapper: KeyValueMapper[K, V, KeyValue[KR, VR]] = (k, v) => {
+        val (kr, vr) = f(k, v)
+        KeyValue.pair(kr, vr)
+    }
+  }
+
+  implicit class ValueMapperFromFunction[V, VR](val f: V => VR) extends AnyVal {
+    def asValueMapper: ValueMapper[V, VR] = v => f(v)
+  }
+
+
 }
+

@@ -22,22 +22,19 @@ class KGroupedStreamS[K, V](inner: KGroupedStream[K, V]) {
   }
 
   def reduce(reducer: (V, V) => V): KTableS[K, V] = {
-    val reducerJ: Reducer[V] = (v1: V, v2: V) => reducer(v1, v2)
-    inner.reduce(reducerJ)
+    inner.reduce(reducer(_,_))
   }
 
   def reduce(reducer: (V, V) => V,
     materialized: Materialized[K, V, KeyValueStore[Bytes, Array[Byte]]]): KTableS[K, V] = {
 
-    val reducerJ: Reducer[V] = (v1: V, v2: V) => reducer(v1, v2)
-    inner.reduce(reducerJ, materialized)
+    inner.reduce(reducer(_, _), materialized)
   }
 
   def reduce(reducer: (V, V) => V,
     storeName: String): KTableS[K, V] = {
 
-    val reducerJ: Reducer[V] = (v1: V, v2: V) => reducer(v1, v2)
-    inner.reduce(reducerJ, Materialized.as[K, V, KeyValueStore[Bytes, Array[Byte]]](storeName))
+    inner.reduce(reducer(_, _), Materialized.as[K, V, KeyValueStore[Bytes, Array[Byte]]](storeName))
   }
 
   def aggregate[VR](initializer: () => VR,

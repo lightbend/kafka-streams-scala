@@ -18,18 +18,14 @@ class KGroupedTableS[K, V](inner: KGroupedTable[K, V]) {
   def reduce(adder: (V, V) => V,
     subtractor: (V, V) => V): KTableS[K, V] = {
 
-    val adderJ: Reducer[V] = (v1: V, v2: V) => adder(v1, v2)
-    val subtractorJ: Reducer[V] = (v1: V, v2: V) => subtractor(v1, v2)
-    inner.reduce(adderJ, subtractorJ)
+    inner.reduce((v1: V, v2: V) => adder(v1, v2), (v1: V, v2: V) => subtractor(v1, v2))
   }
 
   def reduce(adder: (V, V) => V,
     subtractor: (V, V) => V,
     materialized: Materialized[K, V, KeyValueStore[Bytes, Array[Byte]]]): KTableS[K, V] = {
 
-    val adderJ: Reducer[V] = (v1: V, v2: V) => adder(v1, v2)
-    val subtractorJ: Reducer[V] = (v1: V, v2: V) => subtractor(v1, v2)
-    inner.reduce(adderJ, subtractorJ, materialized)
+    inner.reduce((v1: V, v2: V) => adder(v1, v2), (v1: V, v2: V) => subtractor(v1, v2), materialized)
   }
 
   def aggregate[VR](initializer: () => VR,

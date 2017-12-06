@@ -27,47 +27,34 @@ class KTableS[K, V](val inner: KTable[K, V]) {
   }
 
   def mapValues[VR](mapper: V => VR): KTableS[K, VR] = {
-    def mapperJ: ValueMapper[V, VR] = (v) => mapper(v)
-    inner.mapValues[VR](mapperJ)
+    inner.mapValues[VR](mapper.asValueMapper)
   }
 
   def mapValues[VR](mapper: V => VR,
     materialized: Materialized[K, VR, KeyValueStore[Bytes, Array[Byte]]]): KTableS[K, VR] = {
-    def mapperJ: ValueMapper[V, VR] = (v) => mapper(v)
-    inner.mapValues[VR](mapperJ, materialized)
+    inner.mapValues[VR](mapper.asValueMapper, materialized)
   }
 
-  def toStream: KStreamS[K, V] =
-    inner.toStream
+  def toStream: KStreamS[K, V] = inner.toStream
 
   def toStream[KR](mapper: (K, V) => KR): KStreamS[KR, V] = {
-    val mapperJ: KeyValueMapper[K, V, KR] = (k: K, v: V) => mapper(k, v)
-    inner.toStream[KR](mapperJ)
+    inner.toStream[KR](mapper.asKeyValueMapper)
   }
 
   def groupBy[KR, VR](selector: (K, V) => (KR, VR)): KGroupedTableS[KR, VR] = {
-    val selectorJ: KeyValueMapper[K, V, KeyValue[KR, VR]] = (k, v) => {
-      val (kr, vr) = selector(k, v)
-      KeyValue.pair(kr, vr)
-    }
-    inner.groupBy(selectorJ)
+    inner.groupBy(selector.asKeyValueMapper)
   }
 
   def groupBy[KR, VR](selector: (K, V) => (KR, VR),
     serialized: Serialized[KR, VR]): KGroupedTableS[KR, VR] = {
 
-    val selectorJ: KeyValueMapper[K, V, KeyValue[KR, VR]] = (k, v) => {
-      val (kr, vr) = selector(k, v)
-      KeyValue.pair(kr, vr)
-    }
-    inner.groupBy(selectorJ, serialized)
+    inner.groupBy(selector.asKeyValueMapper, serialized)
   }
 
   def join[VO, VR](other: KTableS[K, VO],
     joiner: (V, VO) => VR): KTableS[K, VR] = {
 
-    val joinerJ: ValueJoiner[V, VO, VR] = (v1, v2) => joiner(v1, v2)
-    inner.join[VO, VR](other.inner, joinerJ)
+    inner.join[VO, VR](other.inner, joiner.asValueJoiner)
   }
 
   def join[VO, VR](other: KTableS[K, VO],
