@@ -55,16 +55,16 @@ $ sbt
 This will start the application. Now you can query on the global state using `curl`:
 
 ```bash
-$ curl http://localhost:7071/weblog/access/check/world.std.com
-true
 $ ## We are querying against a bloom filter based store which checks membership. 
 $ ## Since world.std.com is a hostkey present in the dataset, we get true here.
+$ curl http://localhost:7071/weblog/access/check/world.std.com
+true
 $
-$ curl http://localhost:7071/weblog/access/check/world.stx.co
-$ false
 $ ## We are querying against a bloom filter based store which checks membership. 
 $ ## Since world.std.co is not a valid hostkey in the dataset, we get false
 $ ## here.
+$ curl http://localhost:7071/weblog/access/check/world.stx.co
+false
 ```
 
 ## Run in Distributed Mode
@@ -77,7 +77,7 @@ Here are the steps that you need to follow to run the application in distributed
 
 ```bash
 $ sbt
-$ procPackage/universal:packageZipTarball
+> procPackage/universal:packageZipTarball
 ```
 
 This creates a distribution under a folder `<project home>/build`.
@@ -88,8 +88,8 @@ $ pwd
 $ cd build/proc/target/universal
 $ ls
 procpackage-0.0.1.tgz
-$ tar xvfz procpackage-0.0.1.tgz
 ## unpack the distribution
+$ tar xvfz procpackage-0.0.1.tgz
 $ cd procpackage-0.0.1
 $ ls
 bin	   conf	lib
@@ -107,7 +107,7 @@ Ensure the following:
 
 1. Zookeeper and Kafka are running
 2. All topics mentioned above are created
-3. The folder mentioned in `directoyToWatch` in `application.conf` has the data file
+3. The folder mentioned in `directoryToWatch` in `application.conf` has the data file
 
 ```bash
 $ pwd
@@ -121,7 +121,7 @@ In the log file, created under `<...>/procpackage-0.0.1/logs`, check if the REST
 
 ### Step 3: Run the second instance of the application
 
-If you decide to run multiple instances of the application you may choose to split the dataset into 2 parts and keep them in different folders. Also you need to copy the current distribution in some other folder and start the seocnd instance from there, since you need to run it with changed settings in `application.conf`. Say we want to copy in a folder named `clarknet-2`.
+If you decide to run multiple instances of the application you may choose to split the dataset into 2 parts and keep them in different folders. Also you need to copy the current distribution in some other folder and start the second instance from there, since you need to run it with changed settings in `application.conf`. Say we want to copy in a folder named `clarknet-2`.
 
 ```bash
 $ cp <project home>/build/proc/target/universal/procpackage-0.0.1.tgz clarknet-2

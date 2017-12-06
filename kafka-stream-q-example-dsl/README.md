@@ -60,13 +60,15 @@ $ sbt
 This will start the application. Now you can query on the global state using `curl`:
 
 ```bash
-$ curl http://localhost:7070/weblog/access/world.std.com
 $ ## Fetch the number of accesses made to the host world.std.com as per the
 $ ## downloaded data file
+$ curl http://localhost:7070/weblog/access/world.std.com
+15
 $
-$ curl http://localhost:7070/weblog/bytes/world.std.com
 $ ## Fetch the number of bytes in the reply for queries to the host 
 $ ## world.std.com as per the downloaded data file
+$ curl http://localhost:7070/weblog/bytes/world.std.com
+124532
 ```
 
 ## Run in Distributed Mode
@@ -79,7 +81,7 @@ Here are the steps that you need to follow to run the application in distributed
 
 ```bash
 $ sbt
-$ dslPackage/universal:packageZipTarball
+> dslPackage/universal:packageZipTarball
 ```
 
 This creates a distribution under a folder `<project home>/build`.
@@ -90,8 +92,8 @@ $ pwd
 $ cd build/dsl/target/universal
 $ ls
 dslpackage-0.0.1.tgz
-$ tar xvfz dslpackage-0.0.1.tgz
 ## unpack the distribution
+$ tar xvfz dslpackage-0.0.1.tgz
 $ cd dslpackage-0.0.1
 $ ls
 bin	   conf	lib
@@ -109,7 +111,7 @@ Ensure the following:
 
 1. Zookeeper and Kafka are running
 2. All topics mentioned above are created
-3. The folder mentioned in `directoyToWatch` in `application.conf` has the data file
+3. The folder mentioned in `directoryToWatch` in `application.conf` has the data file
 
 ```bash
 $ pwd
@@ -123,7 +125,7 @@ In the log file, created under `<...>/dslpackage-0.0.1/logs`, check if the REST 
 
 ### Step 3: Run the second instance of the application
 
-If you decide to run multiple instances of the application you may choose to split the dataset into 2 parts and keep them in different folders. Also you need to copy the current distribution in some other folder and start the seocnd instance from there, since you need to run it with changed settings in `application.conf`. Say we want to copy in a folder named `clarknet-2`.
+If you decide to run multiple instances of the application you may choose to split the dataset into 2 parts and keep them in different folders. Also you need to copy the current distribution in some other folder and start the second instance from there, since you need to run it with changed settings in `application.conf`. Say we want to copy in a folder named `clarknet-2`.
 
 ```bash
 $ cp <project home>/build/dsl/target/universal/dslpackage-0.0.1.tgz clarknet-2
