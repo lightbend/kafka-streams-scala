@@ -21,6 +21,7 @@ project/plugins/project/
 *.json
 *.json--
 tmp/
+local_state_data/
 *.swp
 .scala_dependencies
 .worksheet
