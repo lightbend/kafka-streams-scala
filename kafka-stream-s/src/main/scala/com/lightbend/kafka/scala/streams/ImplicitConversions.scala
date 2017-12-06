@@ -31,9 +31,9 @@ object ImplicitConversions {
     def asPredicate: Predicate[K,V] = test(_,_)
   }
 
-  implicit class MapperFromFunction[K, V, R](val f:(K,V) => R) extends AnyVal {
-    def asKeyValueMapper: KeyValueMapper[K, V, R] = (k: K, v: V) => f(k, v)
-    def asValueJoiner: ValueJoiner[K,V,R] = (v1, v2) => f(v1, v2)
+  implicit class MapperFromFunction[T, U, V](val f:(T,U) => V) extends AnyVal {
+    def asKeyValueMapper: KeyValueMapper[T, U, V] = (k: T, v: U) => f(k, v)
+    def asValueJoiner: ValueJoiner[T,U,V] = (v1, v2) => f(v1, v2)
   }
 
   implicit class KeyValueMapperFromFunction[K, V, KR, VR](val f:(K,V) => (KR, VR)) extends AnyVal {
@@ -49,6 +49,14 @@ object ImplicitConversions {
 
   implicit class AggregatorFromFunction[K, V, VR](val f: (K, V, VR) => VR) extends AnyVal {
     def asAggregator: Aggregator[K, V, VR] = (k,v,r) => f(k,v,r)
+  }
+
+  implicit class MergerFromFunction[K,VR](val f: (K, VR, VR) => VR) extends  AnyVal {
+    def asMerger: Merger[K, VR] = (k, v1, v2) => f(k, v1, v2)
+  }
+
+  implicit class ReducerFromFunction[V](val f: (V, V) => V) extends AnyVal {
+    def asReducer: Reducer[V] = (v1, v2) => f(v1, v2)
   }
 
 

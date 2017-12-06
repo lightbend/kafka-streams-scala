@@ -12,10 +12,7 @@ class SessionWindowedKStreamS[K, V](val inner: SessionWindowedKStream[K, V]) {
     aggregator: (K, V, VR) => VR,
     merger: (K, VR, VR) => VR): KTableS[Windowed[K], VR] = {
 
-    val initializerJ: Initializer[VR] = () => initializer()
-    val aggregatorJ: Aggregator[K, V, VR] = (k, v, va) => aggregator(k, v, va)
-    val mergerJ: Merger[K, VR] = (k, v1, v2) => merger(k, v1, v2)
-    inner.aggregate(initializerJ, aggregatorJ, mergerJ)
+    inner.aggregate(() => initializer(), aggregator.asAggregator, merger.asMerger)
   }
 
   def aggregate[VR](initializer: () => VR,
@@ -23,10 +20,7 @@ class SessionWindowedKStreamS[K, V](val inner: SessionWindowedKStream[K, V]) {
     merger: (K, VR, VR) => VR,
     materialized: Materialized[K, VR, SessionStore[Bytes, Array[Byte]]]): KTableS[Windowed[K], VR] = {
 
-    val initializerJ: Initializer[VR] = () => initializer()
-    val aggregatorJ: Aggregator[K, V, VR] = (k, v, va) => aggregator(k, v, va)
-    val mergerJ: Merger[K, VR] = (k, v1, v2) => merger(k, v1, v2)
-    inner.aggregate(initializerJ, aggregatorJ, mergerJ, materialized)
+    inner.aggregate(() => initializer(), aggregator.asAggregator, merger.asMerger, materialized)
   }
 
   def count(): KTableS[Windowed[K], Long] = {
@@ -38,14 +32,13 @@ class SessionWindowedKStreamS[K, V](val inner: SessionWindowedKStream[K, V]) {
     inner.count(materialized)
 
   def reduce(reducer: (V, V) => V): KTableS[Windowed[K], V] = {
-    val reducerJ: Reducer[V] = (v1: V, v2: V) => reducer(v1, v2)
-    inner.reduce(reducerJ)
+    inner.reduce((v1, v2) => reducer(v1, v2))
   }
 
   def reduce(reducer: (V, V) => V,
     materialized: Materialized[K, V, SessionStore[Bytes, Array[Byte]]]): KTableS[Windowed[K], V] = {
 
     val reducerJ: Reducer[V] = (v1: V, v2: V) => reducer(v1, v2)
-    inner.reduce(reducerJ, materialized)
+    inner.reduce(reducer.asReducer, materialized)
   }
 }

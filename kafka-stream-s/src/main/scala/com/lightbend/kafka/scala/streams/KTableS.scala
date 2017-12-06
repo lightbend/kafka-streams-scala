@@ -61,30 +61,26 @@ class KTableS[K, V](val inner: KTable[K, V]) {
     joiner: (V, VO) => VR,
     materialized: Materialized[K, VR, KeyValueStore[Bytes, Array[Byte]]]): KTableS[K, VR] = {
 
-    val joinerJ: ValueJoiner[V, VO, VR] = (v1, v2) => joiner(v1, v2)
-    inner.join[VO, VR](other.inner, joinerJ, materialized)
+    inner.join[VO, VR](other.inner, joiner.asValueJoiner, materialized)
   }
 
   def leftJoin[VO, VR](other: KTableS[K, VO],
     joiner: (V, VO) => VR): KTableS[K, VR] = {
 
-    val joinerJ: ValueJoiner[V, VO, VR] = (v1, v2) => joiner(v1, v2)
-    inner.leftJoin[VO, VR](other.inner, joinerJ)
+    inner.leftJoin[VO, VR](other.inner, joiner.asValueJoiner)
   }
 
   def leftJoin[VO, VR](other: KTableS[K, VO],
     joiner: (V, VO) => VR,
     materialized: Materialized[K, VR, KeyValueStore[Bytes, Array[Byte]]]): KTableS[K, VR] = {
 
-    val joinerJ: ValueJoiner[V, VO, VR] = (v1, v2) => joiner(v1, v2)
-    inner.leftJoin[VO, VR](other.inner, joinerJ, materialized)
+    inner.leftJoin[VO, VR](other.inner, joiner.asValueJoiner, materialized)
   }
 
   def outerJoin[VO, VR](other: KTableS[K, VO],
     joiner: (V, VO) => VR): KTableS[K, VR] = {
 
-    val joinerJ: ValueJoiner[V, VO, VR] = (v1, v2) => joiner(v1, v2)
-    inner.outerJoin[VO, VR](other.inner, joinerJ)
+    inner.outerJoin[VO, VR](other.inner, joiner.asValueJoiner)
   }
 
   def outerJoin[VO, VR](other: KTableS[K, VO],
