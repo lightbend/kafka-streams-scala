@@ -25,13 +25,12 @@ class KafkaLocalServer private (kafkaProperties: Properties, zooKeeperServer: Zo
   import KafkaLocalServer._
 
   private var broker = null.asInstanceOf[KafkaServerStartable]
-  private var zkUtils : ZkUtils =
+  private val zkUtils : ZkUtils =
     ZkUtils.apply(s"localhost:${zooKeeperServer.getPort()}", DEFAULT_ZK_SESSION_TIMEOUT_MS, DEFAULT_ZK_CONNECTION_TIMEOUT_MS, false)
 
   def start(): Unit = {
 
     broker = KafkaServerStartable.fromProps(kafkaProperties)
-    println(s"Broker = $broker")
     broker.startup()
   }
 
@@ -83,7 +82,6 @@ import Utils._
 object KafkaLocalServer extends LazyLogging {
   final val DefaultPort = 9092
   final val DefaultResetOnStart = true
-  private val DEFAULT_ZK_CONNECT = "localhost:2181"
   private val DEFAULT_ZK_SESSION_TIMEOUT_MS = 10 * 1000
   private val DEFAULT_ZK_CONNECTION_TIMEOUT_MS = 8 * 1000
 
