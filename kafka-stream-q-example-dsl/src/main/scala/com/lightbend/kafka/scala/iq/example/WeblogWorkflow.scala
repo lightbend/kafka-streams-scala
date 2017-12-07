@@ -38,7 +38,7 @@ trait WeblogWorkflow extends LazyLogging with AppSerializers {
       logger.info(s"Schema Registry will be used - please ensure schema registry service is up and running at $url")
     }
 
-    val server = startLocalServerIfSetInConfig(config)
+    val maybeServer = startLocalServerIfSetInConfig(config)
 
     // setup REST endpoints
     val restEndpointPort = config.httpPort
@@ -94,7 +94,7 @@ trait WeblogWorkflow extends LazyLogging with AppSerializers {
       } finally {
         logger.error("Exiting application ..")
         logger.error(s"Stopping kafka server ..")
-        server.foreach(_.stop())
+        maybeServer.foreach(_.stop())
         System.exit(-1)
       }
     })
@@ -109,7 +109,7 @@ trait WeblogWorkflow extends LazyLogging with AppSerializers {
       restService.stop()
       val closed = streams.close(1, TimeUnit.MINUTES)
       logger.error(s"Exiting application after streams close ($closed)")
-      server.foreach(_.stop())
+      maybeServer.foreach(_.stop())
     } catch {
       case _: Exception => // ignored
     }))

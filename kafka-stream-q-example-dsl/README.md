@@ -11,6 +11,8 @@ The implementation is based on the [ClarkNet dataset](http://ita.ee.lbl.gov/html
 
 ## Build and Run Locally
 
+By default the application runs through an embedded local Kafka Server. In case you want to run separate instances of Kafka and Zookeeper servers, change `kafka.localserver` to `false` in `application.conf`.
+
 To run the application, do the following steps.
 
 ### Build the Libraries
