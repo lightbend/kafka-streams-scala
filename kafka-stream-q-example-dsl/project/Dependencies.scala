@@ -20,6 +20,8 @@ object Dependencies {
   val circeParser     = "io.circe"                     %% "circe-parser"             % circeVersion
   val logback         = "ch.qos.logback"                % "logback-classic"          % logbackVersion
   val scalaLogging    = "com.typesafe.scala-logging"   %% "scala-logging"            % scalaLoggingVersion
+  val curator         = "org.apache.curator"            % "curator-test"             % curatorVersion
+  val kafka           = "org.apache.kafka"             %% "kafka"                    % kafkaVersion excludeAll(ExclusionRule("org.slf4j", "slf4j-log4j12"), ExclusionRule("org.apache.zookeeper", "zookeeper")) 
 }
 
 

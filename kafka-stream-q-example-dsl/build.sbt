@@ -37,7 +37,9 @@ lazy val app = appProject("app")(".")
       circeGeneric,
       circeParser,
       logback,
-      scalaLogging
+      scalaLogging,
+      curator,
+      kafka 
     ),
     scalacOptions ++= Seq(
       "-deprecation",                      // Emit warning and location for usages of deprecated APIs.
@@ -105,7 +107,8 @@ lazy val dslRun = project
     resourceDirectory in Compile := (resourceDirectory in (app, Compile)).value,
     javaOptions in run ++= Seq(
       "-Dconfig.file=" + (resourceDirectory in Compile).value / "application-dsl.conf",
-      "-Dlogback.configurationFile=" + (resourceDirectory in Compile).value / "logback-dsl.xml"),
+      "-Dlogback.configurationFile=" + (resourceDirectory in Compile).value / "logback-dsl.xml",
+      "-Dlog4j.configurationFile=" + (resourceDirectory in Compile).value / "log4j.properties"),
     addCommandAlias("dsl", "dslRun/run")
   )
   .dependsOn(app)
@@ -116,7 +119,8 @@ lazy val dslPackage = appProject("dslPackage")("build/dsl")
     resourceDirectory in Compile := (resourceDirectory in (app, Compile)).value,
     mappings in Universal ++= {
       Seq(((resourceDirectory in Compile).value / "application-dsl.conf") -> "conf/application.conf") ++
-        Seq(((resourceDirectory in Compile).value / "logback-dsl.xml") -> "conf/logback.xml")
+        Seq(((resourceDirectory in Compile).value / "logback-dsl.xml") -> "conf/logback.xml") ++
+        Seq(((resourceDirectory in Compile).value / "log4j.properties") -> "conf/log4j.properties")
     },
     scriptClasspath := Seq("../conf/") ++ scriptClasspath.value,
     mainClass in Compile := Some("com.lightbend.kafka.scala.iq.example.WeblogProcessing")

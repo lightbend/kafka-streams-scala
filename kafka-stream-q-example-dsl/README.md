@@ -19,6 +19,8 @@ You'll need to build the Scala API library, `kafka-scala-s`, and the interactive
 
 ### Start ZooKeeper and Kafka
 
+> This is only required if the setting of `kafka.localserver` is `false` in `application.conf`. If this is set to `true`, the application runs with an embedded local Kafka server. However, note that if you want to run the application in a distributed mode(see below for details of running in distributed mode), you need to run a separate Kafka and Zookeeper server.
+
 Start ZooKeeper and Kafka, if not already running. You can download Kafka 1.0.0 for Scala 2.12 [here](https://kafka.apache.org/documentation/#quickstart), then follow the [Quick Start](https://kafka.apache.org/documentation/#quickstart) instructions for running ZooKeeper and Kafka, steps 1 and 2.
 
 ### Download the ClarkNet dataset
@@ -31,7 +33,11 @@ Copy `src/main/resources/application-dsl.conf.template` to  `src/main/resources/
 
 Edit `src/main/resources/application-dsl.conf` and set the entry for `directorytowatch` to match the folder name where you installed the ClarkNet dataset.
 
+And note that you can run the application with a bundled local Kafka server by setting `kafka.localserver` to `true` in the `application.conf` file.
+
 ### Create the Kafka Topics
+
+> This is only required if the setting of `kafka.localserver` is `false` in `application.conf`. If this is set to `true`, the application runs with an embedded local Kafka server and creates all necessary topics on its own. However, note that if you want to run the application in a distributed mode(see below for details of running in distributed mode), you need to run a separate Kafka and Zookeeper server.
 
 Create the topics using the `kafka-topics.sh` command that comes with the Kafka distribution. We'll refer to the directory where you installed Kafka as `$KAFKA_HOME`. Run the following commands:
 
@@ -74,6 +80,8 @@ $ curl http://localhost:7070/weblog/bytes/world.std.com
 ## Run in Distributed Mode
 
 The http query layer is designed to work even when your application runs in the distributed mode. Running your Kafka Streams application in the distributed mode means that all the instances must have the same application id.
+
+> In order to run the application in distributed mode, you need to run an external Kafka and Zookeeper server. Set `kafka.localserver` to `false` to enbale this setting.
 
 Here are the steps that you need to follow to run the application in distributed mode. We assume here you are running both the instances in the same node with different port numbers. It's fairly easy to scale this on different nodes.
 

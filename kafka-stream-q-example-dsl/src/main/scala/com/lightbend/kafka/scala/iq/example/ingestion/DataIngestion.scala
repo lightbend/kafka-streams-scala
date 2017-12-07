@@ -50,8 +50,7 @@ object DataIngestion extends LazyLogging with AppSerializers {
     val MAX_CHUNK_SIZE = 25000
     val POLLING_INTERVAL = 250 millis
 
-    val producerSettings = ProducerSettings(system, byteArraySerde.serializer, stringSerializer)
-      .withBootstrapServers(config.brokers)
+    val producerSettings = ProducerSettings(system, byteArraySerde.serializer, stringSerializer).withBootstrapServers(config.brokers)
     
     val logLines: Source[String, NotUsed] =
       FileTailSource(path, MAX_CHUNK_SIZE, 0, POLLING_INTERVAL)
