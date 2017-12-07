@@ -6,9 +6,9 @@ organization := "com.lightbend"
 
 version := "0.0.1"
 
-scalaVersion := Versions.scala_2_12_Version
+scalaVersion := Versions.Scala_2_12_Version
 
-crossScalaVersions := Versions.crossScalaVersions
+crossScalaVersions := Versions.CrossScalaVersions
 
 scalacOptions := Seq("-Xexperimental", "-unchecked", "-deprecation")
 
