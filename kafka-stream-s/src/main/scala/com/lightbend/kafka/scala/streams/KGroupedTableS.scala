@@ -4,6 +4,7 @@ import ImplicitConversions._
 import org.apache.kafka.streams.kstream._
 import org.apache.kafka.streams.state.KeyValueStore
 import org.apache.kafka.common.utils.Bytes
+import FunctionConversions._
 
 class KGroupedTableS[K, V](inner: KGroupedTable[K, V]) {
 

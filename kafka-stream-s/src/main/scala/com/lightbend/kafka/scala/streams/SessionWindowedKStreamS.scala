@@ -3,6 +3,7 @@ package com.lightbend.kafka.scala.streams
 import org.apache.kafka.streams.kstream._
 import org.apache.kafka.streams.state.SessionStore
 import org.apache.kafka.common.utils.Bytes
+import FunctionConversions._
 
 import ImplicitConversions._
 

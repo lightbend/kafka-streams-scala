@@ -1,9 +1,10 @@
 package com.lightbend.kafka.scala.streams
 
-import ImplicitConversions._
 import org.apache.kafka.streams.KeyValue
 import org.apache.kafka.streams.kstream._
 import org.apache.kafka.streams.processor.{Processor, ProcessorContext, ProcessorSupplier}
+import ImplicitConversions._
+import FunctionConversions._
 
 import scala.collection.JavaConverters._
 

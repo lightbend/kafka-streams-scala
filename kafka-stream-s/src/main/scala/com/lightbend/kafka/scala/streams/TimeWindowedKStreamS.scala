@@ -4,8 +4,8 @@ import org.apache.kafka.streams.kstream._
 import org.apache.kafka.streams.state.WindowStore
 import org.apache.kafka.common.utils.Bytes
 import org.apache.kafka.common.serialization.Serde
-
 import ImplicitConversions._
+import FunctionConversions._
 
 class TimeWindowedKStreamS[K, V](val inner: TimeWindowedKStream[K, V]) {
 

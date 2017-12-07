@@ -5,6 +5,7 @@ import org.apache.kafka.streams.state.KeyValueStore
 import org.apache.kafka.common.utils.Bytes
 import org.apache.kafka.common.serialization.Serde
 import ImplicitConversions._
+import FunctionConversions._
 
 
 class KGroupedStreamS[K, V](inner: KGroupedStream[K, V]) {
