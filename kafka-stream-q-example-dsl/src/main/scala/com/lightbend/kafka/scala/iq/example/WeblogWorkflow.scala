@@ -19,6 +19,7 @@ import config.KStreamConfig._
 import serializers._
 
 import com.lightbend.kafka.scala.iq.http.InteractiveQueryHttpService
+import com.lightbend.kafka.scala.server._
 
 import ingestion.DataIngestion
 
@@ -36,6 +37,8 @@ trait WeblogWorkflow extends LazyLogging with AppSerializers {
     config.schemaRegistryUrl.foreach { url =>
       logger.info(s"Schema Registry will be used - please ensure schema registry service is up and running at $url")
     }
+
+    val maybeServer = startLocalServerIfSetInConfig(config)
 
     // setup REST endpoints
     val restEndpointPort = config.httpPort
@@ -90,6 +93,8 @@ trait WeblogWorkflow extends LazyLogging with AppSerializers {
         case x: Exception => x.printStackTrace
       } finally {
         logger.error("Exiting application ..")
+        logger.error(s"Stopping kafka server ..")
+        maybeServer.foreach(_.stop())
         System.exit(-1)
       }
     })
@@ -104,10 +109,30 @@ trait WeblogWorkflow extends LazyLogging with AppSerializers {
       restService.stop()
       val closed = streams.close(1, TimeUnit.MINUTES)
       logger.error(s"Exiting application after streams close ($closed)")
+      maybeServer.foreach(_.stop())
     } catch {
       case _: Exception => // ignored
     }))
   }  
+
+  private def createTopics(config: ConfigData, server: KafkaLocalServer) = {
+    import config._
+    List(fromTopic, 
+      errorTopic,
+      toTopic, 
+      avroTopic, 
+      summaryAccessTopic, 
+      windowedSummaryAccessTopic, 
+      summaryPayloadTopic, 
+      windowedSummaryPayloadTopic).foreach(server.createTopic(_))
+  }
+
+  private def startLocalServerIfSetInConfig(config: ConfigData): Option[KafkaLocalServer] = if (config.localServer) {
+    val s = KafkaLocalServer(true, Some(config.stateStoreDir))
+    s.start()
+    createTopics(config, s)
+    Some(s)
+  } else None 
 
   def createStreams(config: ConfigData): KafkaStreams
   def startRestProxy(streams: KafkaStreams, hostInfo: HostInfo,

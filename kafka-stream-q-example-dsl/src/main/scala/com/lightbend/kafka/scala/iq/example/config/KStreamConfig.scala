@@ -8,6 +8,7 @@ import cats.instances.all._
 import scala.util.Try
 import com.typesafe.config.Config
 import scala.concurrent.duration._
+import com.lightbend.kafka.scala.server._
 
 
 /**
@@ -22,8 +23,8 @@ object KStreamConfig {
   )
 
   private[KStreamConfig] case class ServerSettings(
+    localServer: Boolean,
     brokers: String, 
-    zk: String, 
     schemaRegistryUrl: Option[String],
     stateStoreDir: String
   )
@@ -31,12 +32,12 @@ object KStreamConfig {
   private[KStreamConfig] case class TopicSettings(
     fromTopic: String, 
     errorTopic: String,
-    toTopic: Option[String], 
-    avroTopic: Option[String], 
-    summaryAccessTopic: Option[String], 
-    windowedSummaryAccessTopic: Option[String], 
-    summaryPayloadTopic: Option[String], 
-    windowedSummaryPayloadTopic: Option[String]
+    toTopic: String, 
+    avroTopic: String, 
+    summaryAccessTopic: String, 
+    windowedSummaryAccessTopic: String, 
+    summaryPayloadTopic: String, 
+    windowedSummaryPayloadTopic: String
   )
 
   private[KStreamConfig] case class HttpSettings(
@@ -51,8 +52,8 @@ object KStreamConfig {
   )
 
   case class ConfigData(ks: KafkaSettings, hs: HttpSettings, dls: DataLoaderSettings) {
+    def localServer = ks.serverSettings.localServer
     def brokers = ks.serverSettings.brokers
-    def zk = ks.serverSettings.zk
     def schemaRegistryUrl = ks.serverSettings.schemaRegistryUrl
     def fromTopic = ks.topicSettings.fromTopic
     def toTopic = ks.topicSettings.toTopic
@@ -81,22 +82,35 @@ object KStreamConfig {
 
   private def fromKafkaConfig: ConfigReader[KafkaSettings] = Kleisli { (config: Config) =>
     Try {
+      val local = config.getBoolean("kafka.localserver")
+      val serverSettings = 
+        if (local) {
+          ServerSettings(
+            local,
+            s"localhost:${KafkaLocalServer.DefaultPort}",
+            getStringMaybe(config, "kafka.schemaregistryurl"),
+            config.getString("kafka.statestoredir")
+          )
+        } else {
+          ServerSettings(
+            local,
+            config.getString("kafka.brokers"),
+            getStringMaybe(config, "kafka.schemaregistryurl"),
+            config.getString("kafka.statestoredir")
+          )
+        }
+
       KafkaSettings(
-        ServerSettings(
-          config.getString("dcos.kafka.brokers"),
-          config.getString("dcos.kafka.zookeeper"),
-          getStringMaybe(config, "dcos.kafka.schemaregistryurl"),
-          config.getString("dcos.kafka.statestoredir")
-        ),
+        serverSettings,
         TopicSettings(
-          config.getString("dcos.kafka.fromtopic"),
-          config.getString("dcos.kafka.errortopic"),
-          getStringMaybe(config, "dcos.kafka.totopic"),
-          getStringMaybe(config, "dcos.kafka.avrotopic"),
-          getStringMaybe(config, "dcos.kafka.summaryaccesstopic"),
-          getStringMaybe(config, "dcos.kafka.windowedsummaryaccesstopic"),
-          getStringMaybe(config, "dcos.kafka.summarypayloadtopic"),
-          getStringMaybe(config, "dcos.kafka.windowedsummarypayloadtopic")
+          config.getString("kafka.fromtopic"),
+          config.getString("kafka.errortopic"),
+          config.getString("kafka.totopic"),
+          config.getString("kafka.avrotopic"),
+          config.getString("kafka.summaryaccesstopic"),
+          config.getString("kafka.windowedsummaryaccesstopic"),
+          config.getString("kafka.summarypayloadtopic"),
+          config.getString("kafka.windowedsummarypayloadtopic")
         )
       )
     }
@@ -105,8 +119,8 @@ object KStreamConfig {
   private def fromHttpConfig: ConfigReader[HttpSettings] = Kleisli { (config: Config) =>
     Try {
       HttpSettings(
-        config.getString("dcos.http.interface"),
-        config.getInt("dcos.http.port")
+        config.getString("http.interface"),
+        config.getInt("http.port")
       )
     }
   }
@@ -114,9 +128,9 @@ object KStreamConfig {
   private def fromDataLoaderConfig: ConfigReader[DataLoaderSettings] = Kleisli { (config: Config) =>
     Try {
       DataLoaderSettings(
-        config.getString("dcos.kafka.loader.sourcetopic"),
-        getStringMaybe(config, "dcos.kafka.loader.directorytowatch"),
-        config.getDuration("dcos.kafka.loader.pollinterval")
+        config.getString("kafka.loader.sourcetopic"),
+        getStringMaybe(config, "kafka.loader.directorytowatch"),
+        config.getDuration("kafka.loader.pollinterval")
       )
     }
   }

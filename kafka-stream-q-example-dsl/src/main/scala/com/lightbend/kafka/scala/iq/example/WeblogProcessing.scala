@@ -115,7 +115,7 @@ object WeblogProcessing extends WeblogWorkflow {
     //
     // assumption : the topic contains serialized records of LogRecord (serialized through logRecordSerde)
     val logRecords = 
-      builder.stream(List(config.toTopic.get), Consumed.`with`(byteArraySerde, logRecordSerde))
+      builder.stream(List(config.toTopic), Consumed.`with`(byteArraySerde, logRecordSerde))
 
     generateAvro(logRecords, config)
     hostCountSummary(logRecords, config)
@@ -158,7 +158,7 @@ object WeblogProcessing extends WeblogWorkflow {
     filtered(0).mapValues {
       case ValidLogRecord(r) => r
       case _ => ??? // should never happen since we pre-emptively filtered with `branch`
-    }.to(config.toTopic.get, Produced.`with`(byteArraySerde, logRecordSerde))
+    }.to(config.toTopic, Produced.`with`(byteArraySerde, logRecordSerde))
 
     // push the extraction errors
     filtered(1).mapValues {
@@ -175,7 +175,7 @@ object WeblogProcessing extends WeblogWorkflow {
 
   def generateAvro(logRecords: KStreamS[Array[Byte], LogRecord], config: ConfigData): Unit = {
     logRecords.mapValues(makeAvro)
-      .to(config.avroTopic.get, Produced.`with`(byteArraySerde, logRecordAvroSerde(config.schemaRegistryUrl)))
+      .to(config.avroTopic, Produced.`with`(byteArraySerde, logRecordAvroSerde(config.schemaRegistryUrl)))
   }
 
   /**
@@ -209,14 +209,14 @@ object WeblogProcessing extends WeblogWorkflow {
     //
     // materialize the summarized information into a topic
     groupedStream.count(ACCESS_COUNT_PER_HOST_STORE, Some(stringSerde))
-      .toStream.to(config.summaryAccessTopic.get, Produced.`with`(stringSerde, longSerde))
+      .toStream.to(config.summaryAccessTopic, Produced.`with`(stringSerde, longSerde))
 
     groupedStream.windowedBy(TimeWindows.of(60000))
       .count(WINDOWED_ACCESS_COUNT_PER_HOST_STORE, Some(stringSerde))
-      .toStream.to(config.windowedSummaryAccessTopic.get, Produced.`with`(windowedStringSerde, longSerde))
+      .toStream.to(config.windowedSummaryAccessTopic, Produced.`with`(windowedStringSerde, longSerde))
 
     // print the topic info (for debugging)
-    builder.stream(List(config.summaryAccessTopic.get), Consumed.`with`(stringSerde, longSerde))
+    builder.stream(List(config.summaryAccessTopic), Consumed.`with`(stringSerde, longSerde))
       .print(Printed.toSysOut[String, Long].withKeyValueMapper { new KeyValueMapper[String, Long, String]() {
         def apply(key: String, value: Long) = s"""$key / $value"""
       }})
@@ -240,7 +240,7 @@ object WeblogProcessing extends WeblogWorkflow {
           .withKeySerde(stringSerde)
           .withValueSerde(longSerde)
       )
-      .toStream.to(config.summaryPayloadTopic.get, Produced.`with`(stringSerde, longSerde))
+      .toStream.to(config.summaryPayloadTopic, Produced.`with`(stringSerde, longSerde))
 
     groupedStream
       .windowedBy(TimeWindows.of(60000))
@@ -251,9 +251,9 @@ object WeblogProcessing extends WeblogWorkflow {
           .withKeySerde(stringSerde)
           .withValueSerde(longSerde)
       )
-      .toStream.to(config.windowedSummaryPayloadTopic.get, Produced.`with`(windowedStringSerde, longSerde))
+      .toStream.to(config.windowedSummaryPayloadTopic, Produced.`with`(windowedStringSerde, longSerde))
 
-    builder.stream(List(config.summaryPayloadTopic.get), Consumed.`with`(stringSerde, longSerde))
+    builder.stream(List(config.summaryPayloadTopic), Consumed.`with`(stringSerde, longSerde))
       .print(Printed.toSysOut[String, Long].withKeyValueMapper { new KeyValueMapper[String, Long, String]() {
         def apply(key: String, value: Long) = s"""$key / $value"""
       }})
