@@ -93,8 +93,8 @@ object KafkaStreamsTest extends TestSuite[KafkaLocalServer] with WordCountTestDa
 }
 
 trait WordCountTestData {
-  val inputTopic = "inputTopic"
-  val outputTopic = "outputTopic"
+  val inputTopic = s"inputTopic.${scala.util.Random.nextInt(100)}"
+  val outputTopic = s"outputTopic.${scala.util.Random.nextInt(100)}"
   val brokers = "localhost:9092"
   val localStateDir = "local_state_data"
 
