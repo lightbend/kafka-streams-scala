@@ -6,7 +6,7 @@ organization := "com.lightbend"
 
 version := "0.0.1"
 
-scalaVersion := Versions.scalaVersion
+scalaVersion := Versions.scala_2_12_Version
 
 crossScalaVersions := Versions.crossScalaVersions
 

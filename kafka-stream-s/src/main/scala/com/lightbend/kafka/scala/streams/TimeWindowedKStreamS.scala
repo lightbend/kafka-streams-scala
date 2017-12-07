@@ -12,14 +12,14 @@ class TimeWindowedKStreamS[K, V](val inner: TimeWindowedKStream[K, V]) {
   def aggregate[VR](initializer: () => VR,
     aggregator: (K, V, VR) => VR): KTableS[Windowed[K], VR] = {
 
-    inner.aggregate(() => initializer(), aggregator.asAggregator)
+    inner.aggregate(initializer.asInitializer, aggregator.asAggregator)
   }
 
   def aggregate[VR](initializer: () => VR,
     aggregator: (K, V, VR) => VR,
     materialized: Materialized[K, VR, WindowStore[Bytes, Array[Byte]]]): KTableS[Windowed[K], VR] = {
 
-    inner.aggregate(() => initializer(), aggregator.asAggregator, materialized)
+    inner.aggregate(initializer.asInitializer, aggregator.asAggregator, materialized)
   }
 
   def count(): KTableS[Windowed[K], Long] = {

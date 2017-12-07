@@ -38,8 +38,8 @@ object ImplicitConversions {
 
   implicit class KeyValueMapperFromFunction[K, V, KR, VR](val f:(K,V) => (KR, VR)) extends AnyVal {
     def asKeyValueMapper: KeyValueMapper[K, V, KeyValue[KR, VR]] = (k, v) => {
-        val (kr, vr) = f(k, v)
-        KeyValue.pair(kr, vr)
+      val (kr, vr) = f(k, v)
+      KeyValue.pair(kr, vr)
     }
   }
 
@@ -59,6 +59,8 @@ object ImplicitConversions {
     def asReducer: Reducer[V] = (v1, v2) => f(v1, v2)
   }
 
-
+  implicit class InitializerFromFunction[T](val f: () => T) extends AnyVal {
+    def asInitializer: Initializer[T] = () => f()
+  }
 }
 

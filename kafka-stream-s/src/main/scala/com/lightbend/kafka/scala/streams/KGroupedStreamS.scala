@@ -22,30 +22,30 @@ class KGroupedStreamS[K, V](inner: KGroupedStream[K, V]) {
   }
 
   def reduce(reducer: (V, V) => V): KTableS[K, V] = {
-    inner.reduce(reducer(_,_))
+    inner.reduce((v1, v2) => reducer(v1, v2))
   }
 
   def reduce(reducer: (V, V) => V,
     materialized: Materialized[K, V, KeyValueStore[Bytes, Array[Byte]]]): KTableS[K, V] = {
 
-    inner.reduce(reducer(_, _), materialized)
+    inner.reduce((v1: V, v2: V) => reducer(v1, v2), materialized)
   }
 
   def reduce(reducer: (V, V) => V,
     storeName: String): KTableS[K, V] = {
 
-    inner.reduce(reducer(_, _), Materialized.as[K, V, KeyValueStore[Bytes, Array[Byte]]](storeName))
+    inner.reduce((v1: V, v2: V) => reducer(v1, v2), Materialized.as[K, V, KeyValueStore[Bytes, Array[Byte]]](storeName))
   }
 
   def aggregate[VR](initializer: () => VR,
     aggregator: (K, V, VR) => VR): KTableS[K, VR] = {
-    inner.aggregate(() => initializer(), aggregator.asAggregator)
+    inner.aggregate(initializer.asInitializer, aggregator.asAggregator)
   }
 
   def aggregate[VR](initializer: () => VR,
     aggregator: (K, V, VR) => VR,
     materialized: Materialized[K, VR, KeyValueStore[Bytes, Array[Byte]]]): KTableS[K, VR] = {
-    inner.aggregate(() => initializer(), aggregator.asAggregator, materialized)
+    inner.aggregate(initializer.asInitializer, aggregator.asAggregator, materialized)
   }
 
   def windowedBy(windows: SessionWindows): SessionWindowedKStreamS[K, V] =
