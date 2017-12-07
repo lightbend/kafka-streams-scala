@@ -5,6 +5,7 @@ import org.apache.kafka.streams.state.KeyValueStore
 import org.apache.kafka.common.utils.Bytes
 import org.apache.kafka.common.serialization.Serde
 import ImplicitConversions._
+import FunctionConversions._
 
 
 class KGroupedStreamS[K, V](inner: KGroupedStream[K, V]) {
@@ -22,39 +23,30 @@ class KGroupedStreamS[K, V](inner: KGroupedStream[K, V]) {
   }
 
   def reduce(reducer: (V, V) => V): KTableS[K, V] = {
-    val reducerJ: Reducer[V] = (v1: V, v2: V) => reducer(v1, v2)
-    inner.reduce(reducerJ)
+    inner.reduce((v1, v2) => reducer(v1, v2))
   }
 
   def reduce(reducer: (V, V) => V,
     materialized: Materialized[K, V, KeyValueStore[Bytes, Array[Byte]]]): KTableS[K, V] = {
 
-    val reducerJ: Reducer[V] = (v1: V, v2: V) => reducer(v1, v2)
-    inner.reduce(reducerJ, materialized)
+    inner.reduce((v1: V, v2: V) => reducer(v1, v2), materialized)
   }
 
   def reduce(reducer: (V, V) => V,
     storeName: String): KTableS[K, V] = {
 
-    val reducerJ: Reducer[V] = (v1: V, v2: V) => reducer(v1, v2)
-    inner.reduce(reducerJ, Materialized.as[K, V, KeyValueStore[Bytes, Array[Byte]]](storeName))
+    inner.reduce((v1: V, v2: V) => reducer(v1, v2), Materialized.as[K, V, KeyValueStore[Bytes, Array[Byte]]](storeName))
   }
 
   def aggregate[VR](initializer: () => VR,
     aggregator: (K, V, VR) => VR): KTableS[K, VR] = {
-
-    val initializerJ: Initializer[VR] = () => initializer()
-    val aggregatorJ: Aggregator[K, V, VR] = (k: K, v: V, va: VR) => aggregator(k, v, va)
-    inner.aggregate(initializerJ, aggregatorJ)
+    inner.aggregate(initializer.asInitializer, aggregator.asAggregator)
   }
 
   def aggregate[VR](initializer: () => VR,
     aggregator: (K, V, VR) => VR,
     materialized: Materialized[K, VR, KeyValueStore[Bytes, Array[Byte]]]): KTableS[K, VR] = {
-
-    val initializerJ: Initializer[VR] = () => initializer()
-    val aggregatorJ: Aggregator[K, V, VR] = (k: K, v: V, va: VR) => aggregator(k, v, va)
-    inner.aggregate(initializerJ, aggregatorJ, materialized)
+    inner.aggregate(initializer.asInitializer, aggregator.asAggregator, materialized)
   }
 
   def windowedBy(windows: SessionWindows): SessionWindowedKStreamS[K, V] =
