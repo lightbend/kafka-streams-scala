@@ -156,9 +156,9 @@ object StreamToTableJoinScalaIntegrationTest extends TestSuite[KafkaLocalServer]
 trait StreamToTableJoinTestData {
   val brokers = "localhost:9092"
 
-  val userClicksTopic = "user-clicks"
-  val userRegionsTopic = "user-regions"
-  val outputTopic = "output-topic"
+  val userClicksTopic = s"user-clicks.${scala.util.Random.nextInt(100)}"
+  val userRegionsTopic = s"user-regions.${scala.util.Random.nextInt(100)}"
+  val outputTopic = s"output-topic.${scala.util.Random.nextInt(100)}"
   val localStateDir = "local_state_data"
 
   // Input 1: Clicks per user (multiple records allowed per user).

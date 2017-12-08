@@ -41,8 +41,8 @@ import ImplicitConversions._
   */
 trait ProbabilisticCountingScalaIntegrationTestData {
   val brokers = "localhost:9092"
-  val inputTopic = "inputTopic"
-  val outputTopic = "output-topic"
+  val inputTopic = s"inputTopic.${scala.util.Random.nextInt(100)}"
+  val outputTopic = s"output-topic.${scala.util.Random.nextInt(100)}"
   val localStateDir = "local_state_data"
 
   val inputTextLines: Seq[String] = Seq(
