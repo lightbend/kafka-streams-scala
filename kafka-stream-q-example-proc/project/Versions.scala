@@ -15,5 +15,7 @@ object Versions {
   val circeVersion = "0.8.0"
   val scalaLoggingVersion = "3.5.0"
   val logbackVersion = "1.2.3"  
+  val curatorVersion = "4.0.0"
+  val kafkaVersion = "1.0.0"
 }
 

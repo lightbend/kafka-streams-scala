@@ -21,6 +21,7 @@ import serializers._
 import com.lightbend.kafka.scala.iq.http.InteractiveQueryHttpService
 
 import ingestion.DataIngestion
+import com.lightbend.kafka.scala.server._
 
 trait WeblogWorkflow extends LazyLogging with AppSerializers {
 
@@ -33,6 +34,7 @@ trait WeblogWorkflow extends LazyLogging with AppSerializers {
     }
 
     logger.info(s"config = $config")
+    val maybeServer = startLocalServerIfSetInConfig(config)
 
     // setup REST endpoints
     val restEndpointPort = config.httpPort
@@ -41,6 +43,7 @@ trait WeblogWorkflow extends LazyLogging with AppSerializers {
     
     logger.info("Connecting to Kafka cluster via bootstrap servers " + config.brokers)
     logger.warn("REST endpoint at http://" + restEndpointHostName + ":" + restEndpointPort)
+    println("Connecting to Kafka cluster via bootstrap servers " + config.brokers)
     println("REST endpoint at http://" + restEndpointHostName + ":" + restEndpointPort)
 
     implicit val system = ActorSystem()
@@ -87,6 +90,8 @@ trait WeblogWorkflow extends LazyLogging with AppSerializers {
         case x: Exception => x.printStackTrace
       } finally {
         logger.error("Exiting application ..")
+        logger.error(s"Stopping kafka server ..")
+        maybeServer.foreach(_.stop())
         System.exit(-1)
       }
     })
@@ -101,10 +106,23 @@ trait WeblogWorkflow extends LazyLogging with AppSerializers {
       restService.stop()
       val closed = streams.close(1, TimeUnit.MINUTES)
       logger.error(s"Exiting application after streams close ($closed)")
+      maybeServer.foreach(_.stop())
     } catch {
       case _: Exception => // ignored
     }))
   }  
+
+  private def createTopics(config: ConfigData, server: KafkaLocalServer) = {
+    import config._
+    List(fromTopic, errorTopic).foreach(server.createTopic(_))
+  }
+
+  private def startLocalServerIfSetInConfig(config: ConfigData): Option[KafkaLocalServer] = if (config.localServer) {
+    val s = KafkaLocalServer(true, Some(config.stateStoreDir))
+    s.start()
+    createTopics(config, s)
+    Some(s)
+  } else None 
 
   def createStreams(config: ConfigData): KafkaStreams
   def startRestProxy(streams: KafkaStreams, hostInfo: HostInfo,
