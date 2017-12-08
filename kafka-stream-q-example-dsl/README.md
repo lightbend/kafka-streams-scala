@@ -83,7 +83,7 @@ $ curl http://localhost:7070/weblog/bytes/world.std.com
 
 The http query layer is designed to work even when your application runs in the distributed mode. Running your Kafka Streams application in the distributed mode means that all the instances must have the same application id.
 
-> In order to run the application in distributed mode, you need to run an external Kafka and Zookeeper server. Set `kafka.localserver` to `false` to enbale this setting.
+> In order to run the application in distributed mode, you need to run an external Kafka and Zookeeper server. Set `kafka.localserver` to `false` to enable this setting.
 
 Here are the steps that you need to follow to run the application in distributed mode. We assume here you are running both the instances in the same node with different port numbers. It's fairly easy to scale this on different nodes.
 

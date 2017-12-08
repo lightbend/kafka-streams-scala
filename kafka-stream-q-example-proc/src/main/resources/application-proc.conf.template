@@ -6,54 +6,53 @@ akka {
   event-handlers = ["akka.event.slf4j.Slf4jEventHandler"]
 }
 
-dcos {
+kafka {
+  # true if use local kafka server
+  # false otherwise
+  # if true, then setting of brokers below is ignored and set to that of KafkaLocalServer
+  localserver = true
 
-  kafka {
-    ## bootstrap servers for Kafka
-    brokers = "localhost:9092"
-    brokers = ${?KAFKA_BROKERS}
+  ## bootstrap servers for Kafka
+  brokers = "localhost:9092"
+  brokers = ${?KAFKA_BROKERS}
 
-    ## consumer group
-    group = "group-proc"
-    group = ${?KAFKA_GROUP_PROC}
+  ## consumer group
+  group = "group-proc"
+  group = ${?KAFKA_GROUP_PROC}
 
-    ## the source topic - processing starts with
-    ## data in this topic (to be loaded by ingestion)
-    fromtopic = "server-log-proc"
-    fromtopic = ${?KAFKA_FROM_TOPIC_PROC}
+  ## the source topic - processing starts with
+  ## data in this topic (to be loaded by ingestion)
+  fromtopic = "server-log-proc"
+  fromtopic = ${?KAFKA_FROM_TOPIC_PROC}
 
-    ## error topic for the initial processing
-    errortopic = "logerr-proc"
-    errortopic = ${?KAFKA_ERROR_TOPIC_PROC}
+  ## error topic for the initial processing
+  errortopic = "logerr-proc"
+  errortopic = ${?KAFKA_ERROR_TOPIC_PROC}
 
-    zookeeper = "localhost:2181"
-    zookeeper = ${?ZOOKEEPER_URL}
+  ## folder where state stores are created by Kafka Streams
+  statestoredir = "/tmp/kafka-streams"
+  statestoredir = ${?STATESTOREDIR}
 
-    ## folder where state stores are created by Kafka Streams
-    statestoredir = "/tmp/kafka-streams"
-    statestoredir = ${?STATESTOREDIR}
+  ## settings for data ingestion
+  loader {
+    sourcetopic = ${kafka.fromtopic}
+    sourcetopic = ${?KAFKA_FROM_TOPIC_PROC}
 
-    ## settings for data ingestion
-    loader {
-      sourcetopic = ${dcos.kafka.fromtopic}
-      sourcetopic = ${?KAFKA_FROM_TOPIC_PROC}
+    directorytowatch = "/Users/myhome/ClarkNet-HTTP"
+    directorytowatch = ${?DIRECTORY_TO_WATCH}
 
-      directorytowatch = "/Users/myhome/ClarkNet-HTTP"
-      directorytowatch = ${?DIRECTORY_TO_WATCH}
-
-      pollinterval = 1 second
-    }
+    pollinterval = 1 second
   }
+}
 
-  # http endpoints of the weblog microservice
-  http {
-    # The port the dashboard listens on
-    port = 7071
-    port = ${?PORT0}
+# http endpoints of the weblog microservice
+http {
+  # The port the dashboard listens on
+  port = 7071
+  port = ${?PORT0}
 
-    # The interface the dashboard listens on
-    interface = "localhost"
-    interface = ${?INTERFACE_PROC}
-  }
+  # The interface the dashboard listens on
+  interface = "localhost"
+  interface = ${?INTERFACE_PROC}
 }
 
