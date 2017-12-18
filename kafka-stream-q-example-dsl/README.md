@@ -15,7 +15,7 @@ To run the application, do the following steps.
 
 ### Build the Libraries
 
-You'll need to build the Scala API library, `kafka-scala-s`, and the interactive queries library, `kafka-scala-q`. Change to each of those directories and run the SBT command `sbt publishLocal`, which compiles the code, creates archives, and "publishes" them to your local _ivy2_ repository. Note that Scala 2.12.4 and Kafka 1.0.0 are used.
+You'll need to build the Scala API library, `kafka-scala-s`, and the interactive queries library, `kafka-scala-q`. Change to each of those directories and run the SBT command `sbt -mem 1500 publishLocal`, which compiles the code, creates archives, and "publishes" them to your local _ivy2_ repository. Note that Scala 2.12.4 and Kafka 1.0.0 are used.
 
 ### Start ZooKeeper and Kafka
 
