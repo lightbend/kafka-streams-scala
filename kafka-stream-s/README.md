@@ -27,7 +27,10 @@ val clicksPerRegion: KTableS[String, Long] = userClicksStream
   .reduce(_ + _)
 ```
 
-> **Note:** The left quotes around "with" are there because `with` is a Scala keyword. This is the mechanism you use to "escape" a Scala keyword when it's used as a normal identifier in a Java library.
+> **Notes:**
+>
+> 1. The left quotes around "with" are there because `with` is a Scala keyword. This is the mechanism you use to "escape" a Scala keyword when it's used as a normal identifier in a Java library.
+> 2. Note that some methods, like `map`, take a two-argument function, for key-value pairs, rather than the more typical single argument.
 
 ## Better Abstraction
 
@@ -56,3 +59,13 @@ textLines
 ```
 
 Also, the explicit conversion `asJava` from a Scala `Iterable` to a Java `Iterable` is done for you by the Scala library.
+
+## Build the Library
+
+```
+$ sbt -mem 1500
+> +clean
+> +test
+> +publishLocal
+```
+
