@@ -21,7 +21,7 @@ libraryDependencies ++= Seq("com.lightbend" %%
 
 ## Running the Tests
 
-The library comes with an ambedded Kafka server. To run the tests, simply run `sbt testOnly` and all tests will run on the local embedded server.
+The library comes with an embedded Kafka server. To run the tests, simply run `sbt testOnly` and all tests will run on the local embedded server.
 
 ## Type Inference and Composition
 
