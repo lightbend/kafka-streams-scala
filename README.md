@@ -27,6 +27,12 @@ The library comes with an embedded Kafka server. To run the tests, simply run `s
 
 > The embedded server is started and stopped for every test and takes quite a bit of resources. Hence it's recommended that you allocate more heap space to `sbt` when running the tests. e.g. `sbt -mem 1500`.
 
+```bash
+$ sbt -mem 1500
+> +clean
+> +test
+```
+
 ## Type Inference and Composition
 
 Here's a sample code fragment using the Scala wrapper library. Compare this with the Scala code from the same [example](https://github.com/confluentinc/kafka-streams-examples/blob/4.0.0-post/src/test/scala/io/confluent/examples/streams/StreamToTableJoinScalaIntegrationTest.scala) in Confluent's repository.
@@ -46,7 +52,10 @@ val clicksPerRegion: KTableS[String, Long] = userClicksStream
   .reduce(_ + _)
 ```
 
-> **Note:** The left quotes around "with" are there because `with` is a Scala keyword. This is the mechanism you use to "escape" a Scala keyword when it's used as a normal identifier in a Java library.
+> **Notes:** 
+> 
+> 1. The left quotes around "with" are there because `with` is a Scala keyword. This is the mechanism you use to "escape" a Scala keyword when it's used as a normal identifier in a Java library.
+> 2. Note that some methods, like `map`, take a two-argument function, for key-value pairs, rather than the more typical single argument.
 
 ## Better Abstraction
 

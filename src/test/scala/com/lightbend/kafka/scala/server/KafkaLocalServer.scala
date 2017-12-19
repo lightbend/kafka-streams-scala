@@ -31,7 +31,6 @@ class KafkaLocalServer private (kafkaProperties: Properties, zooKeeperServer: Zo
   def start(): Unit = {
 
     broker = KafkaServerStartable.fromProps(kafkaProperties)
-    println(s"Broker = $broker")
     broker.startup()
   }
 
