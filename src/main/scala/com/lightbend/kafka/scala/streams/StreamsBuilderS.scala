@@ -11,6 +11,9 @@ import org.apache.kafka.common.utils.Bytes
 
 import scala.collection.JavaConverters._
 
+/**
+ * Wraps the Java class StreamsBuilder and delegates method calls to the underlying Java object.
+ */ 
 class StreamsBuilderS {
 
   val inner = new StreamsBuilder

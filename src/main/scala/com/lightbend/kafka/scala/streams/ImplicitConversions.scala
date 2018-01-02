@@ -5,6 +5,10 @@ import org.apache.kafka.streams.KeyValue
 
 import scala.language.implicitConversions
 
+/**
+ * Implicit conversions between the Scala wrapper objects and the underlying Java
+ * objects.
+ */ 
 object ImplicitConversions {
 
   implicit def wrapKStream[K, V](inner: KStream[K, V]): KStreamS[K, V] =
