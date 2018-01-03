@@ -7,6 +7,9 @@ import FunctionConversions._
 
 import ImplicitConversions._
 
+/**
+ * Wraps the Java class SessionWindowedKStream and delegates method calls to the underlying Java object.
+ */ 
 class SessionWindowedKStreamS[K, V](val inner: SessionWindowedKStream[K, V]) {
 
   def aggregate[VR](initializer: () => VR,

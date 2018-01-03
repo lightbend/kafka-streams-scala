@@ -7,6 +7,9 @@ import org.apache.kafka.common.serialization.Serde
 import ImplicitConversions._
 import FunctionConversions._
 
+/**
+ * Wraps the Java class TimeWindowedKStream and delegates method calls to the underlying Java object.
+ */ 
 class TimeWindowedKStreamS[K, V](val inner: TimeWindowedKStream[K, V]) {
 
   def aggregate[VR](initializer: () => VR,

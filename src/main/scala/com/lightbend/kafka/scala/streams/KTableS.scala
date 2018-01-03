@@ -6,6 +6,9 @@ import org.apache.kafka.common.utils.Bytes
 import ImplicitConversions._
 import FunctionConversions._
 
+/**
+ * Wraps the Java class KTable and delegates method calls to the underlying Java object.
+ */ 
 class KTableS[K, V](val inner: KTable[K, V]) {
 
   def filter(predicate: (K, V) => Boolean): KTableS[K, V] = {

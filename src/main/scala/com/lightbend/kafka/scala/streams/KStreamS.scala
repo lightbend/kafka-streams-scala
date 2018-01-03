@@ -8,6 +8,9 @@ import FunctionConversions._
 
 import scala.collection.JavaConverters._
 
+/**
+ * Wraps the Java class KStream and delegates method calls to the underlying Java object.
+ */ 
 class KStreamS[K, V](val inner: KStream[K, V]) {
 
   def filter(predicate: (K, V) => Boolean): KStreamS[K, V] = {
