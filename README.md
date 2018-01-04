@@ -21,6 +21,8 @@ libraryDependencies ++= Seq("com.lightbend" %%
 
 > Note: `kafka-streams-scala` supports Kafka Streams `1.0.0`.
 
+The API docs for `kafka-streams-scala` is available [here](https://developer.lightbend.com/docs/api/kafka-streams-scala/2.12) for Scala 2.12 and [here](https://developer.lightbend.com/docs/api/kafka-streams-scala/2.11) for Scala 2.11.
+
 ## Running the Tests
 
 The library comes with an embedded Kafka server. To run the tests, simply run `sbt testOnly` and all tests will run on the local embedded server.
