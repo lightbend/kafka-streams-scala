@@ -13,7 +13,7 @@ The design of the library was inspired by the work started by Alexis Seigneurin 
 `kafka-streams-scala` is published and cross-built for Scala `2.11`, and `2.12`, so you can just add the following to your build:
 
 ```scala
-val kafka_streams_scala_version = "0.0.1"
+val kafka_streams_scala_version = "0.1.0"
 
 libraryDependencies ++= Seq("com.lightbend" %%
   "kafka-streams-scala" % kafka_streams_scala_version)

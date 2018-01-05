@@ -1,3 +1,7 @@
+/**
+ * Copyright (C) 2018 Lightbend Inc. <https://www.lightbend.com>
+ */
+
 package com.lightbend.kafka.scala.server
 
 // Loosely based on Lagom implementation at
