@@ -1,3 +1,8 @@
+/**
+ * Copyright (C) 2018 Lightbend Inc. <https://www.lightbend.com>
+ * Adapted from Confluent Inc. whose copyright is reproduced below.
+ */
+
 /*
  * Copyright Confluent Inc.
  *

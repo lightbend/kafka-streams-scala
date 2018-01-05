@@ -1,3 +1,7 @@
+/**
+ * Copyright (C) 2018 Lightbend Inc. <https://www.lightbend.com>
+ */
+
 package com.lightbend.kafka.scala.streams
 
 import org.apache.kafka.streams.kstream._
