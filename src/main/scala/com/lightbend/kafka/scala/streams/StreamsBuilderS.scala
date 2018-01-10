@@ -56,6 +56,17 @@ class StreamsBuilderS {
   def globalTable[K, V](topic: String): GlobalKTable[K, V] =
     inner.globalTable(topic)
 
+  def globalTable[K, V](topic: String, consumed: Consumed[K, V]) : GlobalKTable[K, V] = 
+     inner.globalTable(topic, consumed)
+
+  def globalTable[K, V](topic: String, consumed: Consumed[K, V],
+    materialized: Materialized[K, V, KeyValueStore[Bytes, Array[Byte]]]): GlobalKTable[K, V] = 
+    inner.globalTable(topic,  consumed, materialized)
+
+  def globalTable[K, V](topic: String, 
+    materialized: Materialized[K, V, KeyValueStore[Bytes, Array[Byte]]]): GlobalKTable[K, V] = 
+    inner.globalTable(topic,  materialized)
+
   def addStateStore(builder: StoreBuilder[_ <: StateStore]): StreamsBuilder = inner.addStateStore(builder)
 
   def addGlobalStore(storeBuilder: StoreBuilder[_ <: StateStore], topic: String, sourceName: String, consumed: Consumed[_, _], processorName: String, stateUpdateSupplier: ProcessorSupplier[_, _]): StreamsBuilder =
