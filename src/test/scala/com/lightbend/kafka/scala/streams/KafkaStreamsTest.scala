@@ -1,23 +1,18 @@
 /**
- * Copyright (C) 2018 Lightbend Inc. <https://www.lightbend.com>
- */
+  * Copyright (C) 2018 Lightbend Inc. <https://www.lightbend.com>
+  */
 
 package com.lightbend.kafka.scala.streams
 
-import minitest.TestSuite
-import com.lightbend.kafka.scala.server.{ KafkaLocalServer, MessageSender, MessageListener, RecordProcessorTrait }
-
-import java.util.{ Properties, Locale }
+import java.util.Properties
 import java.util.regex.Pattern
 
-import org.apache.kafka.streams.{ KeyValue, StreamsConfig, KafkaStreams, Consumed }
-import org.apache.kafka.streams.kstream.{ Materialized, Produced, KeyValueMapper, Printed }
-import org.apache.kafka.common.serialization.{ Serdes, StringSerializer, StringDeserializer, Serde, LongDeserializer }
+import com.lightbend.kafka.scala.server.{KafkaLocalServer, MessageListener, MessageSender, RecordProcessorTrait}
+import minitest.TestSuite
 import org.apache.kafka.clients.consumer.ConsumerRecord
-
-import scala.concurrent.duration._
-
-import ImplicitConversions._
+import org.apache.kafka.common.serialization._
+import org.apache.kafka.streams.kstream.Produced
+import org.apache.kafka.streams.{KafkaStreams, KeyValue, StreamsConfig}
 
 object KafkaStreamsTest extends TestSuite[KafkaLocalServer] with WordCountTestData {
 
@@ -45,19 +40,19 @@ object KafkaStreamsTest extends TestSuite[KafkaLocalServer] with WordCountTestDa
     val streamsConfiguration = new Properties()
     streamsConfiguration.put(StreamsConfig.APPLICATION_ID_CONFIG, s"wordcount-${scala.util.Random.nextInt(100)}")
     streamsConfiguration.put(StreamsConfig.CLIENT_ID_CONFIG, "wordcountgroup")
-    
+
     streamsConfiguration.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, brokers)
     streamsConfiguration.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.String().getClass().getName())
     streamsConfiguration.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, Serdes.String().getClass().getName())
     streamsConfiguration.put(StreamsConfig.STATE_DIR_CONFIG, localStateDir)
 
-    val builder = new StreamsBuilderS
+    val builder = StreamsBuilderS()
 
     val textLines = builder.stream[String, String](inputTopic)
 
     val pattern = Pattern.compile("\\W+", Pattern.UNICODE_CHARACTER_CLASS)
 
-    val wordCounts: KTableS[String, Long] = 
+    val wordCounts: KTableS[String, Long] =
       textLines.flatMapValues(v => pattern.split(v.toLowerCase))
         .groupBy((k, v) => v)
         .count()
@@ -70,15 +65,15 @@ object KafkaStreamsTest extends TestSuite[KafkaLocalServer] with WordCountTestDa
     //
     // Step 2: Produce some input data to the input topic.
     //
-    val sender = MessageSender[String, String](brokers, classOf[StringSerializer].getName, classOf[StringSerializer].getName) 
+    val sender = MessageSender[String, String](brokers, classOf[StringSerializer].getName, classOf[StringSerializer].getName)
     val mvals = sender.batchWriteValue(inputTopic, inputValues)
 
     //
     // Step 3: Verify the application's output data.
     //
-    val listener = MessageListener(brokers, outputTopic, "wordcountgroup", 
-      classOf[StringDeserializer].getName, 
-      classOf[LongDeserializer].getName, 
+    val listener = MessageListener(brokers, outputTopic, "wordcountgroup",
+      classOf[StringDeserializer].getName,
+      classOf[LongDeserializer].getName,
       new RecordProcessor
     )
 
@@ -90,10 +85,11 @@ object KafkaStreamsTest extends TestSuite[KafkaLocalServer] with WordCountTestDa
   }
 
   class RecordProcessor extends RecordProcessorTrait[String, Long] {
-    override def processRecord(record: ConsumerRecord[String, Long]): Unit = { 
+    override def processRecord(record: ConsumerRecord[String, Long]): Unit = {
       // println(s"Get Message $record")
     }
   }
+
 }
 
 trait WordCountTestData {
