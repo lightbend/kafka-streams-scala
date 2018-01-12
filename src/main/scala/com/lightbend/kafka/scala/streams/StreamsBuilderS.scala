@@ -18,59 +18,59 @@ import scala.collection.JavaConverters._
 /**
  * Wraps the Java class StreamsBuilder and delegates method calls to the underlying Java object.
  */
-class StreamsBuilderS(streamsBuilder:StreamsBuilder) {
+class StreamsBuilderS(inner:StreamsBuilder) {
 
   def stream[K, V](topic: String) : KStreamS[K, V] =
-     streamsBuilder.stream[K, V](topic)
+     inner.stream[K, V](topic)
 
   def stream[K, V](topic: String, consumed: Consumed[K, V]) : KStreamS[K, V] =
-     streamsBuilder.stream[K, V](topic, consumed)
+     inner.stream[K, V](topic, consumed)
 
   def stream[K, V](topics: List[String]): KStreamS[K, V] =
-     streamsBuilder.stream[K, V](topics.asJava)
+     inner.stream[K, V](topics.asJava)
 
   def stream[K, V](topics: List[String], consumed: Consumed[K, V]): KStreamS[K, V] =
-     streamsBuilder.stream[K, V](topics.asJava, consumed)
+     inner.stream[K, V](topics.asJava, consumed)
 
   def stream[K, V](topicPattern: Pattern) : KStreamS[K, V] =
-    streamsBuilder.stream[K, V](topicPattern)
+    inner.stream[K, V](topicPattern)
 
   def stream[K, V](topicPattern: Pattern, consumed: Consumed[K, V]) : KStreamS[K, V] =
-    streamsBuilder.stream[K, V](topicPattern, consumed)
+    inner.stream[K, V](topicPattern, consumed)
 
-  def table[K, V](topic: String) : KTableS[K, V] = streamsBuilder.table[K, V](topic)
+  def table[K, V](topic: String) : KTableS[K, V] = inner.table[K, V](topic)
 
   def table[K, V](topic: String, consumed: Consumed[K, V]) : KTableS[K, V] =
-    streamsBuilder.table[K, V](topic, consumed)
+    inner.table[K, V](topic, consumed)
 
   def table[K, V](topic: String, consumed: Consumed[K, V],
     materialized: Materialized[K, V, KeyValueStore[Bytes, Array[Byte]]]): KTableS[K, V] =
-    streamsBuilder.table[K, V](topic,  consumed, materialized)
+    inner.table[K, V](topic,  consumed, materialized)
 
   def table[K, V](topic: String,
     materialized: Materialized[K, V, KeyValueStore[Bytes, Array[Byte]]]): KTableS[K, V] =
-    streamsBuilder.table[K, V](topic, materialized)
+    inner.table[K, V](topic, materialized)
 
   def globalTable[K, V](topic: String): GlobalKTable[K, V] =
-    streamsBuilder.globalTable(topic)
+    inner.globalTable(topic)
 
   def globalTable[K, V](topic: String, consumed: Consumed[K, V]) : GlobalKTable[K, V] =
-     streamsBuilder.globalTable(topic, consumed)
+     inner.globalTable(topic, consumed)
 
   def globalTable[K, V](topic: String, consumed: Consumed[K, V],
     materialized: Materialized[K, V, KeyValueStore[Bytes, Array[Byte]]]): GlobalKTable[K, V] =
-    streamsBuilder.globalTable(topic,  consumed, materialized)
+    inner.globalTable(topic,  consumed, materialized)
 
   def globalTable[K, V](topic: String,
     materialized: Materialized[K, V, KeyValueStore[Bytes, Array[Byte]]]): GlobalKTable[K, V] =
-    streamsBuilder.globalTable(topic,  materialized)
+    inner.globalTable(topic,  materialized)
 
-  def addStateStore(builder: StoreBuilder[_ <: StateStore]): StreamsBuilder = streamsBuilder.addStateStore(builder)
+  def addStateStore(builder: StoreBuilder[_ <: StateStore]): StreamsBuilder = inner.addStateStore(builder)
 
   def addGlobalStore(storeBuilder: StoreBuilder[_ <: StateStore], topic: String, sourceName: String, consumed: Consumed[_, _], processorName: String, stateUpdateSupplier: ProcessorSupplier[_, _]): StreamsBuilder =
-    streamsBuilder.addGlobalStore(storeBuilder,topic,sourceName,consumed,processorName,stateUpdateSupplier)
+    inner.addGlobalStore(storeBuilder,topic,sourceName,consumed,processorName,stateUpdateSupplier)
 
-  def build() : Topology = streamsBuilder.build()
+  def build() : Topology = inner.build()
 }
 
 object StreamsBuilderS {
