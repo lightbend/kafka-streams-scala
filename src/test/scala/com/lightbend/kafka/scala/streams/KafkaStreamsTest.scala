@@ -46,7 +46,7 @@ object KafkaStreamsTest extends TestSuite[KafkaLocalServer] with WordCountTestDa
     streamsConfiguration.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, Serdes.String().getClass().getName())
     streamsConfiguration.put(StreamsConfig.STATE_DIR_CONFIG, localStateDir)
 
-    val builder = StreamsBuilderS()
+    val builder = new StreamsBuilderS()
 
     val textLines = builder.stream[String, String](inputTopic)
 

@@ -97,7 +97,7 @@ object ProbabilisticCountingScalaIntegrationTest extends TestSuite[KafkaLocalSer
       p
     }
 
-    val builder = StreamsBuilderS()
+    val builder = new StreamsBuilderS()
 
     val cmsStoreName = "cms-store"
     val cmsStoreBuilder = {
