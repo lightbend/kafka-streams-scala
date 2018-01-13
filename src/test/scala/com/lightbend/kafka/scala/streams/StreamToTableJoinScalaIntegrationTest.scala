@@ -81,7 +81,7 @@ object StreamToTableJoinScalaIntegrationTest extends TestSuite[KafkaLocalServer]
       p
     }
 
-    val builder = new StreamsBuilderS
+    val builder = new StreamsBuilderS()
 
     val userClicksStream: KStreamS[String, Long] = builder.stream(userClicksTopic, Consumed.`with`(stringSerde, longSerde))
 
