@@ -74,15 +74,19 @@ class KStreamS[K, V](val inner: KStream[K, V]) {
       val transformerS: Transformer[K, V, (K1, V1)] = transformerSupplier()
       new Transformer[K, V, KeyValue[K1, V1]] {
         override def transform(key: K, value: V): KeyValue[K1, V1] = {
-          val (k1,v1) = transformerS.transform(key, value)
-          KeyValue.pair(k1, v1)
+          transformerS.transform(key, value) match {
+            case (k1,v1) => KeyValue.pair(k1, v1)
+            case _ => null
+          }
         }
 
         override def init(context: ProcessorContext): Unit = transformerS.init(context)
 
         override def punctuate(timestamp: Long): KeyValue[K1, V1] = {
-          val (k1,v1) = transformerS.punctuate(timestamp)
-          KeyValue.pair[K1, V1](k1, v1)
+          transformerS.punctuate(timestamp) match {
+            case (k1, v1) => KeyValue.pair[K1, V1](k1, v1)
+            case _ => null
+          }
         }
 
         override def close(): Unit = transformerS.close()
