@@ -1,5 +1,7 @@
 # A Thin Scala Wrapper Around the Kafka Streams Java API
 
+[![Build Status](https://secure.travis-ci.org/lightbend/kafka-streams-scala.png)](http://travis-ci.org/lightbend/kafka-streams-scala)
+
 The library wraps Java APIs in Scala thereby providing:
 
 1. much better type inference in Scala
