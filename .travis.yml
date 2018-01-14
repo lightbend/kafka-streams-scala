@@ -4,8 +4,9 @@ jdk: oraclejdk8
 scala:
 - 2.11.11
 - 2.12.4
+sbt_args: -mem 1500
 script:
-- sbt "++ ${TRAVIS_SCALA_VERSION}!" -mem 1500 test
+- sbt "++ ${TRAVIS_SCALA_VERSION}!" test
 cache:
   directories:
   - "$HOME/.ivy2/cache"
