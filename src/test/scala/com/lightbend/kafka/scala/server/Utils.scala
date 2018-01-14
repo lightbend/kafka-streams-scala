@@ -9,7 +9,7 @@ import java.io.File
 import java.nio.file.{ FileVisitOption, Files, Paths }
 import java.util.Comparator
 
-import scala.util.{ Try, Success, Failure }
+import scala.util.Try
 import scala.collection.JavaConverters._
 
 object Utils {
