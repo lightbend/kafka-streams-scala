@@ -5,7 +5,7 @@ scala:
 - 2.11.11
 - 2.12.4
 script:
-- sbt -mem 1500 "++ ${TRAVIS_SCALA_VERSION}!" test
+- sbt "++ ${TRAVIS_SCALA_VERSION}!" -mem 1500 test
 cache:
   directories:
   - "$HOME/.ivy2/cache"
