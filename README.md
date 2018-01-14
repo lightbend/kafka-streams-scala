@@ -21,7 +21,7 @@ libraryDependencies ++= Seq("com.lightbend" %%
   "kafka-streams-scala" % kafka_streams_scala_version)
 ```
 
-> Note: `kafka-streams-scala` supports Kafka Streams `1.0.0`.
+> Note: `kafka-streams-scala` supports onwards Kafka Streams `1.0.0`.
 
 The API docs for `kafka-streams-scala` is available [here](https://developer.lightbend.com/docs/api/kafka-streams-scala/0.1.0/com/lightbend/kafka/scala/streams) for Scala 2.12 and [here](https://developer.lightbend.com/docs/api/kafka-streams-scala_2.11/0.1.0/#package) for Scala 2.11.
 
