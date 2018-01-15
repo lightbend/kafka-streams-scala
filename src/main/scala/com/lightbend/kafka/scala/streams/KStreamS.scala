@@ -14,7 +14,7 @@ import scala.collection.JavaConverters._
 
 /**
  * Wraps the Java class KStream and delegates method calls to the underlying Java object.
- */ 
+ */
 class KStreamS[K, V](val inner: KStream[K, V]) {
 
   def filter(predicate: (K, V) => Boolean): KStreamS[K, V] = {
@@ -47,7 +47,7 @@ class KStreamS[K, V](val inner: KStream[K, V]) {
     inner.flatMapValues[VR]((v) => processor(v).asJava)
   }
 
-  def print(printed: Printed[K, V]) = inner.print(printed)
+  def print(printed: Printed[K, V]): Unit = inner.print(printed)
 
   def foreach(action: (K, V) => Unit): Unit = {
     inner.foreach((k, v) => action(k, v))
@@ -74,15 +74,19 @@ class KStreamS[K, V](val inner: KStream[K, V]) {
       val transformerS: Transformer[K, V, (K1, V1)] = transformerSupplier()
       new Transformer[K, V, KeyValue[K1, V1]] {
         override def transform(key: K, value: V): KeyValue[K1, V1] = {
-          val (k1,v1) = transformerS.transform(key, value)
-          KeyValue.pair(k1, v1)
+          transformerS.transform(key, value) match {
+            case (k1,v1) => KeyValue.pair(k1, v1)
+            case _ => null
+          }
         }
 
         override def init(context: ProcessorContext): Unit = transformerS.init(context)
 
         override def punctuate(timestamp: Long): KeyValue[K1, V1] = {
-          val (k1,v1) = transformerS.punctuate(timestamp)
-          KeyValue.pair[K1, V1](k1, v1)
+          transformerS.punctuate(timestamp) match {
+            case (k1, v1) => KeyValue.pair[K1, V1](k1, v1)
+            case _ => null
+          }
         }
 
         override def close(): Unit = transformerS.close()
@@ -99,7 +103,7 @@ class KStreamS[K, V](val inner: KStream[K, V]) {
   }
 
   def process(processorSupplier: () => Processor[K, V],
-    stateStoreNames: String*) = {
+    stateStoreNames: String*): Unit = {
 
     val processorSupplierJ: ProcessorSupplier[K, V] = () => processorSupplier()
     inner.process(processorSupplierJ, stateStoreNames: _*)
@@ -206,13 +210,13 @@ class KStreamS[K, V](val inner: KStream[K, V]) {
 
   def merge(stream: KStreamS[K, V]): KStreamS[K, V] = inner.merge(stream)
 
-  def peek(action: (K, V) => Unit): KStream[K, V] = {
+  def peek(action: (K, V) => Unit): KStreamS[K, V] = {
     inner.peek(action(_,_))
   }
 
   // -- EXTENSIONS TO KAFKA STREAMS --
 
-  // applies the predicate to know what messages shuold go to the left stream (predicate == true)
+  // applies the predicate to know what messages should go to the left stream (predicate == true)
   // or to the right stream (predicate == false)
   def split(predicate: (K, V) => Boolean): (KStreamS[K, V], KStreamS[K, V]) = {
     (this.filter(predicate), this.filterNot(predicate))

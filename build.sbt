@@ -4,13 +4,13 @@ name := "kafka-streams-scala"
 
 organization := "com.lightbend"
 
-version := "0.1.0"
+version := "0.1.1"
 
 scalaVersion := Versions.Scala_2_12_Version
 
 crossScalaVersions := Versions.CrossScalaVersions
 
-scalacOptions := Seq("-Xexperimental", "-unchecked", "-deprecation")
+scalacOptions := Seq("-Xexperimental", "-unchecked", "-deprecation", "-Ywarn-unused-import")
 
 parallelExecution in Test := false
 

@@ -8,7 +8,6 @@ package com.lightbend.kafka.scala.server
 //  https://github.com/lagom/lagom/blob/master/dev/kafka-server/src/main/scala/com/lightbend/lagom/internal/kafka/KafkaLocalServer.scala
 
 import java.io.{ IOException, File }
-import java.nio.file.{ FileVisitOption, Files, Paths }
 import java.util.Properties
 
 import org.apache.curator.test.TestingServer
@@ -16,9 +15,7 @@ import com.typesafe.scalalogging.LazyLogging
 
 import kafka.server.{KafkaConfig, KafkaServerStartable}
 
-import scala.collection.JavaConverters._
 import scala.util.{ Try, Success, Failure }
-import java.util.Comparator
 
 import kafka.admin.{AdminUtils, RackAwareMode}
 import kafka.utils.ZkUtils

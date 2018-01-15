@@ -29,8 +29,6 @@ import org.apache.kafka.streams.kstream._
 import org.apache.kafka.streams._
 
 import org.apache.kafka.clients.consumer.ConsumerRecord
-import collection.JavaConverters._
-import ImplicitConversions._
 
 /**
   * End-to-end integration test that demonstrates how to perform a join between a KStream and a
@@ -81,7 +79,7 @@ object StreamToTableJoinScalaIntegrationTest extends TestSuite[KafkaLocalServer]
       p
     }
 
-    val builder = new StreamsBuilderS
+    val builder = new StreamsBuilderS()
 
     val userClicksStream: KStreamS[String, Long] = builder.stream(userClicksTopic, Consumed.`with`(stringSerde, longSerde))
 

@@ -1,5 +1,7 @@
 # A Thin Scala Wrapper Around the Kafka Streams Java API
 
+[![Build Status](https://secure.travis-ci.org/lightbend/kafka-streams-scala.png)](http://travis-ci.org/lightbend/kafka-streams-scala)
+
 The library wraps Java APIs in Scala thereby providing:
 
 1. much better type inference in Scala
@@ -13,15 +15,15 @@ The design of the library was inspired by the work started by Alexis Seigneurin 
 `kafka-streams-scala` is published and cross-built for Scala `2.11`, and `2.12`, so you can just add the following to your build:
 
 ```scala
-val kafka_streams_scala_version = "0.1.0"
+val kafka_streams_scala_version = "0.1.1"
 
 libraryDependencies ++= Seq("com.lightbend" %%
   "kafka-streams-scala" % kafka_streams_scala_version)
 ```
 
-> Note: `kafka-streams-scala` supports Kafka Streams `1.0.0`.
+> Note: `kafka-streams-scala` supports onwards Kafka Streams `1.0.0`.
 
-The API docs for `kafka-streams-scala` is available [here](https://developer.lightbend.com/docs/api/kafka-streams-scala/0.1.0/com/lightbend/kafka/scala/streams) for Scala 2.12 and [here](https://developer.lightbend.com/docs/api/kafka-streams-scala_2.11/0.1.0/#package) for Scala 2.11.
+The API docs for `kafka-streams-scala` is available [here](https://developer.lightbend.com/docs/api/kafka-streams-scala/0.1.1/com/lightbend/kafka/scala/streams) for Scala 2.12 and [here](https://developer.lightbend.com/docs/api/kafka-streams-scala_2.11/0.1.1/#package) for Scala 2.11.
 
 ## Running the Tests
 

@@ -1,7 +1,7 @@
 /**
- * Copyright (C) 2018 Lightbend Inc. <https://www.lightbend.com>
- * Adapted from Confluent Inc. whose copyright is reproduced below.
- */
+  * Copyright (C) 2018 Lightbend Inc. <https://www.lightbend.com>
+  * Adapted from Confluent Inc. whose copyright is reproduced below.
+  */
 
 /*
  * Copyright Confluent Inc.
@@ -22,21 +22,15 @@ package com.lightbend.kafka.scala.streams
 
 import java.util.Properties
 
-import minitest.TestSuite
-import com.lightbend.kafka.scala.server.{ KafkaLocalServer, MessageSender, MessageListener, RecordProcessorTrait, Utils }
-
+import com.lightbend.kafka.scala.server.{KafkaLocalServer, MessageListener, MessageSender, RecordProcessorTrait}
+import com.lightbend.kafka.scala.streams.ImplicitConversions._
 import com.lightbend.kafka.scala.streams.algebird.{CMSStore, CMSStoreBuilder}
-
-import org.apache.kafka.clients.consumer.ConsumerConfig
-import org.apache.kafka.clients.producer.ProducerConfig
-import org.apache.kafka.common.serialization._
-import org.apache.kafka.streams.kstream.{KStream, Produced, Transformer, TransformerSupplier}
-import org.apache.kafka.streams.processor.ProcessorContext
-import org.apache.kafka.streams.{KafkaStreams, KeyValue, StreamsBuilder, StreamsConfig}
+import minitest.TestSuite
 import org.apache.kafka.clients.consumer.ConsumerRecord
-
-import collection.JavaConverters._
-import ImplicitConversions._
+import org.apache.kafka.common.serialization._
+import org.apache.kafka.streams.kstream.{Produced, Transformer}
+import org.apache.kafka.streams.processor.ProcessorContext
+import org.apache.kafka.streams.{KafkaStreams, KeyValue, StreamsConfig}
 
 /**
   * End-to-end integration test that demonstrates how to probabilistically count items in an input stream.
@@ -71,7 +65,7 @@ trait ProbabilisticCountingScalaIntegrationTestData {
   )
 }
 
-object ProbabilisticCountingScalaIntegrationTest extends TestSuite[KafkaLocalServer] 
+object ProbabilisticCountingScalaIntegrationTest extends TestSuite[KafkaLocalServer]
   with ProbabilisticCountingScalaIntegrationTestData {
 
   override def setup(): KafkaLocalServer = {
@@ -103,7 +97,7 @@ object ProbabilisticCountingScalaIntegrationTest extends TestSuite[KafkaLocalSer
       p
     }
 
-    val builder = new StreamsBuilderS
+    val builder = new StreamsBuilderS()
 
     val cmsStoreName = "cms-store"
     val cmsStoreBuilder = {
@@ -159,15 +153,15 @@ object ProbabilisticCountingScalaIntegrationTest extends TestSuite[KafkaLocalSer
     //
     // Step 2: Publish some input text lines.
     //
-    val sender = MessageSender[String, String](brokers, classOf[StringSerializer].getName, classOf[StringSerializer].getName) 
+    val sender = MessageSender[String, String](brokers, classOf[StringSerializer].getName, classOf[StringSerializer].getName)
     val mvals = sender.batchWriteValue(inputTopic, inputTextLines)
 
     //
     // Step 3: Verify the application's output data.
     //
-    val listener = MessageListener(brokers, outputTopic, "probwordcountgroup", 
-      classOf[StringDeserializer].getName, 
-      classOf[LongDeserializer].getName, 
+    val listener = MessageListener(brokers, outputTopic, "probwordcountgroup",
+      classOf[StringDeserializer].getName,
+      classOf[LongDeserializer].getName,
       new RecordProcessor
     )
 
@@ -178,8 +172,9 @@ object ProbabilisticCountingScalaIntegrationTest extends TestSuite[KafkaLocalSer
   }
 
   class RecordProcessor extends RecordProcessorTrait[String, Long] {
-    override def processRecord(record: ConsumerRecord[String, Long]): Unit = { 
+    override def processRecord(record: ConsumerRecord[String, Long]): Unit = {
       // println(s"Get Message $record")
     }
   }
+
 }
