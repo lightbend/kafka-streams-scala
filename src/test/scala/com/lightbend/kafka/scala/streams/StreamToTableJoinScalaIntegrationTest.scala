@@ -64,8 +64,8 @@ object StreamToTableJoinScalaIntegrationTest extends TestSuite[KafkaLocalServer]
     //
     // Step 1: Configure and start the processor topology.
     //
-    val stringSerde: Serde[String] = Serdes.String()
-    val longSerde: Serde[Long] = Serdes.Long().asInstanceOf[Serde[Long]]
+    implicit val stringSerde: Serde[String] = Serdes.String()
+    implicit val longSerde: Serde[Long] = Serdes.Long().asInstanceOf[Serde[Long]]
 
     val streamsConfiguration: Properties = {
       val p = new Properties()
@@ -96,7 +96,7 @@ object StreamToTableJoinScalaIntegrationTest extends TestSuite[KafkaLocalServer]
         .map((_, regionWithClicks) => regionWithClicks)
 
         // Compute the total per region by summing the individual click counts per region.
-        .groupByKey(Serialized.`with`(stringSerde, longSerde))
+        .groupByKey()
         .reduce(_ + _)
 
     // Write the (continuously updating) results to the output topic.

@@ -9,6 +9,7 @@ import org.apache.kafka.streams.kstream._
 import org.apache.kafka.streams.processor.{Processor, ProcessorContext, ProcessorSupplier}
 import ImplicitConversions._
 import FunctionConversions._
+import org.apache.kafka.common.serialization.Serde
 
 import scala.collection.JavaConverters._
 
@@ -57,12 +58,14 @@ class KStreamS[K, V](val inner: KStream[K, V]) {
     inner.branch(predicates.map(_.asPredicate): _*).map(kstream => wrapKStream(kstream))
   }
 
-  def through(topic: String): KStreamS[K, V] = inner.through(topic)
+  def through(topic: String)(implicit keySerde: Serde[K], valueSerde: Serde[V]): KStreamS[K, V] =
+    through(topic, Produced.`with`(keySerde, valueSerde))
 
   def through(topic: String,
     produced: Produced[K, V]): KStreamS[K, V] = inner.through(topic, produced)
 
-  def to(topic: String): Unit = inner.to(topic)
+  def to(topic: String)(implicit keySerde: Serde[K], valueSerde: Serde[V]): Unit =
+    to(topic, Produced.`with`(keySerde, valueSerde))
 
   def to(topic: String,
     produced: Produced[K, V]): Unit = inner.to(topic, produced)
@@ -109,14 +112,11 @@ class KStreamS[K, V](val inner: KStream[K, V]) {
     inner.process(processorSupplierJ, stateStoreNames: _*)
   }
 
-  def groupByKey(): KGroupedStreamS[K, V] =
-    inner.groupByKey()
+  def groupByKey()(implicit keySerde: Serde[K], valueSerde: Serde[V]): KGroupedStreamS[K, V] =
+    inner.groupByKey(Serialized.`with`(keySerde, valueSerde))
 
-  def groupByKey(serialized: Serialized[K, V]): KGroupedStreamS[K, V] =
-    inner.groupByKey(serialized)
-
-  def groupBy[KR](selector: (K, V) => KR): KGroupedStreamS[KR, V] = {
-    inner.groupBy(selector.asKeyValueMapper)
+  def groupBy[KR](selector: (K, V) => KR)(implicit keySerde: Serde[KR], valueSerde: Serde[V]): KGroupedStreamS[KR, V] = {
+    groupBy(selector, Serialized.`with`(keySerde, valueSerde))
   }
 
   def groupBy[KR](selector: (K, V) => KR, serialized: Serialized[KR, V]): KGroupedStreamS[KR, V] = {

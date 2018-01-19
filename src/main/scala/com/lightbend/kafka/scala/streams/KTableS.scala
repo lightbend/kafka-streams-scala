@@ -9,6 +9,7 @@ import org.apache.kafka.streams.state.KeyValueStore
 import org.apache.kafka.common.utils.Bytes
 import ImplicitConversions._
 import FunctionConversions._
+import org.apache.kafka.common.serialization.Serde
 
 /**
  * Wraps the Java class KTable and delegates method calls to the underlying Java object.
@@ -48,8 +49,8 @@ class KTableS[K, V](val inner: KTable[K, V]) {
     inner.toStream[KR](mapper.asKeyValueMapper)
   }
 
-  def groupBy[KR, VR](selector: (K, V) => (KR, VR)): KGroupedTableS[KR, VR] = {
-    inner.groupBy(selector.asKeyValueMapper)
+  def groupBy[KR, VR](selector: (K, V) => (KR, VR))(implicit keySerde: Serde[KR], valueSerde: Serde[VR]): KGroupedTableS[KR, VR] = {
+    inner.groupBy(selector.asKeyValueMapper, Serialized.`with`(keySerde, valueSerde))
   }
 
   def groupBy[KR, VR](selector: (K, V) => (KR, VR),
