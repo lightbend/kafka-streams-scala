@@ -86,12 +86,15 @@ object ProbabilisticCountingScalaIntegrationTest extends TestSuite[KafkaLocalSer
     //
     // Step 1: Configure and start the processor topology.
     //
+    implicit val keySerde: Serde[Array[Byte]] = Serdes.ByteArray
+    implicit val valueSerde: Serde[String] = Serdes.String
+
     val streamsConfiguration: Properties = {
       val p = new Properties()
       p.put(StreamsConfig.APPLICATION_ID_CONFIG, s"probabilistic-counting-scala-integration-test-${scala.util.Random.nextInt(100)}")
       p.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, brokers)
-      p.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.ByteArray.getClass.getName)
-      p.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, Serdes.String.getClass.getName)
+      p.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, keySerde.getClass.getName)
+      p.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, valueSerde.getClass.getName)
       p.put(StreamsConfig.COMMIT_INTERVAL_MS_CONFIG, "10000")
       p.put(StreamsConfig.STATE_DIR_CONFIG, localStateDir)
       p

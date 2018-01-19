@@ -7,6 +7,7 @@ package com.lightbend.kafka.scala.streams
 import java.util.regex.Pattern
 
 import com.lightbend.kafka.scala.streams.ImplicitConversions._
+import org.apache.kafka.common.serialization.Serde
 import org.apache.kafka.common.utils.Bytes
 import org.apache.kafka.streams.kstream.{GlobalKTable, Materialized}
 import org.apache.kafka.streams.processor.{ProcessorSupplier, StateStore}
@@ -20,25 +21,26 @@ import scala.collection.JavaConverters._
   */
 class StreamsBuilderS(inner: StreamsBuilder = new StreamsBuilder) {
 
-  def stream[K, V](topic: String): KStreamS[K, V] =
-    inner.stream[K, V](topic)
+  def stream[K, V](topic: String)(implicit keySerde: Serde[K], valueSerde: Serde[V]): KStreamS[K, V] =
+    inner.stream[K, V](topic, Consumed.`with`(keySerde, valueSerde))
 
   def stream[K, V](topic: String, consumed: Consumed[K, V]): KStreamS[K, V] =
     inner.stream[K, V](topic, consumed)
 
-  def stream[K, V](topics: List[String]): KStreamS[K, V] =
-    inner.stream[K, V](topics.asJava)
+  def stream[K, V](topics: List[String])(implicit keySerde: Serde[K], valueSerde: Serde[V]): KStreamS[K, V] =
+    inner.stream[K, V](topics.asJava, Consumed.`with`(keySerde, valueSerde))
 
   def stream[K, V](topics: List[String], consumed: Consumed[K, V]): KStreamS[K, V] =
     inner.stream[K, V](topics.asJava, consumed)
 
-  def stream[K, V](topicPattern: Pattern): KStreamS[K, V] =
-    inner.stream[K, V](topicPattern)
+  def stream[K, V](topicPattern: Pattern)(implicit keySerde: Serde[K], valueSerde: Serde[V]): KStreamS[K, V] =
+    inner.stream[K, V](topicPattern, Consumed.`with`(keySerde, valueSerde))
 
   def stream[K, V](topicPattern: Pattern, consumed: Consumed[K, V]): KStreamS[K, V] =
     inner.stream[K, V](topicPattern, consumed)
 
-  def table[K, V](topic: String): KTableS[K, V] = inner.table[K, V](topic)
+  def table[K, V](topic: String)(implicit keySerde: Serde[K], valueSerde: Serde[V]): KTableS[K, V] =
+    inner.table[K, V](topic, Consumed.`with`(keySerde, valueSerde))
 
   def table[K, V](topic: String, consumed: Consumed[K, V]): KTableS[K, V] =
     inner.table[K, V](topic, consumed)
@@ -51,8 +53,8 @@ class StreamsBuilderS(inner: StreamsBuilder = new StreamsBuilder) {
                   materialized: Materialized[K, V, KeyValueStore[Bytes, Array[Byte]]]): KTableS[K, V] =
     inner.table[K, V](topic, materialized)
 
-  def globalTable[K, V](topic: String): GlobalKTable[K, V] =
-    inner.globalTable(topic)
+  def globalTable[K, V](topic: String)(implicit keySerde: Serde[K], valueSerde: Serde[V]): GlobalKTable[K, V] =
+    inner.globalTable(topic, Consumed.`with`(keySerde, valueSerde))
 
   def globalTable[K, V](topic: String, consumed: Consumed[K, V]): GlobalKTable[K, V] =
     inner.globalTable(topic, consumed)
