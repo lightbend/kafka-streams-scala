@@ -73,7 +73,7 @@ object StreamToTableJoinScalaIntegrationTest extends TestSuite[KafkaLocalServer]
       p.put(StreamsConfig.CLIENT_ID_CONFIG, "join-scala-integration-test-standard-consumer")
       p.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, brokers)
       p.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.String.getClass.getName)
-      p.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, Serdes.String.getClass.getName)
+      p.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, Serdes.Long.getClass.getName)
       p.put(StreamsConfig.COMMIT_INTERVAL_MS_CONFIG, "100")
       p.put(StreamsConfig.STATE_DIR_CONFIG, localStateDir)
       p
@@ -97,7 +97,9 @@ object StreamToTableJoinScalaIntegrationTest extends TestSuite[KafkaLocalServer]
 
         // Compute the total per region by summing the individual click counts per region.
         .groupByKey(Serialized.`with`(stringSerde, longSerde))
-        .reduce(_ + _)
+
+        // .reduce(_ + _, "local_state_data") // doesn't work in Scala 2.11, works with Scala 2.12
+        .reduce((firstClicks: Long, secondClicks: Long) => firstClicks + secondClicks, "local_state_data")
 
     // Write the (continuously updating) results to the output topic.
     clicksPerRegion.toStream.to(outputTopic, Produced.`with`(stringSerde, longSerde))
