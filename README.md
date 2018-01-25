@@ -15,7 +15,7 @@ The design of the library was inspired by the work started by Alexis Seigneurin 
 `kafka-streams-scala` is published and cross-built for Scala `2.11`, and `2.12`, so you can just add the following to your build:
 
 ```scala
-val kafka_streams_scala_version = "0.1.1"
+val kafka_streams_scala_version = "0.1.2"
 
 libraryDependencies ++= Seq("com.lightbend" %%
   "kafka-streams-scala" % kafka_streams_scala_version)
@@ -23,7 +23,7 @@ libraryDependencies ++= Seq("com.lightbend" %%
 
 > Note: `kafka-streams-scala` supports onwards Kafka Streams `1.0.0`.
 
-The API docs for `kafka-streams-scala` is available [here](https://developer.lightbend.com/docs/api/kafka-streams-scala/0.1.1/com/lightbend/kafka/scala/streams) for Scala 2.12 and [here](https://developer.lightbend.com/docs/api/kafka-streams-scala_2.11/0.1.1/#package) for Scala 2.11.
+The API docs for `kafka-streams-scala` is available [here](https://developer.lightbend.com/docs/api/kafka-streams-scala/0.1.2/com/lightbend/kafka/scala/streams) for Scala 2.12 and [here](https://developer.lightbend.com/docs/api/kafka-streams-scala_2.11/0.1.2/#package) for Scala 2.11.
 
 ## Running the Tests
 
