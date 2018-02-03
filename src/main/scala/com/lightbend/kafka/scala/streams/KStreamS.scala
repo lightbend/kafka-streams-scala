@@ -82,6 +82,7 @@ class KStreamS[K, V](val inner: KStream[K, V]) {
 
         override def init(context: ProcessorContext): Unit = transformerS.init(context)
 
+        @deprecated ("Please use Punctuator functional interface at https://kafka.apache.org/10/javadoc/org/apache/kafka/streams/processor/Punctuator.html instead", "0.1.3")
         override def punctuate(timestamp: Long): KeyValue[K1, V1] = {
           transformerS.punctuate(timestamp) match {
             case (k1, v1) => KeyValue.pair[K1, V1](k1, v1)
