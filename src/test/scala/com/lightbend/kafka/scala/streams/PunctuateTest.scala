@@ -9,7 +9,7 @@ import java.util.Properties
 import com.lightbend.kafka.scala.server.{KafkaLocalServer, MessageSender}
 import minitest.TestSuite
 import org.apache.kafka.common.serialization._
-import org.apache.kafka.streams.processor.{ProcessorContext, PunctuationType, Punctuator}
+import org.apache.kafka.streams.processor.{AbstractProcessor, ProcessorContext, PunctuationType, Punctuator}
 import org.apache.kafka.streams.{KafkaStreams, StreamsConfig, Topology}
 
 /**
@@ -50,7 +50,7 @@ object PunctuateTest extends TestSuite[KafkaLocalServer] with PunctuateTestData 
     // Data input streams
     topology.addSource("data", inputTopic)
     // Processors
-    topology.addProcessor("data processor", new SampleProcessor(5000), "data")
+    topology.addProcessor("data processor", () => new SampleProcessor(5000), "data")
     val streams = new KafkaStreams(topology, streamsConfiguration)
     streams.start()
     // Allpw time for the streams to start up
@@ -71,7 +71,7 @@ object PunctuateTest extends TestSuite[KafkaLocalServer] with PunctuateTestData 
     streams.close()
   }
 
-  class SampleProcessor(punctuateTime: Long) extends ProcessorS[String, String] {
+  class SampleProcessor(punctuateTime: Long) extends AbstractProcessor[String, String] {
 
     var ctx: ProcessorContext = _
     var message = ""
