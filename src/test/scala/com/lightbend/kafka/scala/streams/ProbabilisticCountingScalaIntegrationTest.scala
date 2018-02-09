@@ -28,9 +28,10 @@ import com.lightbend.kafka.scala.streams.algebird.{CMSStore, CMSStoreBuilder}
 import minitest.TestSuite
 import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.apache.kafka.common.serialization._
-import org.apache.kafka.streams.kstream.{Produced, Transformer}
+import org.apache.kafka.streams.kstream.Transformer
 import org.apache.kafka.streams.processor.ProcessorContext
 import org.apache.kafka.streams.{KafkaStreams, KeyValue, StreamsConfig}
+import ImplicitConversions._
 
 /**
   * End-to-end integration test that demonstrates how to probabilistically count items in an input stream.
@@ -140,12 +141,13 @@ object ProbabilisticCountingScalaIntegrationTest extends TestSuite[KafkaLocalSer
     // Read the input from Kafka.
     val textLines: KStreamS[Array[Byte], String] = builder.stream(inputTopic)
 
-    val longSerde: Serde[Long] = Serdes.Long().asInstanceOf[Serde[Long]]
+    implicit val stringSerde = Serdes.String()
+    implicit val longSerde: Serde[Long] = Serdes.Long().asInstanceOf[Serde[Long]]
 
     textLines
       .flatMapValues(value => value.toLowerCase.split("\\W+").toIterable)
       .transform(() => new ProbabilisticCounter, cmsStoreName)
-      .to(outputTopic, Produced.`with`(Serdes.String(), longSerde))
+      .to(outputTopic)
 
     val streams: KafkaStreams = new KafkaStreams(builder.build(), streamsConfiguration)
     streams.start()

@@ -5,7 +5,8 @@
 package com.lightbend.kafka.scala.streams
 
 import org.apache.kafka.streams.kstream._
-import org.apache.kafka.streams.KeyValue
+import org.apache.kafka.streams.{ KeyValue, Consumed }
+import org.apache.kafka.common.serialization.Serde
 
 import scala.language.implicitConversions
 
@@ -35,5 +36,22 @@ object ImplicitConversions {
 
   implicit def Tuple2ToKeyValue[K, V](tuple: (K, V)): KeyValue[K, V] = new KeyValue(tuple._1, tuple._2)
 
-}
+  case class Perhaps[E](value: Option[E]) {
+    def fold[F](ifAbsent: => F)(ifPresent: E => F): F = {
+      value.fold(ifAbsent)(ifPresent)
+    }
+  }
 
+  implicit def perhaps[E](implicit ev: E = null): Perhaps[E] = {
+    Perhaps(Option(ev))
+  }
+
+  implicit def SerializedFromSerde[K,V](implicit keySerde: Serde[K], valueSerde: Serde[V]): Serialized[K,V] = 
+    Serialized.`with`(keySerde, valueSerde)
+
+  implicit def ConsumedFromSerde[K,V](implicit keySerde: Serde[K], valueSerde: Serde[V]): Consumed[K,V] = 
+    Consumed.`with`(keySerde, valueSerde)
+
+  implicit def ProducedFromSerde[K,V](implicit keySerde: Serde[K], valueSerde: Serde[V]): Produced[K,V] = 
+    Produced.`with`(keySerde, valueSerde)
+}

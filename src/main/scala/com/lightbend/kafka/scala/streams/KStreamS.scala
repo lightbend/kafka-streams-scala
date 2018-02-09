@@ -57,15 +57,11 @@ class KStreamS[K, V](val inner: KStream[K, V]) {
     inner.branch(predicates.map(_.asPredicate): _*).map(kstream => wrapKStream(kstream))
   }
 
-  def through(topic: String): KStreamS[K, V] = inner.through(topic)
+  def through(topic: String)(implicit produced: Perhaps[Produced[K, V]]): KStreamS[K, V] = 
+    produced.fold[KStreamS[K, V]] { inner.through(topic) } { ev => inner.through(topic, ev) }
 
-  def through(topic: String,
-    produced: Produced[K, V]): KStreamS[K, V] = inner.through(topic, produced)
-
-  def to(topic: String): Unit = inner.to(topic)
-
-  def to(topic: String,
-    produced: Produced[K, V]): Unit = inner.to(topic, produced)
+  def to(topic: String)(implicit produced: Perhaps[Produced[K, V]]): Unit =
+    produced.fold[Unit] { inner.to(topic) } { implicit ev => inner.to(topic, ev) }
 
   def transform[K1, V1](transformerSupplier: () => Transformer[K, V, (K1, V1)],
     stateStoreNames: String*): KStreamS[K1, V1] = {
@@ -110,18 +106,31 @@ class KStreamS[K, V](val inner: KStream[K, V]) {
     inner.process(processorSupplierJ, stateStoreNames: _*)
   }
 
-  def groupByKey(): KGroupedStreamS[K, V] =
-    inner.groupByKey()
+  /**
+   * If `Serialized[K, V]` is found in the implicit scope, then use it, else
+   * use the API with the default serializers.
+   *
+   * Usage Pattern 1: No implicits in scope, use default serializers
+   * - .groupByKey
+   *
+   * Usage Pattern 2: Use implicit `Serialized` in scope
+   * implicit val serialized = Serialized.`with`(stringSerde, longSerde)
+   * - .groupByKey
+   *
+   * Usage Pattern 3: uses the implicit conversion from the serdes to `Serialized`
+   * implicit val stringSerde: Serde[String] = Serdes.String()
+   * implicit val longSerde: Serde[Long] = Serdes.Long().asInstanceOf[Serde[Long]]
+   * - .groupByKey
+   */ 
+  def groupByKey(implicit serialized: Perhaps[Serialized[K, V]]): KGroupedStreamS[K, V] =
+    serialized.fold[KGroupedStreamS[K, V]] { inner.groupByKey } { implicit ev => inner.groupByKey(ev) }
 
-  def groupByKey(serialized: Serialized[K, V]): KGroupedStreamS[K, V] =
-    inner.groupByKey(serialized)
-
-  def groupBy[KR](selector: (K, V) => KR): KGroupedStreamS[KR, V] = {
-    inner.groupBy(selector.asKeyValueMapper)
-  }
-
-  def groupBy[KR](selector: (K, V) => KR, serialized: Serialized[KR, V]): KGroupedStreamS[KR, V] = {
-    inner.groupBy(selector.asKeyValueMapper, serialized)
+  def groupBy[KR](selector: (K, V) => KR)(implicit serialized: Perhaps[Serialized[KR, V]]): KGroupedStreamS[KR, V] = {
+    serialized.fold[KGroupedStreamS[KR, V]] { 
+      inner.groupBy(selector.asKeyValueMapper) 
+    } { implicit ev => 
+      inner.groupBy(selector.asKeyValueMapper, ev) 
+    }
   }
 
   def join[VO, VR](otherStream: KStreamS[K, VO],

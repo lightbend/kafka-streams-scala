@@ -25,10 +25,11 @@ import minitest.TestSuite
 import com.lightbend.kafka.scala.server.{ KafkaLocalServer, MessageSender, MessageListener, RecordProcessorTrait }
 
 import org.apache.kafka.common.serialization._
-import org.apache.kafka.streams.kstream._
 import org.apache.kafka.streams._
+import org.apache.kafka.streams.kstream.{ Serialized, Produced }
 
 import org.apache.kafka.clients.consumer.ConsumerRecord
+import ImplicitConversions._
 
 /**
   * End-to-end integration test that demonstrates how to perform a join between a KStream and a
@@ -64,8 +65,8 @@ object StreamToTableJoinScalaIntegrationTest extends TestSuite[KafkaLocalServer]
     //
     // Step 1: Configure and start the processor topology.
     //
-    val stringSerde: Serde[String] = Serdes.String()
-    val longSerde: Serde[Long] = Serdes.Long().asInstanceOf[Serde[Long]]
+    implicit val stringSerde: Serde[String] = Serdes.String()
+    implicit val longSerde: Serde[Long] = Serdes.Long().asInstanceOf[Serde[Long]]
 
     val streamsConfiguration: Properties = {
       val p = new Properties()
@@ -79,11 +80,18 @@ object StreamToTableJoinScalaIntegrationTest extends TestSuite[KafkaLocalServer]
       p
     }
 
+    implicit val consumedStringString = Consumed.`with`(stringSerde, stringSerde)
+
     val builder = new StreamsBuilderS()
 
-    val userClicksStream: KStreamS[String, Long] = builder.stream(userClicksTopic, Consumed.`with`(stringSerde, longSerde))
+    // implicit val consumedStringLong = Consumed.`with`(stringSerde, longSerde)
+    val userClicksStream: KStreamS[String, Long] = builder.stream(userClicksTopic)
 
-    val userRegionsTable: KTableS[String, String] = builder.table(userRegionsTopic, Consumed.`with`(stringSerde, stringSerde))
+    val userRegionsTable: KTableS[String, String] = builder.table(userRegionsTopic)
+
+    // implicit val producedStringLong = Produced.`with`(stringSerde, longSerde)
+
+    // implicit val serialized: Serialized[String, Long] = Serialized.`with`(stringSerde, longSerde)
 
     // Compute the total per region by summing the individual click counts per region.
     val clicksPerRegion: KTableS[String, Long] = 
@@ -96,13 +104,14 @@ object StreamToTableJoinScalaIntegrationTest extends TestSuite[KafkaLocalServer]
         .map((_, regionWithClicks) => regionWithClicks)
 
         // Compute the total per region by summing the individual click counts per region.
-        .groupByKey(Serialized.`with`(stringSerde, longSerde))
+        .groupByKey
+        // .groupByKey(perhaps(implicitly[Serialized[String, Long]]))
 
         // .reduce(_ + _, "local_state_data") // doesn't work in Scala 2.11, works with Scala 2.12
         .reduce((firstClicks: Long, secondClicks: Long) => firstClicks + secondClicks, "local_state_data")
 
     // Write the (continuously updating) results to the output topic.
-    clicksPerRegion.toStream.to(outputTopic, Produced.`with`(stringSerde, longSerde))
+    clicksPerRegion.toStream.to(outputTopic)
 
     val streams: KafkaStreams = new KafkaStreams(builder.build, streamsConfiguration)
 
