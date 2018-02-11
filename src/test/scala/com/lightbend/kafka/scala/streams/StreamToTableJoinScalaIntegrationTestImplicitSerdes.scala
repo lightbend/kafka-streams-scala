@@ -26,7 +26,6 @@ import com.lightbend.kafka.scala.server.{ KafkaLocalServer, MessageSender, Messa
 
 import org.apache.kafka.common.serialization._
 import org.apache.kafka.streams._
-import org.apache.kafka.streams.kstream.{ Serialized, Produced }
 
 import org.apache.kafka.clients.consumer.ConsumerRecord
 import ImplicitConversions._
@@ -44,7 +43,7 @@ import ImplicitConversions._
   * must be `static` and `public`) to a workaround combination of `@Rule def` and a `private val`.
   */
 
-object StreamToTableJoinScalaIntegrationTest extends TestSuite[KafkaLocalServer] with StreamToTableJoinTestData {
+object StreamToTableJoinScalaIntegrationTestImplicitSerdes extends TestSuite[KafkaLocalServer] with StreamToTableJoinTestData {
 
   override def setup(): KafkaLocalServer = {
     val s = KafkaLocalServer(true, Some(localStateDir))
@@ -70,8 +69,8 @@ object StreamToTableJoinScalaIntegrationTest extends TestSuite[KafkaLocalServer]
 
     val streamsConfiguration: Properties = {
       val p = new Properties()
-      p.put(StreamsConfig.APPLICATION_ID_CONFIG, s"stream-table-join-scala-integration-test-${scala.util.Random.nextInt(100)}")
-      p.put(StreamsConfig.CLIENT_ID_CONFIG, "join-scala-integration-test-standard-consumer")
+      p.put(StreamsConfig.APPLICATION_ID_CONFIG, s"stream-table-join-scala-integration-test-implicit-serdes-${scala.util.Random.nextInt(100)}")
+      p.put(StreamsConfig.CLIENT_ID_CONFIG, "join-scala-integration-test-implicit-serdes-standard-consumer")
       p.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, brokers)
       p.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.String.getClass.getName)
       p.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, Serdes.Long.getClass.getName)
@@ -80,18 +79,11 @@ object StreamToTableJoinScalaIntegrationTest extends TestSuite[KafkaLocalServer]
       p
     }
 
-    implicit val consumedStringString = Consumed.`with`(stringSerde, stringSerde)
-
     val builder = new StreamsBuilderS()
 
-    // implicit val consumedStringLong = Consumed.`with`(stringSerde, longSerde)
     val userClicksStream: KStreamS[String, Long] = builder.stream(userClicksTopic)
 
     val userRegionsTable: KTableS[String, String] = builder.table(userRegionsTopic)
-
-    // implicit val producedStringLong = Produced.`with`(stringSerde, longSerde)
-
-    // implicit val serialized: Serialized[String, Long] = Serialized.`with`(stringSerde, longSerde)
 
     // Compute the total per region by summing the individual click counts per region.
     val clicksPerRegion: KTableS[String, Long] = 
@@ -105,7 +97,6 @@ object StreamToTableJoinScalaIntegrationTest extends TestSuite[KafkaLocalServer]
 
         // Compute the total per region by summing the individual click counts per region.
         .groupByKey
-        // .groupByKey(perhaps(implicitly[Serialized[String, Long]]))
 
         // .reduce(_ + _, "local_state_data") // doesn't work in Scala 2.11, works with Scala 2.12
         .reduce((firstClicks: Long, secondClicks: Long) => firstClicks + secondClicks, "local_state_data")
@@ -165,42 +156,4 @@ object StreamToTableJoinScalaIntegrationTest extends TestSuite[KafkaLocalServer]
       // println(s"Get Message $record")
     }
   }
-}
-
-trait StreamToTableJoinTestData {
-  val brokers = "localhost:9092"
-
-  val userClicksTopic = s"user-clicks.${scala.util.Random.nextInt(100)}"
-  val userRegionsTopic = s"user-regions.${scala.util.Random.nextInt(100)}"
-  val outputTopic = s"output-topic.${scala.util.Random.nextInt(100)}"
-  val localStateDir = "local_state_data"
-
-  // Input 1: Clicks per user (multiple records allowed per user).
-  val userClicks: Seq[KeyValue[String, Long]] = Seq(
-    new KeyValue("alice", 13L),
-    new KeyValue("bob", 4L),
-    new KeyValue("chao", 25L),
-    new KeyValue("bob", 19L),
-    new KeyValue("dave", 56L),
-    new KeyValue("eve", 78L),
-    new KeyValue("alice", 40L),
-    new KeyValue("fang", 99L)
-  )
-
-  // Input 2: Region per user (multiple records allowed per user).
-  val userRegions: Seq[KeyValue[String, String]] = Seq(
-    new KeyValue("alice", "asia"), /* Alice lived in Asia originally... */
-    new KeyValue("bob", "americas"),
-    new KeyValue("chao", "asia"),
-    new KeyValue("dave", "europe"),
-    new KeyValue("alice", "europe"), /* ...but moved to Europe some time later. */
-    new KeyValue("eve", "americas"),
-    new KeyValue("fang", "asia")
-  )
-
-  val expectedClicksPerRegion: Seq[KeyValue[String, Long]] = Seq(
-    new KeyValue("americas", 101L),
-    new KeyValue("europe", 109L),
-    new KeyValue("asia", 124L)
-  )
 }
