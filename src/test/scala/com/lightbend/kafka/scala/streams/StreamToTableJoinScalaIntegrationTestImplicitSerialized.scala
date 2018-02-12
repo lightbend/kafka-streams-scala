@@ -74,7 +74,7 @@ object StreamToTableJoinScalaIntegrationTestImplicitSerialized extends TestSuite
       p.put(StreamsConfig.CLIENT_ID_CONFIG, "join-scala-integration-test-implicit-ser-standard-consumer")
       p.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, brokers)
       p.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.String.getClass.getName)
-      p.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, Serdes.Long.getClass.getName)
+      p.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, Serdes.String.getClass.getName)
       p.put(StreamsConfig.COMMIT_INTERVAL_MS_CONFIG, "100")
       p.put(StreamsConfig.STATE_DIR_CONFIG, localStateDir)
       p
@@ -105,9 +105,7 @@ object StreamToTableJoinScalaIntegrationTestImplicitSerialized extends TestSuite
 
         // Compute the total per region by summing the individual click counts per region.
         .groupByKey
-
-        // .reduce(_ + _, "local_state_data") // doesn't work in Scala 2.11, works with Scala 2.12
-        .reduce((firstClicks: Long, secondClicks: Long) => firstClicks + secondClicks, "local_state_data")
+        .reduce(_ + _)
 
     // Write the (continuously updating) results to the output topic.
     clicksPerRegion.toStream.to(outputTopic)
