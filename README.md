@@ -88,3 +88,21 @@ textLines
 ```
 
 Also, the explicit conversion `asJava` from a Scala `Iterable` to a Java `Iterable` is done for you by the Scala library.
+
+## Implicit Serdes
+
+One of the areas where the Java APIs' verbosity can be reduced is through a succinct way to pass serializers and de-serializers to the various functions. The library implementation offers implicit serdes to provide the serializers and de-serializers but at the same time also *allows the opt-in to use the default serializers registered in the Kafka Streams config*.
+
+The optional implicit pattern is implemented with the usual null-default-value trick, but with a difference. The technique used is adopted from [this blog post](http://missingfaktor.blogspot.in/2013/12/optional-implicit-trick-in-scala.html).
+
+The standard way to implement the null-default-value trick could not be applied as Scala [does not allow](https://stackoverflow.com/questions/4652095/why-does-the-scala-compiler-disallow-overloaded-methods-with-default-arguments/4652681#4652681) a mix of default values and function overloads. And we have quite a few examples of such overloaded functions in the Kafka Streams API set.
+
+The implementation allows implicits for the `Serde`s or for `Serialized`, `Consumed` and `Produced`. The test examples demonstrate both, though the implicits for Serdes make a cleaner implementation.
+
+The implementation does a trade-off in using the null-default-value trick as it moves some of the compile time errors to runtime.
+
+### Examples
+
+1. The example [StreamToTableJoinScalaIntegrationTestImplicitSerdes](https://github.com/lightbend/kafka-streams-scala/blob/develop/src/test/scala/com/lightbend/kafka/scala/streams/StreamToTableJoinScalaIntegrationTestImplicitSerdes.scala) demonstrates how to use the technique of implicit `Serde`s
+2. The example [StreamToTableJoinScalaIntegrationTestImplicitSerialized](https://github.com/lightbend/kafka-streams-scala/blob/develop/src/test/scala/com/lightbend/kafka/scala/streams/StreamToTableJoinScalaIntegrationTestImplicitSerialized.scala) demonstrates how to use the technique of implicit `Serialized`, `Consumed` and `Produced`.
+3. The example [StreamToTableJoinScalaIntegrationTestMixImplicitSerialized](https://github.com/lightbend/kafka-streams-scala/blob/develop/src/test/scala/com/lightbend/kafka/scala/streams/StreamToTableJoinScalaIntegrationTestMixImplicitSerialized.scala) demonstrates how to use the technique of how to use default serdes along with implicit `Serialized`, `Consumed` and `Produced`.
