@@ -25,10 +25,10 @@ import minitest.TestSuite
 import com.lightbend.kafka.scala.server.{ KafkaLocalServer, MessageSender, MessageListener, RecordProcessorTrait }
 
 import org.apache.kafka.common.serialization._
-import org.apache.kafka.streams.kstream._
 import org.apache.kafka.streams._
 
 import org.apache.kafka.clients.consumer.ConsumerRecord
+import ImplicitConversions._
 
 /**
   * End-to-end integration test that demonstrates how to perform a join between a KStream and a
@@ -43,7 +43,7 @@ import org.apache.kafka.clients.consumer.ConsumerRecord
   * must be `static` and `public`) to a workaround combination of `@Rule def` and a `private val`.
   */
 
-object StreamToTableJoinScalaIntegrationTest extends TestSuite[KafkaLocalServer] with StreamToTableJoinTestData {
+object StreamToTableJoinScalaIntegrationTestImplicitSerdes extends TestSuite[KafkaLocalServer] with StreamToTableJoinTestData {
 
   override def setup(): KafkaLocalServer = {
     val s = KafkaLocalServer(true, Some(localStateDir))
@@ -64,16 +64,16 @@ object StreamToTableJoinScalaIntegrationTest extends TestSuite[KafkaLocalServer]
     //
     // Step 1: Configure and start the processor topology.
     //
-    val stringSerde: Serde[String] = Serdes.String()
-    val longSerde: Serde[Long] = Serdes.Long().asInstanceOf[Serde[Long]]
+    implicit val stringSerde: Serde[String] = Serdes.String()
+    implicit val longSerde: Serde[Long] = Serdes.Long().asInstanceOf[Serde[Long]]
 
     val streamsConfiguration: Properties = {
       val p = new Properties()
-      p.put(StreamsConfig.APPLICATION_ID_CONFIG, s"stream-table-join-scala-integration-test-${scala.util.Random.nextInt(100)}")
-      p.put(StreamsConfig.CLIENT_ID_CONFIG, "join-scala-integration-test-standard-consumer")
+      p.put(StreamsConfig.APPLICATION_ID_CONFIG, s"stream-table-join-scala-integration-test-implicit-serdes-${scala.util.Random.nextInt(100)}")
+      p.put(StreamsConfig.CLIENT_ID_CONFIG, "join-scala-integration-test-implicit-serdes-standard-consumer")
       p.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, brokers)
       p.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.String.getClass.getName)
-      p.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, Serdes.Long.getClass.getName)
+      p.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, Serdes.String.getClass.getName)
       p.put(StreamsConfig.COMMIT_INTERVAL_MS_CONFIG, "100")
       p.put(StreamsConfig.STATE_DIR_CONFIG, localStateDir)
       p
@@ -81,9 +81,9 @@ object StreamToTableJoinScalaIntegrationTest extends TestSuite[KafkaLocalServer]
 
     val builder = new StreamsBuilderS()
 
-    val userClicksStream: KStreamS[String, Long] = builder.stream(userClicksTopic, Consumed.`with`(stringSerde, longSerde))
+    val userClicksStream: KStreamS[String, Long] = builder.stream(userClicksTopic)
 
-    val userRegionsTable: KTableS[String, String] = builder.table(userRegionsTopic, Consumed.`with`(stringSerde, stringSerde))
+    val userRegionsTable: KTableS[String, String] = builder.table(userRegionsTopic)
 
     // Compute the total per region by summing the individual click counts per region.
     val clicksPerRegion: KTableS[String, Long] = 
@@ -96,13 +96,11 @@ object StreamToTableJoinScalaIntegrationTest extends TestSuite[KafkaLocalServer]
         .map((_, regionWithClicks) => regionWithClicks)
 
         // Compute the total per region by summing the individual click counts per region.
-        .groupByKey(Serialized.`with`(stringSerde, longSerde))
-
-        // .reduce(_ + _, "local_state_data") // doesn't work in Scala 2.11, works with Scala 2.12
-        .reduce((firstClicks: Long, secondClicks: Long) => firstClicks + secondClicks, "local_state_data")
+        .groupByKey
+        .reduce(_ + _)
 
     // Write the (continuously updating) results to the output topic.
-    clicksPerRegion.toStream.to(outputTopic, Produced.`with`(stringSerde, longSerde))
+    clicksPerRegion.toStream.to(outputTopic)
 
     val streams: KafkaStreams = new KafkaStreams(builder.build, streamsConfiguration)
 
@@ -156,42 +154,4 @@ object StreamToTableJoinScalaIntegrationTest extends TestSuite[KafkaLocalServer]
       // println(s"Get Message $record")
     }
   }
-}
-
-trait StreamToTableJoinTestData {
-  val brokers = "localhost:9092"
-
-  val userClicksTopic = s"user-clicks.${scala.util.Random.nextInt(100)}"
-  val userRegionsTopic = s"user-regions.${scala.util.Random.nextInt(100)}"
-  val outputTopic = s"output-topic.${scala.util.Random.nextInt(100)}"
-  val localStateDir = "local_state_data"
-
-  // Input 1: Clicks per user (multiple records allowed per user).
-  val userClicks: Seq[KeyValue[String, Long]] = Seq(
-    new KeyValue("alice", 13L),
-    new KeyValue("bob", 4L),
-    new KeyValue("chao", 25L),
-    new KeyValue("bob", 19L),
-    new KeyValue("dave", 56L),
-    new KeyValue("eve", 78L),
-    new KeyValue("alice", 40L),
-    new KeyValue("fang", 99L)
-  )
-
-  // Input 2: Region per user (multiple records allowed per user).
-  val userRegions: Seq[KeyValue[String, String]] = Seq(
-    new KeyValue("alice", "asia"), /* Alice lived in Asia originally... */
-    new KeyValue("bob", "americas"),
-    new KeyValue("chao", "asia"),
-    new KeyValue("dave", "europe"),
-    new KeyValue("alice", "europe"), /* ...but moved to Europe some time later. */
-    new KeyValue("eve", "americas"),
-    new KeyValue("fang", "asia")
-  )
-
-  val expectedClicksPerRegion: Seq[KeyValue[String, Long]] = Seq(
-    new KeyValue("americas", 101L),
-    new KeyValue("europe", 109L),
-    new KeyValue("asia", 124L)
-  )
 }

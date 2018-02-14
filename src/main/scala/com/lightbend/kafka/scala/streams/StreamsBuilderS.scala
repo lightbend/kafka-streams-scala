@@ -20,50 +20,28 @@ import scala.collection.JavaConverters._
   */
 class StreamsBuilderS(inner: StreamsBuilder = new StreamsBuilder) {
 
-  def stream[K, V](topic: String): KStreamS[K, V] =
-    inner.stream[K, V](topic)
+  def stream[K, V](topic: String)(implicit consumed: Perhaps[Consumed[K, V]]): KStreamS[K, V] =
+    consumed.fold[KStreamS[K, V]] { inner.stream[K, V](topic) } { implicit ev => inner.stream[K, V](topic, ev) }
 
-  def stream[K, V](topic: String, consumed: Consumed[K, V]): KStreamS[K, V] =
-    inner.stream[K, V](topic, consumed)
+  def stream[K, V](topics: List[String])(implicit consumed: Perhaps[Consumed[K, V]]): KStreamS[K, V] =
+    consumed.fold[KStreamS[K, V]] { inner.stream[K, V](topics.asJava) } { implicit ev => inner.stream[K, V](topics.asJava, ev) }
 
-  def stream[K, V](topics: List[String]): KStreamS[K, V] =
-    inner.stream[K, V](topics.asJava)
+  def stream[K, V](topicPattern: Pattern)(implicit consumed: Perhaps[Consumed[K, V]]): KStreamS[K, V] =
+    consumed.fold[KStreamS[K, V]] { inner.stream[K, V](topicPattern) } { implicit ev => inner.stream[K, V](topicPattern, ev) }
 
-  def stream[K, V](topics: List[String], consumed: Consumed[K, V]): KStreamS[K, V] =
-    inner.stream[K, V](topics.asJava, consumed)
+  def table[K, V](topic: String)(implicit consumed: Perhaps[Consumed[K, V]]): KTableS[K, V] = 
+    consumed.fold[KTableS[K, V]] { inner.table[K, V](topic) } { implicit ev => inner.table[K, V](topic, ev) }
 
-  def stream[K, V](topicPattern: Pattern): KStreamS[K, V] =
-    inner.stream[K, V](topicPattern)
+  def table[K, V](topic: String, materialized: Materialized[K, V, KeyValueStore[Bytes, Array[Byte]]])
+    (implicit consumed: Perhaps[Consumed[K, V]]): KTableS[K, V] =
+    consumed.fold[KTableS[K, V]] { inner.table(topic, materialized) } { implicit ev => inner.table[K, V](topic, ev, materialized) }
 
-  def stream[K, V](topicPattern: Pattern, consumed: Consumed[K, V]): KStreamS[K, V] =
-    inner.stream[K, V](topicPattern, consumed)
+  def globalTable[K, V](topic: String)(implicit consumed: Perhaps[Consumed[K, V]]): GlobalKTable[K, V] =
+    consumed.fold[GlobalKTable[K, V]] { inner.globalTable(topic) } { implicit ev => inner.globalTable(topic, ev) }
 
-  def table[K, V](topic: String): KTableS[K, V] = inner.table[K, V](topic)
-
-  def table[K, V](topic: String, consumed: Consumed[K, V]): KTableS[K, V] =
-    inner.table[K, V](topic, consumed)
-
-  def table[K, V](topic: String, consumed: Consumed[K, V],
-                  materialized: Materialized[K, V, KeyValueStore[Bytes, Array[Byte]]]): KTableS[K, V] =
-    inner.table[K, V](topic, consumed, materialized)
-
-  def table[K, V](topic: String,
-                  materialized: Materialized[K, V, KeyValueStore[Bytes, Array[Byte]]]): KTableS[K, V] =
-    inner.table[K, V](topic, materialized)
-
-  def globalTable[K, V](topic: String): GlobalKTable[K, V] =
-    inner.globalTable(topic)
-
-  def globalTable[K, V](topic: String, consumed: Consumed[K, V]): GlobalKTable[K, V] =
-    inner.globalTable(topic, consumed)
-
-  def globalTable[K, V](topic: String, consumed: Consumed[K, V],
-                        materialized: Materialized[K, V, KeyValueStore[Bytes, Array[Byte]]]): GlobalKTable[K, V] =
-    inner.globalTable(topic, consumed, materialized)
-
-  def globalTable[K, V](topic: String,
-                        materialized: Materialized[K, V, KeyValueStore[Bytes, Array[Byte]]]): GlobalKTable[K, V] =
-    inner.globalTable(topic, materialized)
+  def globalTable[K, V](topic: String, materialized: Materialized[K, V, KeyValueStore[Bytes, Array[Byte]]])
+    (implicit consumed: Perhaps[Consumed[K, V]]): GlobalKTable[K, V] =
+    consumed.fold[GlobalKTable[K, V]] { inner.globalTable(topic, materialized) } { implicit ev => inner.globalTable(topic, ev, materialized) }
 
   def addStateStore(builder: StoreBuilder[_ <: StateStore]): StreamsBuilder = inner.addStateStore(builder)
 

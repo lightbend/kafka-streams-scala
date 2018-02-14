@@ -11,8 +11,8 @@ import com.lightbend.kafka.scala.server.{KafkaLocalServer, MessageListener, Mess
 import minitest.TestSuite
 import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.apache.kafka.common.serialization._
-import org.apache.kafka.streams.kstream.Produced
 import org.apache.kafka.streams.{KafkaStreams, KeyValue, StreamsConfig}
+import ImplicitConversions._
 
 object KafkaStreamsTest extends TestSuite[KafkaLocalServer] with WordCountTestData {
 
@@ -34,8 +34,8 @@ object KafkaStreamsTest extends TestSuite[KafkaLocalServer] with WordCountTestDa
     //
     // Step 1: Configure and start the processor topology.
     //
-    val stringSerde = Serdes.String()
-    val longSerde: Serde[Long] = Serdes.Long().asInstanceOf[Serde[Long]]
+    implicit val stringSerde = Serdes.String()
+    implicit val longSerde: Serde[Long] = Serdes.Long().asInstanceOf[Serde[Long]]
 
     val streamsConfiguration = new Properties()
     streamsConfiguration.put(StreamsConfig.APPLICATION_ID_CONFIG, s"wordcount-${scala.util.Random.nextInt(100)}")
@@ -57,7 +57,7 @@ object KafkaStreamsTest extends TestSuite[KafkaLocalServer] with WordCountTestDa
         .groupBy((k, v) => v)
         .count()
 
-    wordCounts.toStream.to(outputTopic, Produced.`with`(stringSerde, longSerde))
+    wordCounts.toStream.to(outputTopic)
 
     val streams = new KafkaStreams(builder.build, streamsConfiguration)
     streams.start()

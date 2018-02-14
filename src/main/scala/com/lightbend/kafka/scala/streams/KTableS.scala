@@ -48,14 +48,12 @@ class KTableS[K, V](val inner: KTable[K, V]) {
     inner.toStream[KR](mapper.asKeyValueMapper)
   }
 
-  def groupBy[KR, VR](selector: (K, V) => (KR, VR)): KGroupedTableS[KR, VR] = {
-    inner.groupBy(selector.asKeyValueMapper)
-  }
-
-  def groupBy[KR, VR](selector: (K, V) => (KR, VR),
-    serialized: Serialized[KR, VR]): KGroupedTableS[KR, VR] = {
-
-    inner.groupBy(selector.asKeyValueMapper, serialized)
+  def groupBy[KR, VR](selector: (K, V) => (KR, VR))(implicit serialized: Perhaps[Serialized[KR, VR]]): KGroupedTableS[KR, VR] = {
+    serialized.fold[KGroupedTableS[KR, VR]] { 
+      inner.groupBy(selector.asKeyValueMapper) 
+    } { implicit ev => 
+      inner.groupBy(selector.asKeyValueMapper, ev) 
+    }
   }
 
   def join[VO, VR](other: KTableS[K, VO],
