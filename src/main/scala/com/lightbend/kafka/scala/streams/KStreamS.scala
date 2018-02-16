@@ -135,30 +135,21 @@ class KStreamS[K, V](val inner: KStream[K, V]) {
 
   def join[VO, VR](otherStream: KStreamS[K, VO],
     joiner: (V, VO) => VR,
-    windows: JoinWindows): KStreamS[K, VR] = {
+    windows: JoinWindows)(implicit joined: Perhaps[Joined[K, V, VO]]): KStreamS[K, VR] = {
 
-    inner.join[VO, VR](otherStream.inner, joiner.asValueJoiner, windows)
-  }
-
-  def join[VO, VR](otherStream: KStreamS[K, VO],
-    joiner: (V, VO) => VR,
-    windows: JoinWindows,
-    joined: Joined[K, V, VO]): KStreamS[K, VR] = {
-
-    inner.join[VO, VR](otherStream.inner, joiner.asValueJoiner, windows, joined)
+    joined.fold[KStreamS[K, VR]] { 
+      inner.join[VO, VR](otherStream.inner, joiner.asValueJoiner, windows) } { implicit ev => 
+      inner.join[VO, VR](otherStream.inner, joiner.asValueJoiner, windows, ev) 
+    }
   }
 
   def join[VT, VR](table: KTableS[K, VT],
-    joiner: (V, VT) => VR): KStreamS[K, VR] = {
+    joiner: (V, VT) => VR)(implicit joined: Perhaps[Joined[K, V, VT]]): KStreamS[K, VR] = {
 
-    inner.join[VT, VR](table.inner, joiner.asValueJoiner)
-  }
-
-  def join[VT, VR](table: KTableS[K, VT],
-    joiner: (V, VT) => VR,
-    joined: Joined[K, V, VT]): KStreamS[K, VR] = {
-
-    inner.join[VT, VR](table.inner, joiner.asValueJoiner, joined)
+    joined.fold[KStreamS[K, VR]] { 
+      inner.leftJoin[VT, VR](table.inner, joiner.asValueJoiner) } { implicit ev => 
+      inner.leftJoin[VT, VR](table.inner, joiner.asValueJoiner, ev) 
+    }
   }
 
   def join[GK, GV, RV](globalKTable: GlobalKTable[GK, GV],
@@ -170,30 +161,21 @@ class KStreamS[K, V](val inner: KStream[K, V]) {
 
   def leftJoin[VO, VR](otherStream: KStreamS[K, VO],
     joiner: (V, VO) => VR,
-    windows: JoinWindows): KStreamS[K, VR] = {
+    windows: JoinWindows)(implicit joined: Perhaps[Joined[K, V, VO]]): KStreamS[K, VR] = {
 
-    inner.leftJoin[VO, VR](otherStream.inner, joiner.asValueJoiner, windows)
-  }
-
-  def leftJoin[VO, VR](otherStream: KStreamS[K, VO],
-    joiner: (V, VO) => VR,
-    windows: JoinWindows,
-    joined: Joined[K, V, VO]): KStreamS[K, VR] = {
-
-    inner.leftJoin[VO, VR](otherStream.inner, joiner.asValueJoiner, windows, joined)
+    joined.fold[KStreamS[K, VR]] { 
+      inner.leftJoin[VO, VR](otherStream.inner, joiner.asValueJoiner, windows) } { implicit ev => 
+      inner.leftJoin[VO, VR](otherStream.inner, joiner.asValueJoiner, windows, ev) 
+    }
   }
 
   def leftJoin[VT, VR](table: KTableS[K, VT],
-    joiner: (V, VT) => VR): KStreamS[K, VR] = {
+    joiner: (V, VT) => VR)(implicit joined: Perhaps[Joined[K, V, VT]]): KStreamS[K, VR] = {
 
-    inner.leftJoin[VT, VR](table.inner, joiner.asValueJoiner)
-  }
-
-  def leftJoin[VT, VR](table: KTableS[K, VT],
-    joiner: (V, VT) => VR,
-    joined: Joined[K, V, VT]): KStreamS[K, VR] = {
-
-    inner.leftJoin[VT, VR](table.inner, joiner.asValueJoiner, joined)
+    joined.fold[KStreamS[K, VR]] { 
+      inner.leftJoin[VT, VR](table.inner, joiner.asValueJoiner) } { implicit ev => 
+      inner.leftJoin[VT, VR](table.inner, joiner.asValueJoiner, ev) 
+    }
   }
 
   def leftJoin[GK, GV, RV](globalKTable: GlobalKTable[GK, GV],
@@ -205,17 +187,12 @@ class KStreamS[K, V](val inner: KStream[K, V]) {
 
   def outerJoin[VO, VR](otherStream: KStreamS[K, VO],
     joiner: (V, VO) => VR,
-    windows: JoinWindows): KStreamS[K, VR] = {
+    windows: JoinWindows)(implicit joined: Perhaps[Joined[K, V, VO]]): KStreamS[K, VR] = {
 
-    inner.outerJoin[VO, VR](otherStream.inner, joiner.asValueJoiner, windows)
-  }
-
-  def outerJoin[VO, VR](otherStream: KStreamS[K, VO],
-    joiner: (V, VO) => VR,
-    windows: JoinWindows,
-    joined: Joined[K, V, VO]): KStreamS[K, VR] = {
-
-    inner.outerJoin[VO, VR](otherStream.inner, joiner.asValueJoiner, windows, joined)
+    joined.fold[KStreamS[K, VR]] { 
+      inner.outerJoin[VO, VR](otherStream.inner, joiner.asValueJoiner, windows) } { implicit ev => 
+      inner.outerJoin[VO, VR](otherStream.inner, joiner.asValueJoiner, windows, ev) 
+    }
   }
 
   def merge(stream: KStreamS[K, V]): KStreamS[K, V] = inner.merge(stream)

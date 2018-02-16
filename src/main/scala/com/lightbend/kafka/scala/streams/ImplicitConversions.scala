@@ -52,12 +52,17 @@ object ImplicitConversions {
   // we would also like to allow users implicit serdes
   // and these implicits will convert them to `Serialized`, `Produced` or `Consumed`
 
-  implicit def SerializedFromSerde[K,V](implicit keySerde: Serde[K], valueSerde: Serde[V]): Serialized[K,V] = 
+  implicit def SerializedFromSerde[K, V](implicit keySerde: Serde[K], valueSerde: Serde[V]): Serialized[K, V] = 
     Serialized.`with`(keySerde, valueSerde)
 
-  implicit def ConsumedFromSerde[K,V](implicit keySerde: Serde[K], valueSerde: Serde[V]): Consumed[K,V] = 
+  implicit def ConsumedFromSerde[K, V](implicit keySerde: Serde[K], valueSerde: Serde[V]): Consumed[K, V] = 
     Consumed.`with`(keySerde, valueSerde)
 
-  implicit def ProducedFromSerde[K,V](implicit keySerde: Serde[K], valueSerde: Serde[V]): Produced[K,V] = 
+  implicit def ProducedFromSerde[K, V](implicit keySerde: Serde[K], valueSerde: Serde[V]): Produced[K, V] = 
     Produced.`with`(keySerde, valueSerde)
+
+  implicit def JoinedFromKVOSerde[K, V, VO](implicit keySerde: Serde[K], valueSerde: Serde[V], otherValueSerde: Serde[VO]): Joined[K, V, VO] = {
+    println(s"ks: $keySerde vs: $valueSerde ovs: $otherValueSerde")
+    Joined.`with`(keySerde, valueSerde, otherValueSerde)
+  }
 }
