@@ -16,7 +16,7 @@
 package com.lightbend.kafka.scala.streams.typesafe
 
 import com.lightbend.kafka.scala.streams.FunctionConversions._
-import com.lightbend.kafka.scala.streams.typesafe.implicits._
+import com.lightbend.kafka.scala.streams.typesafe.ImplicitConverters._
 import org.apache.kafka.streams.kstream._
 
 /** Wraps the Java class [[KGroupedStream]] and delegates method calls to the

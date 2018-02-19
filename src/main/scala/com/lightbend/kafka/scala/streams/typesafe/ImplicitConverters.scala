@@ -26,7 +26,7 @@ import org.apache.kafka.streams.kstream._
   * that no new objects get allocated for the `.safe` call (only the TSxx
   * objects get allocated).
   */
-private[typesafe] object implicits {
+object ImplicitConverters {
 
   implicit final class TSKStreamAuto[K, V]
   (val inner: KStream[K, V])
