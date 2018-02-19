@@ -46,6 +46,10 @@ object FunctionConversions {
     def asReducer: Reducer[V] = (v1, v2) => f(v1, v2)
   }
 
+  implicit class InitializerFromNameRef[T](f: => T) {
+    def asInitializer: Initializer[T] = () => f
+  }
+
   implicit class InitializerFromFunction[T](val f: () => T) extends AnyVal {
     def asInitializer: Initializer[T] = () => f()
   }
