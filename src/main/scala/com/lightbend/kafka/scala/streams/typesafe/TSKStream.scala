@@ -171,6 +171,7 @@ class TSKStream[K, V](protected[typesafe] override val unsafe: KStream[K, V])
           override def init(context: ProcessorContext): Unit =
             transformerS.init(context)
 
+          @deprecated ("Please use Punctuator functional interface at https://kafka.apache.org/10/javadoc/org/apache/kafka/streams/processor/Punctuator.html instead", "0.1.3")
           override def punctuate(timestamp: Long): KeyValue[K1, V1] = {
             val (k1, v1) = transformerS.punctuate(timestamp)
             KeyValue.pair[K1, V1](k1, v1)
