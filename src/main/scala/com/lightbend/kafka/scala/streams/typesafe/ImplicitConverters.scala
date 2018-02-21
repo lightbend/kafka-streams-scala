@@ -28,43 +28,42 @@ import org.apache.kafka.streams.kstream._
   */
 object ImplicitConverters {
 
-  implicit final class TSKStreamAuto[K, V]
+  implicit class TSKStreamAuto[K, V]
   (val inner: KStream[K, V])
-    extends
-      AnyVal {
+    extends AnyVal {
     def safe: TSKStream[K, V] =
       new TSKStream[K, V](inner)
   }
 
-  implicit final class TSKTableAuto[K, V]
+  implicit class TSKTableAuto[K, V]
   (val inner: KTable[K, V])
     extends AnyVal {
     def safe: TSKTable[K, V] =
       new TSKTable[K, V](inner)
   }
 
-  implicit final class TSKGroupedStreamAuto[K, V]
+  implicit class TSKGroupedStreamAuto[K, V]
   (val inner: KGroupedStream[K, V])
     extends AnyVal {
     def safe: TSKGroupedStream[K, V] =
       new TSKGroupedStream[K, V](inner)
   }
 
-  implicit final class TSKGroupedTableAuto[K, V]
+  implicit class TSKGroupedTableAuto[K, V]
   (val inner: KGroupedTable[K, V])
     extends AnyVal {
     def safe: TSKGroupedTable[K, V] =
       new TSKGroupedTable[K, V](inner)
   }
 
-  implicit final class TSSessionWindowedKStreamAuto[K, V]
+  implicit class TSSessionWindowedKStreamAuto[K, V]
   (val inner: SessionWindowedKStream[K, V])
     extends AnyVal {
     def safe: TSSessionWindowedKStream[K, V] =
       new TSSessionWindowedKStream[K, V](inner)
   }
 
-  implicit final class TSTimeWindowedKStreamAuto[K, V]
+  implicit class TSTimeWindowedKStreamAuto[K, V]
   (val inner: TimeWindowedKStream[K, V])
     extends AnyVal {
     def safe: TSTimeWindowedKStream[K, V] =
