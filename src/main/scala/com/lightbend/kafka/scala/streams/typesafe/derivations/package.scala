@@ -71,10 +71,10 @@ package object derivations {
   }
 
   trait defaultSerdes {
-    implicit val ScalaLongSerde: Serde[Long] =
+    implicit val scalaLongSerde: Serde[Long] =
       Serdes.Long().asInstanceOf[Serde[Long]]
 
-    implicit val ScalaDoubleSerde: Serde[Double] =
+    implicit val scalaDoubleSerde: Serde[Double] =
       Serdes.Double().asInstanceOf[Serde[Double]]
 
     implicit val stringSerde: Serde[String] = Serdes.String()
