@@ -26,6 +26,7 @@ import com.lightbend.kafka.scala.server.{ KafkaLocalServer, MessageSender, Messa
 
 import org.apache.kafka.common.serialization._
 import org.apache.kafka.streams._
+import org.apache.kafka.streams.kstream.Joined
 
 import org.apache.kafka.clients.consumer.ConsumerRecord
 import ImplicitConversions._
@@ -78,6 +79,22 @@ object StreamToTableJoinScalaIntegrationTestImplicitSerdes extends TestSuite[Kaf
       p.put(StreamsConfig.STATE_DIR_CONFIG, localStateDir)
       p
     }
+
+    // this will make the leftJoin use the key and value serde from this implicit, while use the default
+    // from config for otherValueSerde
+    implicit val joined: Joined[String, Long, String] = Joined.keySerde(stringSerde).withValueSerde(longSerde)
+
+    /**
+     * Patterns for handling serdes in leftJoin (similar will be the handling of all join functions that accept a Joined argument)
+     *
+     * a. For `Joined[K, V, VO`], just make the implicit serdes available for `K`, `V` and `VO`. In the following
+     *    example of `leftJoin`, we have `Joined[String, Long, String]` and have the implicits `stringSerde` and
+     *    `longSerdes` available in scope. This should be enough to make an implicit `Joined` for `leftJoin`.
+     *
+     * b. Want to use default serdes from config for key and otherValue. Add the implicit `Joined` in scope as:
+     *    `implicit val joined: Joined[String, Long, String] = Joined.valueSerde(longSerde)`. The other serdes will
+     *    be picked up as `null` and used from the config.
+     */ 
 
     val builder = new StreamsBuilderS()
 
