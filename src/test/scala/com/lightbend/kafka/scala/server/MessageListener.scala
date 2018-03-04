@@ -35,10 +35,10 @@ object MessageListener {
 }
 
 class MessageListener[K, V](
-  brokers: String, 
-  topic: String, 
-  group: String, 
-  keyDeserializer: String, 
+  brokers: String,
+  topic: String,
+  group: String,
+  keyDeserializer: String,
   valueDeserializer: String,
   processor: RecordProcessorTrait[K, V]) {
 
@@ -57,7 +57,7 @@ class MessageListener[K, V](
     while (totalPollTimeMs < maxTotalPollTimeMs && continueConsuming(consumedValues.size, maxMessages)) {
       totalPollTimeMs = totalPollTimeMs + pollIntervalMs
       val records = consumer.poll(pollIntervalMs)
-      records.asScala.foreach { record => 
+      records.asScala.foreach { record =>
         processor.processRecord(record)
         consumedValues += new KeyValue(record.key, record.value)
       }
@@ -70,8 +70,8 @@ class MessageListener[K, V](
     maxMessages <= 0 || messagesConsumed < maxMessages
   }
 
-  def waitUntilMinKeyValueRecordsReceived(expectedNumRecords: Int, waitTime: Long, 
-    startTime: Long = System.currentTimeMillis(), 
+  def waitUntilMinKeyValueRecordsReceived(expectedNumRecords: Int, waitTime: Long,
+    startTime: Long = System.currentTimeMillis(),
     accumData: ListBuffer[KeyValue[K, V]] = ListBuffer.empty[KeyValue[K, V]]): List[KeyValue[K, V]] = {
 
     val readData = readKeyValues(-1)

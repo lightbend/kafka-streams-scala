@@ -12,7 +12,7 @@ import FunctionConversions._
 
 /**
  * Wraps the Java class KTable and delegates method calls to the underlying Java object.
- */ 
+ */
 class KTableS[K, V](val inner: KTable[K, V]) {
 
   def filter(predicate: (K, V) => Boolean): KTableS[K, V] = {
@@ -21,7 +21,7 @@ class KTableS[K, V](val inner: KTable[K, V]) {
 
   def filter(predicate: (K, V) => Boolean,
     materialized: Materialized[K, V, KeyValueStore[Bytes, Array[Byte]]]): KTableS[K, V] = {
-    inner.filter(predicate(_, _), materialized)
+    inner.filter(predicate, materialized)
   }
 
   def filterNot(predicate: (K, V) => Boolean): KTableS[K, V] = {
@@ -49,10 +49,10 @@ class KTableS[K, V](val inner: KTable[K, V]) {
   }
 
   def groupBy[KR, VR](selector: (K, V) => (KR, VR))(implicit serialized: Perhaps[Serialized[KR, VR]]): KGroupedTableS[KR, VR] = {
-    serialized.fold[KGroupedTableS[KR, VR]] { 
-      inner.groupBy(selector.asKeyValueMapper) 
-    } { implicit ev => 
-      inner.groupBy(selector.asKeyValueMapper, ev) 
+    serialized.fold[KGroupedTableS[KR, VR]] {
+      inner.groupBy(selector.asKeyValueMapper)
+    } { implicit ev =>
+      inner.groupBy(selector.asKeyValueMapper, ev)
     }
   }
 

@@ -30,7 +30,7 @@ class TopCMSSerializer[T] extends Serializer[TopCMS[T]] {
   }
 
   override def serialize(topic: String, cms: TopCMS[T]): Array[Byte] =
-    if (cms == null) null
+    if (cms == null) null // scalastyle:ignore
     else ScalaKryoInstantiator.defaultPool.toBytesWithClass(cms)
 
   override def close(): Unit = {
@@ -45,11 +45,12 @@ class TopCMSDeserializer[T] extends Deserializer[TopCMS[T]] {
     // nothing to do
   }
 
+  //scalastyle:off null
   override def deserialize(topic: String, bytes: Array[Byte]): TopCMS[T] =
     if (bytes == null) null
     else if (bytes.isEmpty) throw new SerializationException("byte array must not be empty")
     else ScalaKryoInstantiator.defaultPool.fromBytes(bytes).asInstanceOf[TopCMS[T]]
-
+  //scalastyle:on null
   override def close(): Unit = {
     // nothing to do
   }

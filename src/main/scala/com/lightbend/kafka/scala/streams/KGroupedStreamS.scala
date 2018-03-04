@@ -14,7 +14,7 @@ import FunctionConversions._
 
 /**
  * Wraps the Java class KGroupedStream and delegates method calls to the underlying Java object.
- */ 
+ */
 class KGroupedStreamS[K, V](inner: KGroupedStream[K, V]) {
 
   def count(): KTableS[K, Long] = {

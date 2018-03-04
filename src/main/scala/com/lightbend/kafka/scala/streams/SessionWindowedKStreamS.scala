@@ -13,7 +13,7 @@ import ImplicitConversions._
 
 /**
  * Wraps the Java class SessionWindowedKStream and delegates method calls to the underlying Java object.
- */ 
+ */
 class SessionWindowedKStreamS[K, V](val inner: SessionWindowedKStream[K, V]) {
 
   def aggregate[VR](initializer: () => VR,
@@ -36,7 +36,7 @@ class SessionWindowedKStreamS[K, V](val inner: SessionWindowedKStream[K, V]) {
     c.mapValues[Long](Long2long(_))
   }
 
-  def count(materialized: Materialized[K, Long, SessionStore[Bytes, Array[Byte]]]): KTableS[Windowed[K], Long] = 
+  def count(materialized: Materialized[K, Long, SessionStore[Bytes, Array[Byte]]]): KTableS[Windowed[K], Long] =
     inner.count(materialized)
 
   def reduce(reducer: (V, V) => V): KTableS[Windowed[K], V] = {
@@ -45,8 +45,6 @@ class SessionWindowedKStreamS[K, V](val inner: SessionWindowedKStream[K, V]) {
 
   def reduce(reducer: (V, V) => V,
     materialized: Materialized[K, V, SessionStore[Bytes, Array[Byte]]]): KTableS[Windowed[K], V] = {
-
-    val reducerJ: Reducer[V] = (v1: V, v2: V) => reducer(v1, v2)
     inner.reduce(reducer.asReducer, materialized)
   }
 }
