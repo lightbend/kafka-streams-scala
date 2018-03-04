@@ -7,21 +7,23 @@ package com.lightbend.kafka.scala.streams
 import java.util.Properties
 
 import com.lightbend.kafka.scala.server.{KafkaLocalServer, MessageSender}
+import com.typesafe.scalalogging.LazyLogging
 import minitest.TestSuite
 import org.apache.kafka.common.serialization._
-import org.apache.kafka.streams.processor.{AbstractProcessor, ProcessorContext, PunctuationType, Punctuator}
+import org.apache.kafka.streams.processor.{AbstractProcessor, ProcessorContext, PunctuationType}
 import org.apache.kafka.streams.{KafkaStreams, StreamsConfig, Topology}
 
 /**
   * This sample is using usage of punctuate, which is significantly changed in version 1.0 and
   * Kafka Streams Processor APIs (https://kafka.apache.org/10/documentation/streams/developer-guide/processor-api.html)
-  * This code is based on the article "Problems With Kafka Streams: The Saga Continues" (https://dzone.com/articles/problems-with-kafka-streams-the-saga-continues)
+  * This code is based on the article "Problems With Kafka Streams:
+  * The Saga Continues" (https://dzone.com/articles/problems-with-kafka-streams-the-saga-continues)
   */
 
-object PunctuateTest extends TestSuite[KafkaLocalServer] with PunctuateTestData {
+object PunctuateTest extends TestSuite[KafkaLocalServer] with PunctuateTestData with LazyLogging {
 
   override def setup(): KafkaLocalServer = {
-    val s = KafkaLocalServer(true, Some(localStateDir))
+    val s = KafkaLocalServer(cleanOnStart = true, Some(localStateDir))
     s.start()
     s
   }
@@ -54,7 +56,7 @@ object PunctuateTest extends TestSuite[KafkaLocalServer] with PunctuateTestData 
     val streams = new KafkaStreams(topology, streamsConfiguration)
     streams.start()
     // Allpw time for the streams to start up
-    Thread.sleep(5000l)
+    Thread.sleep(5000L)
 
 
     //
@@ -63,11 +65,11 @@ object PunctuateTest extends TestSuite[KafkaLocalServer] with PunctuateTestData 
     val sender = MessageSender[String, String](brokers, classOf[StringSerializer].getName, classOf[StringSerializer].getName)
     for (i <- 0 to 15){
       sender.writeValue(inputTopic, i.toString)
-      Thread.sleep(1000l)     // sleep for 1 sec
+      Thread.sleep(1000L)     // sleep for 1 sec
     }
 
     // End test
-    Thread.sleep(5000l)     // sleep for 10 sec
+    Thread.sleep(5000L)     // sleep for 10 sec
     streams.close()
   }
 
@@ -78,15 +80,13 @@ object PunctuateTest extends TestSuite[KafkaLocalServer] with PunctuateTestData 
 
     override def init(context: ProcessorContext): Unit = {
       ctx = context
-      ctx.schedule(punctuateTime, PunctuationType.STREAM_TIME, new Punctuator {
-        override def punctuate(timestamp: Long): Unit = {
-          println(s"Punctuator called at $timestamp, current message $message")
-        }
+      ctx.schedule(punctuateTime, PunctuationType.STREAM_TIME, (timestamp: Long) => {
+        logger.info(s"Punctuator called at $timestamp, current message $message")
       })
     }
 
     override def process(key: String, value: String): Unit = {
-      println(s"Processing new message $value")
+      logger.info(s"Processing new message $value")
       message = value
     }
   }

@@ -13,11 +13,12 @@ import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.apache.kafka.common.serialization._
 import org.apache.kafka.streams.{KafkaStreams, KeyValue, StreamsConfig}
 import ImplicitConversions._
+import com.typesafe.scalalogging.LazyLogging
 
-object KafkaStreamsTest extends TestSuite[KafkaLocalServer] with WordCountTestData {
+object KafkaStreamsTest extends TestSuite[KafkaLocalServer] with WordCountTestData with LazyLogging {
 
   override def setup(): KafkaLocalServer = {
-    val s = KafkaLocalServer(true, Some(localStateDir))
+    val s = KafkaLocalServer(cleanOnStart = true, Some(localStateDir))
     s.start()
     s
   }
@@ -34,7 +35,7 @@ object KafkaStreamsTest extends TestSuite[KafkaLocalServer] with WordCountTestDa
     //
     // Step 1: Configure and start the processor topology.
     //
-    implicit val stringSerde = Serdes.String()
+    implicit val stringSerde: Serde[String] = Serdes.String()
     implicit val longSerde: Serde[Long] = Serdes.Long().asInstanceOf[Serde[Long]]
 
     val streamsConfiguration = new Properties()
@@ -59,7 +60,7 @@ object KafkaStreamsTest extends TestSuite[KafkaLocalServer] with WordCountTestDa
 
     wordCounts.toStream.to(outputTopic)
 
-    val streams = new KafkaStreams(builder.build, streamsConfiguration)
+    val streams = new KafkaStreams(builder.build(), streamsConfiguration)
     streams.start()
 
     //
@@ -86,7 +87,7 @@ object KafkaStreamsTest extends TestSuite[KafkaLocalServer] with WordCountTestDa
 
   class RecordProcessor extends RecordProcessorTrait[String, Long] {
     override def processRecord(record: ConsumerRecord[String, Long]): Unit = {
-      // println(s"Get Message $record")
+      // logger.info(s"Get Message $record")
     }
   }
 
