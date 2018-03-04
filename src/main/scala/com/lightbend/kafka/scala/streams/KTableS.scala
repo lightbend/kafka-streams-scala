@@ -21,7 +21,7 @@ class KTableS[K, V](val inner: KTable[K, V]) {
 
   def filter(predicate: (K, V) => Boolean,
     materialized: Materialized[K, V, KeyValueStore[Bytes, Array[Byte]]]): KTableS[K, V] = {
-    inner.filter(predicate(_, _), materialized)
+    inner.filter(predicate, materialized)
   }
 
   def filterNot(predicate: (K, V) => Boolean): KTableS[K, V] = {
