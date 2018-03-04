@@ -22,7 +22,7 @@ package com.lightbend.kafka.scala.streams
 
 import java.util.Properties
 
-import com.lightbend.kafka.scala.server.{KafkaLocalServer, MessageListener, RecordProcessorTrait}
+import com.lightbend.kafka.scala.server.{KafkaLocalServer, MessageListener, MessageSender, RecordProcessorTrait}
 import com.lightbend.kafka.scala.streams.algebird.{CMSStore, CMSStoreBuilder}
 import minitest.TestSuite
 import org.apache.kafka.clients.consumer.ConsumerRecord
@@ -151,6 +151,11 @@ object ProbabilisticCountingScalaIntegrationTest extends TestSuite[KafkaLocalSer
 
     val streams: KafkaStreams = new KafkaStreams(builder.build(), streamsConfiguration)
     streams.start()
+
+    // Step 2: Publish some input text lines.
+    val sender = MessageSender[String, String](brokers, classOf[StringSerializer].getName, classOf[StringSerializer].getName)
+    sender.batchWriteValue(inputTopic, inputTextLines)
+    // Step 3: Verify the application's output data.
 
     val listener = MessageListener(brokers, outputTopic, "probwordcountgroup",
       classOf[StringDeserializer].getName,
