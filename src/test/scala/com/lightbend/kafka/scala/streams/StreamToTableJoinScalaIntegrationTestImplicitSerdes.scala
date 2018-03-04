@@ -21,15 +21,15 @@
 package com.lightbend.kafka.scala.streams
 
 import java.util.Properties
-import minitest.TestSuite
-import com.lightbend.kafka.scala.server.{ KafkaLocalServer, MessageSender, MessageListener, RecordProcessorTrait }
 
+import minitest.TestSuite
+import com.lightbend.kafka.scala.server.{KafkaLocalServer, MessageListener, MessageSender, RecordProcessorTrait}
 import org.apache.kafka.common.serialization._
 import org.apache.kafka.streams._
 import org.apache.kafka.streams.kstream.Joined
-
 import org.apache.kafka.clients.consumer.ConsumerRecord
 import ImplicitConversions._
+import com.typesafe.scalalogging.LazyLogging
 
 /**
   * End-to-end integration test that demonstrates how to perform a join between a KStream and a
@@ -44,10 +44,11 @@ import ImplicitConversions._
   * must be `static` and `public`) to a workaround combination of `@Rule def` and a `private val`.
   */
 
-object StreamToTableJoinScalaIntegrationTestImplicitSerdes extends TestSuite[KafkaLocalServer] with StreamToTableJoinTestData {
+object StreamToTableJoinScalaIntegrationTestImplicitSerdes extends TestSuite[KafkaLocalServer]
+  with StreamToTableJoinTestData with LazyLogging {
 
   override def setup(): KafkaLocalServer = {
-    val s = KafkaLocalServer(true, Some(localStateDir))
+    val s = KafkaLocalServer(cleanOnStart = true, Some(localStateDir))
     s.start()
     s
   }
@@ -94,7 +95,7 @@ object StreamToTableJoinScalaIntegrationTestImplicitSerdes extends TestSuite[Kaf
      * b. Want to use default serdes from config for key and otherValue. Add the implicit `Joined` in scope as:
      *    `implicit val joined: Joined[String, Long, String] = Joined.valueSerde(longSerde)`. The other serdes will
      *    be picked up as `null` and used from the config.
-     */ 
+     */
 
     val builder = new StreamsBuilderS()
 
@@ -103,7 +104,7 @@ object StreamToTableJoinScalaIntegrationTestImplicitSerdes extends TestSuite[Kaf
     val userRegionsTable: KTableS[String, String] = builder.table(userRegionsTopic)
 
     // Compute the total per region by summing the individual click counts per region.
-    val clicksPerRegion: KTableS[String, Long] = 
+    val clicksPerRegion: KTableS[String, Long] =
       userClicksStream
 
         // Join the stream against the table.
@@ -119,20 +120,18 @@ object StreamToTableJoinScalaIntegrationTestImplicitSerdes extends TestSuite[Kaf
     // Write the (continuously updating) results to the output topic.
     clicksPerRegion.toStream.to(outputTopic)
 
-    val streams: KafkaStreams = new KafkaStreams(builder.build, streamsConfiguration)
+    val streams: KafkaStreams = new KafkaStreams(builder.build(), streamsConfiguration)
 
-    streams.setUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
-      override def uncaughtException(t: Thread, e: Throwable): Unit = try {
-        println(s"Stream terminated because of uncaught exception .. Shutting down app", e)
-        e.printStackTrace
-        val closed = streams.close()
-        println(s"Exiting application after streams close ($closed)")
-      } catch {
-        case x: Exception => x.printStackTrace
-      } finally {
-        println("Exiting application ..")
-        System.exit(-1)
-      }
+    streams.setUncaughtExceptionHandler((t: Thread, e: Throwable) => try {
+      logger.error(s"Stream terminated because of uncaught exception .. Shutting down app", e)
+      e.printStackTrace()
+      val closed: Unit = streams.close()
+      logger.info(s"Exiting application after streams close ($closed)")
+    } catch {
+      case x: Exception => x.printStackTrace()
+    } finally {
+      logger.debug("Exiting application ..")
+      System.exit(-1)
     })
 
     streams.start()
@@ -143,21 +142,21 @@ object StreamToTableJoinScalaIntegrationTestImplicitSerdes extends TestSuite[Kaf
     // To keep this code example simple and easier to understand/reason about, we publish all
     // user-region records before any user-click records (cf. step 3).  In practice though,
     // data records would typically be arriving concurrently in both input streams/topics.
-    val sender1 = MessageSender[String, String](brokers, classOf[StringSerializer].getName, classOf[StringSerializer].getName) 
+    val sender1 = MessageSender[String, String](brokers, classOf[StringSerializer].getName, classOf[StringSerializer].getName)
     userRegions.foreach(r => sender1.writeKeyValue(userRegionsTopic, r.key, r.value))
 
     //
     // Step 3: Publish some user click events.
     //
-    val sender2 = MessageSender[String, Long](brokers, classOf[StringSerializer].getName, classOf[LongSerializer].getName) 
+    val sender2 = MessageSender[String, Long](brokers, classOf[StringSerializer].getName, classOf[LongSerializer].getName)
     userClicks.foreach(r => sender2.writeKeyValue(userClicksTopic, r.key, r.value))
 
     //
     // Step 4: Verify the application's output data.
     //
-    val listener = MessageListener(brokers, outputTopic, "join-scala-integration-test-standard-consumer", 
-      classOf[StringDeserializer].getName, 
-      classOf[LongDeserializer].getName, 
+    val listener = MessageListener(brokers, outputTopic, "join-scala-integration-test-standard-consumer",
+      classOf[StringDeserializer].getName,
+      classOf[LongDeserializer].getName,
       new RecordProcessor
     )
 
@@ -167,8 +166,8 @@ object StreamToTableJoinScalaIntegrationTestImplicitSerdes extends TestSuite[Kaf
   }
 
   class RecordProcessor extends RecordProcessorTrait[String, Long] {
-    override def processRecord(record: ConsumerRecord[String, Long]): Unit = { 
-      // println(s"Get Message $record")
+    override def processRecord(record: ConsumerRecord[String, Long]): Unit = {
+      // logger.info(s"Got Message $record")
     }
   }
 }

@@ -52,7 +52,7 @@ class CMSStoreBuilder[T: CMSHasher](val name: String,
 
   override def build(): CMSStore[T] = new CMSStore[T](name, loggingEnabled)
 
-  override def withCachingEnabled() = throw new UnsupportedOperationException("caching not supported")
+  override def withCachingEnabled(): StoreBuilder[CMSStore[T]] = throw new UnsupportedOperationException("caching not supported")
 
   override def withLoggingEnabled(config: util.Map[String, String]): CMSStoreBuilder[T] = {
     loggingEnabled = true

@@ -30,7 +30,7 @@ class KStreamS[K, V](val inner: KStream[K, V]) {
   }
 
   def map[KR, VR](mapper: (K, V) => (KR, VR)): KStreamS[KR, VR] = {
-    val kvMapper = mapper.tupled andThen Tuple2ToKeyValue
+    val kvMapper = mapper.tupled andThen tuple2ToKeyValue
     inner.map[KR, VR]((k, v) => kvMapper(k,v))
   }
 
@@ -39,7 +39,7 @@ class KStreamS[K, V](val inner: KStream[K, V]) {
   }
 
   def flatMap[KR, VR](mapper: (K, V) => Iterable[(KR, VR)]): KStreamS[KR, VR] = {
-    val kvMapper = mapper.tupled andThen (iter => iter.map(Tuple2ToKeyValue).asJava)
+    val kvMapper = mapper.tupled andThen (iter => iter.map(tuple2ToKeyValue).asJava)
     inner.flatMap[KR, VR]((k,v) => kvMapper(k , v))
   }
 
@@ -57,12 +57,13 @@ class KStreamS[K, V](val inner: KStream[K, V]) {
     inner.branch(predicates.map(_.asPredicate): _*).map(kstream => wrapKStream(kstream))
   }
 
-  def through(topic: String)(implicit produced: Perhaps[Produced[K, V]]): KStreamS[K, V] = 
+  def through(topic: String)(implicit produced: Perhaps[Produced[K, V]]): KStreamS[K, V] =
     produced.fold[KStreamS[K, V]] { inner.through(topic) } { ev => inner.through(topic, ev) }
 
   def to(topic: String)(implicit produced: Perhaps[Produced[K, V]]): Unit =
     produced.fold[Unit] { inner.to(topic) } { implicit ev => inner.to(topic, ev) }
 
+  //scalastyle:off null
   def transform[K1, V1](transformerSupplier: () => Transformer[K, V, (K1, V1)],
     stateStoreNames: String*): KStreamS[K1, V1] = {
 
@@ -78,7 +79,7 @@ class KStreamS[K, V](val inner: KStream[K, V]) {
 
         override def init(context: ProcessorContext): Unit = transformerS.init(context)
 
-        @deprecated ("Please use Punctuator functional interface at https://kafka.apache.org/10/javadoc/org/apache/kafka/streams/processor/Punctuator.html instead", "0.1.3")
+        @deprecated ("Please use Punctuator functional interface at https://kafka.apache.org/10/javadoc/org/apache/kafka/streams/processor/Punctuator.html instead", "0.1.3") // scalastyle:ignore
         override def punctuate(timestamp: Long): KeyValue[K1, V1] = {
           transformerS.punctuate(timestamp) match {
             case (k1, v1) => KeyValue.pair[K1, V1](k1, v1)
@@ -91,6 +92,7 @@ class KStreamS[K, V](val inner: KStream[K, V]) {
     }
     inner.transform(transformerSupplierJ, stateStoreNames: _*)
   }
+  //scalastyle:on null
 
   def transformValues[VR](valueTransformerSupplier: () => ValueTransformer[V, VR],
     stateStoreNames: String*): KStreamS[K, VR] = {
@@ -121,15 +123,15 @@ class KStreamS[K, V](val inner: KStream[K, V]) {
    * implicit val stringSerde: Serde[String] = Serdes.String()
    * implicit val longSerde: Serde[Long] = Serdes.Long().asInstanceOf[Serde[Long]]
    * - .groupByKey
-   */ 
+   */
   def groupByKey(implicit serialized: Perhaps[Serialized[K, V]]): KGroupedStreamS[K, V] =
     serialized.fold[KGroupedStreamS[K, V]] { inner.groupByKey } { implicit ev => inner.groupByKey(ev) }
 
   def groupBy[KR](selector: (K, V) => KR)(implicit serialized: Perhaps[Serialized[KR, V]]): KGroupedStreamS[KR, V] = {
-    serialized.fold[KGroupedStreamS[KR, V]] { 
-      inner.groupBy(selector.asKeyValueMapper) 
-    } { implicit ev => 
-      inner.groupBy(selector.asKeyValueMapper, ev) 
+    serialized.fold[KGroupedStreamS[KR, V]] {
+      inner.groupBy(selector.asKeyValueMapper)
+    } { implicit ev =>
+      inner.groupBy(selector.asKeyValueMapper, ev)
     }
   }
 
@@ -137,18 +139,18 @@ class KStreamS[K, V](val inner: KStream[K, V]) {
     joiner: (V, VO) => VR,
     windows: JoinWindows)(implicit joined: Perhaps[Joined[K, V, VO]]): KStreamS[K, VR] = {
 
-    joined.fold[KStreamS[K, VR]] { 
-      inner.join[VO, VR](otherStream.inner, joiner.asValueJoiner, windows) } { implicit ev => 
-      inner.join[VO, VR](otherStream.inner, joiner.asValueJoiner, windows, ev) 
+    joined.fold[KStreamS[K, VR]] {
+      inner.join[VO, VR](otherStream.inner, joiner.asValueJoiner, windows) } { implicit ev =>
+      inner.join[VO, VR](otherStream.inner, joiner.asValueJoiner, windows, ev)
     }
   }
 
   def join[VT, VR](table: KTableS[K, VT],
     joiner: (V, VT) => VR)(implicit joined: Perhaps[Joined[K, V, VT]]): KStreamS[K, VR] = {
 
-    joined.fold[KStreamS[K, VR]] { 
-      inner.leftJoin[VT, VR](table.inner, joiner.asValueJoiner) } { implicit ev => 
-      inner.leftJoin[VT, VR](table.inner, joiner.asValueJoiner, ev) 
+    joined.fold[KStreamS[K, VR]] {
+      inner.leftJoin[VT, VR](table.inner, joiner.asValueJoiner) } { implicit ev =>
+      inner.leftJoin[VT, VR](table.inner, joiner.asValueJoiner, ev)
     }
   }
 
@@ -163,18 +165,18 @@ class KStreamS[K, V](val inner: KStream[K, V]) {
     joiner: (V, VO) => VR,
     windows: JoinWindows)(implicit joined: Perhaps[Joined[K, V, VO]]): KStreamS[K, VR] = {
 
-    joined.fold[KStreamS[K, VR]] { 
-      inner.leftJoin[VO, VR](otherStream.inner, joiner.asValueJoiner, windows) } { implicit ev => 
-      inner.leftJoin[VO, VR](otherStream.inner, joiner.asValueJoiner, windows, ev) 
+    joined.fold[KStreamS[K, VR]] {
+      inner.leftJoin[VO, VR](otherStream.inner, joiner.asValueJoiner, windows) } { implicit ev =>
+      inner.leftJoin[VO, VR](otherStream.inner, joiner.asValueJoiner, windows, ev)
     }
   }
 
   def leftJoin[VT, VR](table: KTableS[K, VT],
     joiner: (V, VT) => VR)(implicit joined: Perhaps[Joined[K, V, VT]]): KStreamS[K, VR] = {
 
-    joined.fold[KStreamS[K, VR]] { 
-      inner.leftJoin[VT, VR](table.inner, joiner.asValueJoiner) } { implicit ev => 
-      inner.leftJoin[VT, VR](table.inner, joiner.asValueJoiner, ev) 
+    joined.fold[KStreamS[K, VR]] {
+      inner.leftJoin[VT, VR](table.inner, joiner.asValueJoiner) } { implicit ev =>
+      inner.leftJoin[VT, VR](table.inner, joiner.asValueJoiner, ev)
     }
   }
 
@@ -189,9 +191,9 @@ class KStreamS[K, V](val inner: KStream[K, V]) {
     joiner: (V, VO) => VR,
     windows: JoinWindows)(implicit joined: Perhaps[Joined[K, V, VO]]): KStreamS[K, VR] = {
 
-    joined.fold[KStreamS[K, VR]] { 
-      inner.outerJoin[VO, VR](otherStream.inner, joiner.asValueJoiner, windows) } { implicit ev => 
-      inner.outerJoin[VO, VR](otherStream.inner, joiner.asValueJoiner, windows, ev) 
+    joined.fold[KStreamS[K, VR]] {
+      inner.outerJoin[VO, VR](otherStream.inner, joiner.asValueJoiner, windows) } { implicit ev =>
+      inner.outerJoin[VO, VR](otherStream.inner, joiner.asValueJoiner, windows, ev)
     }
   }
 
