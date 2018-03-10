@@ -29,7 +29,7 @@ class StreamsBuilderS(inner: StreamsBuilder = new StreamsBuilder) {
   def stream[K, V](topicPattern: Pattern)(implicit consumed: Perhaps[Consumed[K, V]]): KStreamS[K, V] =
     consumed.fold[KStreamS[K, V]] { inner.stream[K, V](topicPattern) } { implicit ev => inner.stream[K, V](topicPattern, ev) }
 
-  def table[K, V](topic: String)(implicit consumed: Perhaps[Consumed[K, V]]): KTableS[K, V] = 
+  def table[K, V](topic: String)(implicit consumed: Perhaps[Consumed[K, V]]): KTableS[K, V] =
     consumed.fold[KTableS[K, V]] { inner.table[K, V](topic) } { implicit ev => inner.table[K, V](topic, ev) }
 
   def table[K, V](topic: String, materialized: Materialized[K, V, KeyValueStore[Bytes, Array[Byte]]])
@@ -45,7 +45,12 @@ class StreamsBuilderS(inner: StreamsBuilder = new StreamsBuilder) {
 
   def addStateStore(builder: StoreBuilder[_ <: StateStore]): StreamsBuilder = inner.addStateStore(builder)
 
-  def addGlobalStore(storeBuilder: StoreBuilder[_ <: StateStore], topic: String, sourceName: String, consumed: Consumed[_, _], processorName: String, stateUpdateSupplier: ProcessorSupplier[_, _]): StreamsBuilder =
+  def addGlobalStore(storeBuilder: StoreBuilder[_ <: StateStore],
+                     topic: String,
+                     sourceName: String,
+                     consumed: Consumed[_, _],
+                     processorName: String,
+                     stateUpdateSupplier: ProcessorSupplier[_, _]): StreamsBuilder =
     inner.addGlobalStore(storeBuilder, topic, sourceName, consumed, processorName, stateUpdateSupplier)
 
   def build(): Topology = inner.build()

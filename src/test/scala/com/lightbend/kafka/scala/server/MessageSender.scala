@@ -13,10 +13,10 @@ object MessageSender {
   private val BATCH_SIZE_CONFIG = "1024" // Buffers for unsent records for each partition - controlls batching
   private val LINGER_MS_CONFIG = "1" // Timeout for more records to arive - controlls batching
 
-  private val BUFFER_MEMORY_CONFIG = "1024000" // Controls the total amount of memory available to the producer for buffering. 
-                                               // If records are sent faster than they can be transmitted to the server then this 
-                                               // buffer space will be exhausted. When the buffer space is exhausted additional 
-                                               // send calls will block. The threshold for time to block is determined by max.block.ms 
+  private val BUFFER_MEMORY_CONFIG = "1024000" // Controls the total amount of memory available to the producer for buffering.
+                                               // If records are sent faster than they can be transmitted to the server then this
+                                               // buffer space will be exhausted. When the buffer space is exhausted additional
+                                               // send calls will block. The threshold for time to block is determined by max.block.ms
                                                // after which it throws a TimeoutException.
 
   def providerProperties(brokers: String, keySerializer: String, valueSerializer: String): Properties = {
@@ -47,13 +47,13 @@ class MessageSender[K, V](val brokers: String, val keySerializer: String, val va
   }
 
   def writeValue(topic: String, value: V): Unit = {
-    val result = producer.send(new ProducerRecord[K, V](topic, null.asInstanceOf[K], value)).get
+    val result = producer.send(new ProducerRecord[K, V](topic, null.asInstanceOf[K], value)).get // scalastyle:ignore
     producer.flush()
   }
 
   def batchWriteValue(topic: String, batch: Seq[V]): Seq[RecordMetadata] = {
     val result = batch.map(value => {
-      producer.send(new ProducerRecord[K, V](topic, null.asInstanceOf[K], value)).get})
+      producer.send(new ProducerRecord[K, V](topic, null.asInstanceOf[K], value)).get}) // scalastyle:ignore
     producer.flush()
     result
   }

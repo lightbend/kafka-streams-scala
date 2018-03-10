@@ -23,7 +23,6 @@ package com.lightbend.kafka.scala.streams
 import java.util.Properties
 
 import com.lightbend.kafka.scala.server.{KafkaLocalServer, MessageListener, MessageSender, RecordProcessorTrait}
-import com.lightbend.kafka.scala.streams.ImplicitConversions._
 import com.lightbend.kafka.scala.streams.algebird.{CMSStore, CMSStoreBuilder}
 import minitest.TestSuite
 import org.apache.kafka.clients.consumer.ConsumerRecord
@@ -32,6 +31,7 @@ import org.apache.kafka.streams.kstream.Transformer
 import org.apache.kafka.streams.processor.ProcessorContext
 import org.apache.kafka.streams.{KafkaStreams, KeyValue, StreamsConfig}
 import ImplicitConversions._
+import com.typesafe.scalalogging.LazyLogging
 
 /**
   * End-to-end integration test that demonstrates how to probabilistically count items in an input stream.
@@ -39,7 +39,7 @@ import ImplicitConversions._
   * This example uses a custom state store implementation, [[CMSStore]], that is backed by a
   * Count-Min Sketch data structure.
   */
-trait ProbabilisticCountingScalaIntegrationTestData {
+trait ProbabilisticCountingScalaIntegrationTestData extends LazyLogging {
   val brokers = "localhost:9092"
   val inputTopic = s"inputTopic.${scala.util.Random.nextInt(100)}"
   val outputTopic = s"output-topic.${scala.util.Random.nextInt(100)}"
@@ -70,7 +70,7 @@ object ProbabilisticCountingScalaIntegrationTest extends TestSuite[KafkaLocalSer
   with ProbabilisticCountingScalaIntegrationTestData {
 
   override def setup(): KafkaLocalServer = {
-    val s = KafkaLocalServer(true, Some(localStateDir))
+    val s = KafkaLocalServer(cleanOnStart = true, Some(localStateDir))
     s.start()
     s
   }
@@ -102,7 +102,6 @@ object ProbabilisticCountingScalaIntegrationTest extends TestSuite[KafkaLocalSer
 
     val cmsStoreName = "cms-store"
     val cmsStoreBuilder = {
-      val changeloggingEnabled = true
       val changelogConfig: java.util.HashMap[String, String] = {
         val cfg = new java.util.HashMap[String, String]
         val segmentSizeBytes = (20 * 1024 * 1024).toString
@@ -133,15 +132,16 @@ object ProbabilisticCountingScalaIntegrationTest extends TestSuite[KafkaLocalSer
         (value, cmsState.get(value))
       }
 
+      //scalastyle:off null
       override def punctuate(l: Long): (String, Long) = null
-
+     //scalastyle:on null
       override def close(): Unit = {}
     }
 
     // Read the input from Kafka.
     val textLines: KStreamS[Array[Byte], String] = builder.stream(inputTopic)
 
-    implicit val stringSerde = Serdes.String()
+    implicit val stringSerde: Serde[String] = Serdes.String()
     implicit val longSerde: Serde[Long] = Serdes.Long().asInstanceOf[Serde[Long]]
 
     textLines
@@ -152,15 +152,11 @@ object ProbabilisticCountingScalaIntegrationTest extends TestSuite[KafkaLocalSer
     val streams: KafkaStreams = new KafkaStreams(builder.build(), streamsConfiguration)
     streams.start()
 
-    //
     // Step 2: Publish some input text lines.
-    //
     val sender = MessageSender[String, String](brokers, classOf[StringSerializer].getName, classOf[StringSerializer].getName)
-    val mvals = sender.batchWriteValue(inputTopic, inputTextLines)
-
-    //
+    sender.batchWriteValue(inputTopic, inputTextLines)
     // Step 3: Verify the application's output data.
-    //
+
     val listener = MessageListener(brokers, outputTopic, "probwordcountgroup",
       classOf[StringDeserializer].getName,
       classOf[LongDeserializer].getName,
@@ -175,7 +171,7 @@ object ProbabilisticCountingScalaIntegrationTest extends TestSuite[KafkaLocalSer
 
   class RecordProcessor extends RecordProcessorTrait[String, Long] {
     override def processRecord(record: ConsumerRecord[String, Long]): Unit = {
-      // println(s"Get Message $record")
+      // logger.info(s"Get Message $record")
     }
   }
 
