@@ -26,7 +26,6 @@ import minitest.TestSuite
 import com.lightbend.kafka.scala.server.{KafkaLocalServer, MessageListener, MessageSender, RecordProcessorTrait}
 import org.apache.kafka.common.serialization._
 import org.apache.kafka.streams._
-import org.apache.kafka.streams.kstream.Joined
 import org.apache.kafka.clients.consumer.ConsumerRecord
 import ImplicitConversions._
 import com.typesafe.scalalogging.LazyLogging
@@ -66,36 +65,23 @@ object StreamToTableJoinScalaIntegrationTestImplicitSerdes extends TestSuite[Kaf
     //
     // Step 1: Configure and start the processor topology.
     //
-    implicit val stringSerde: Serde[String] = Serdes.String()
-    implicit val longSerde: Serde[Long] = Serdes.Long().asInstanceOf[Serde[Long]]
+    // DefaultSerdes brings into scope implicit serdes (mostly for primitives) that will set up all Serialized, Produced, 
+    // Consumed and Joined instances. So all APIs below that accept Serialized, Produced, Consumed or Joined will
+    // get these instances automatically
+    import DefaultSerdes._
 
+    // we don't have any serde declared as part of configuration. Even if they are declared here, the
+    // Scala APIs will ignore them. But it's possible to declare serdes here and use them through
+    // Java APIs
     val streamsConfiguration: Properties = {
       val p = new Properties()
-      p.put(StreamsConfig.APPLICATION_ID_CONFIG, s"stream-table-join-scala-integration-test-implicit-serdes-${scala.util.Random.nextInt(100)}")
-      p.put(StreamsConfig.CLIENT_ID_CONFIG, "join-scala-integration-test-implicit-serdes-standard-consumer")
+      p.put(StreamsConfig.APPLICATION_ID_CONFIG, s"stream-table-join-scala-integration-test-implicit-ser-${scala.util.Random.nextInt(100)}")
+      p.put(StreamsConfig.CLIENT_ID_CONFIG, "join-scala-integration-test-implicit-ser-standard-consumer")
       p.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, brokers)
-      p.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.String.getClass.getName)
-      p.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, Serdes.String.getClass.getName)
       p.put(StreamsConfig.COMMIT_INTERVAL_MS_CONFIG, "100")
       p.put(StreamsConfig.STATE_DIR_CONFIG, localStateDir)
       p
     }
-
-    // this will make the leftJoin use the key and value serde from this implicit, while use the default
-    // from config for otherValueSerde
-    implicit val joined: Joined[String, Long, String] = Joined.keySerde(stringSerde).withValueSerde(longSerde)
-
-    /**
-     * Patterns for handling serdes in leftJoin (similar will be the handling of all join functions that accept a Joined argument)
-     *
-     * a. For `Joined[K, V, VO`], just make the implicit serdes available for `K`, `V` and `VO`. In the following
-     *    example of `leftJoin`, we have `Joined[String, Long, String]` and have the implicits `stringSerde` and
-     *    `longSerdes` available in scope. This should be enough to make an implicit `Joined` for `leftJoin`.
-     *
-     * b. Want to use default serdes from config for key and otherValue. Add the implicit `Joined` in scope as:
-     *    `implicit val joined: Joined[String, Long, String] = Joined.valueSerde(longSerde)`. The other serdes will
-     *    be picked up as `null` and used from the config.
-     */
 
     val builder = new StreamsBuilderS()
 
@@ -122,7 +108,7 @@ object StreamToTableJoinScalaIntegrationTestImplicitSerdes extends TestSuite[Kaf
 
     val streams: KafkaStreams = new KafkaStreams(builder.build(), streamsConfiguration)
 
-    streams.setUncaughtExceptionHandler((t: Thread, e: Throwable) => try {
+    streams.setUncaughtExceptionHandler((_: Thread, e: Throwable) => try {
       logger.error(s"Stream terminated because of uncaught exception .. Shutting down app", e)
       e.printStackTrace()
       val closed: Unit = streams.close()
@@ -142,6 +128,7 @@ object StreamToTableJoinScalaIntegrationTestImplicitSerdes extends TestSuite[Kaf
     // To keep this code example simple and easier to understand/reason about, we publish all
     // user-region records before any user-click records (cf. step 3).  In practice though,
     // data records would typically be arriving concurrently in both input streams/topics.
+    //
     val sender1 = MessageSender[String, String](brokers, classOf[StringSerializer].getName, classOf[StringSerializer].getName)
     userRegions.foreach(r => sender1.writeKeyValue(userRegionsTopic, r.key, r.value))
 
@@ -160,14 +147,14 @@ object StreamToTableJoinScalaIntegrationTestImplicitSerdes extends TestSuite[Kaf
       new RecordProcessor
     )
 
-    val l = listener.waitUntilMinKeyValueRecordsReceived(expectedClicksPerRegion.size, 30000)
+    val l = listener.waitUntilMinKeyValueRecordsReceived(expectedClicksPerRegion.size, 30000) // scalastyle:ignore
     streams.close()
     assertEquals(l.sortBy(_.key), expectedClicksPerRegion.sortBy(_.key))
   }
 
   class RecordProcessor extends RecordProcessorTrait[String, Long] {
     override def processRecord(record: ConsumerRecord[String, Long]): Unit = {
-      // logger.info(s"Got Message $record")
+       //logger.info(s"Get Message $record")
     }
   }
 }

@@ -4,7 +4,7 @@ jdk: oraclejdk8
 scala:
 - 2.11.11
 - 2.12.4
-sbt_args: -mem 1500
+sbt_args: -mem 2000
 script:
 - sbt "++ ${TRAVIS_SCALA_VERSION}!" test
 cache:

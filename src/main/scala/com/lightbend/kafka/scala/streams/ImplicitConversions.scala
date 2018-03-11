@@ -36,17 +36,6 @@ object ImplicitConversions {
 
   implicit def tuple2ToKeyValue[K, V](tuple: (K, V)): KeyValue[K, V] = new KeyValue(tuple._1, tuple._2)
 
-  // technique for optional implicits adopted from
-  // http://missingfaktor.blogspot.in/2013/12/optional-implicit-trick-in-scala.html
-
-  case class Perhaps[E](value: Option[E]) {
-    def fold[F](ifAbsent: => F)(ifPresent: E => F): F = {
-      value.fold(ifAbsent)(ifPresent)
-    }
-  }
-
-  //scalastyle:off null
-  implicit def perhaps[E](implicit ev: E = null): Perhaps[E] = Perhaps(Option(ev))
   //scalastyle:on null
   // we would also like to allow users implicit serdes
   // and these implicits will convert them to `Serialized`, `Produced` or `Consumed`
