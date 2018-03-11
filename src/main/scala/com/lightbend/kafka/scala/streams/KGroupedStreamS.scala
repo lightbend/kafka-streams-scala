@@ -42,11 +42,16 @@ class KGroupedStreamS[K, V](inner: KGroupedStream[K, V]) {
   }
 
   def reduce(reducer: (V, V) => V,
-    storeName: String): KTableS[K, V] = {
+    storeName: String)(implicit keySerde: Serde[K], valueSerde: Serde[V]): KTableS[K, V] = {
 
     // need this explicit asReducer for Scala 2.11 or else the SAM conversion doesn't take place
     // works perfectly with Scala 2.12 though
-    inner.reduce(((v1: V, v2: V) => reducer(v1, v2)).asReducer, Materialized.as[K, V, KeyValueStore[Bytes, Array[Byte]]](storeName))
+    inner.reduce(((v1: V, v2: V) =>
+      reducer(v1, v2)).asReducer,
+      Materialized.as[K, V, KeyValueStore[Bytes, Array[Byte]]](storeName)
+        .withKeySerde(keySerde)
+        .withValueSerde(valueSerde)
+    )
   }
 
   def aggregate[VR](initializer: () => VR,
