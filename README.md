@@ -118,6 +118,8 @@ Not only the serdes, but `DefaultSerdes` also brings into scope implicit  `Seria
 Just one import of `DefaultSerdes._` and the following code does not need a bit of `Serialized`, `Produced`, `Consumed` or `Joined` to be specified explicitly or through the default config. **And the best part is that for any missing instances of these you get a compilation error.** ..
 
 ```scala
+import DefaultSerdes._
+
 val clicksPerRegion: KTableS[String, Long] =
   userClicksStream
 
