@@ -138,11 +138,13 @@ object ProbabilisticCountingScalaIntegrationTest extends TestSuite[KafkaLocalSer
       override def close(): Unit = {}
     }
 
+    implicit val stringSerde: Serde[String] = Serdes.String()
+    implicit val byteArraySerde: Serde[Array[Byte]] = Serdes.ByteArray()
+    implicit val longSerde: Serde[Long] = Serdes.Long().asInstanceOf[Serde[Long]]
+
     // Read the input from Kafka.
     val textLines: KStreamS[Array[Byte], String] = builder.stream(inputTopic)
 
-    implicit val stringSerde: Serde[String] = Serdes.String()
-    implicit val longSerde: Serde[Long] = Serdes.Long().asInstanceOf[Serde[Long]]
 
     textLines
       .flatMapValues(value => value.toLowerCase.split("\\W+").toIterable)

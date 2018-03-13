@@ -21,4 +21,5 @@ object Dependencies {
   val minitestLaws = "io.monix"                       %% "minitest-laws"     % MinitestVersion
   val algebird = "com.twitter"                        %% "algebird-core"     % AlgebirdVersion
   val chill = "com.twitter"                           %% "chill"             % ChillVersion
+  val avro4s = "com.sksamuel.avro4s"                  %% "avro4s-core"       % Avro4sVersion
 }

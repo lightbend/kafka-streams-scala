@@ -9,5 +9,6 @@ object Versions {
   val JDKVersion = "1.8"
   val Scala_2_12_Version = "2.12.4"
   val Scala_2_11_Version = "2.11.11"
+  val Avro4sVersion = "1.8.3"
   val CrossScalaVersions = Seq(Scala_2_12_Version, Scala_2_11_Version )
 }

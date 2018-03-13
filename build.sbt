@@ -23,7 +23,8 @@ libraryDependencies ++= Seq(
   minitest % "test",
   minitestLaws % "test",
   algebird % "test",
-  chill % "test"
+  chill % "test",
+  avro4s % "test"
 )
 
 testFrameworks += new TestFramework("minitest.runner.Framework")

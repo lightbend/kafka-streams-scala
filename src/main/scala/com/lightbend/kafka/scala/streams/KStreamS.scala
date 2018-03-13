@@ -57,11 +57,11 @@ class KStreamS[K, V](val inner: KStream[K, V]) {
     inner.branch(predicates.map(_.asPredicate): _*).map(kstream => wrapKStream(kstream))
   }
 
-  def through(topic: String)(implicit produced: Perhaps[Produced[K, V]]): KStreamS[K, V] =
-    produced.fold[KStreamS[K, V]] { inner.through(topic) } { ev => inner.through(topic, ev) }
+  def through(topic: String)(implicit produced: Produced[K, V]): KStreamS[K, V] =
+    inner.through(topic, produced)
 
-  def to(topic: String)(implicit produced: Perhaps[Produced[K, V]]): Unit =
-    produced.fold[Unit] { inner.to(topic) } { implicit ev => inner.to(topic, ev) }
+  def to(topic: String)(implicit produced: Produced[K, V]): Unit =
+    inner.to(topic, produced)
 
   //scalastyle:off null
   def transform[K1, V1](transformerSupplier: () => Transformer[K, V, (K1, V1)],
@@ -124,61 +124,34 @@ class KStreamS[K, V](val inner: KStream[K, V]) {
    * implicit val longSerde: Serde[Long] = Serdes.Long().asInstanceOf[Serde[Long]]
    * - .groupByKey
    */
-  def groupByKey(implicit serialized: Perhaps[Serialized[K, V]]): KGroupedStreamS[K, V] =
-    serialized.fold[KGroupedStreamS[K, V]] { inner.groupByKey } { implicit ev => inner.groupByKey(ev) }
+  def groupByKey(implicit serialized: Serialized[K, V]): KGroupedStreamS[K, V] =
+    inner.groupByKey(serialized)
 
-  def groupBy[KR](selector: (K, V) => KR)(implicit serialized: Perhaps[Serialized[KR, V]]): KGroupedStreamS[KR, V] = {
-    serialized.fold[KGroupedStreamS[KR, V]] {
-      inner.groupBy(selector.asKeyValueMapper)
-    } { implicit ev =>
-      inner.groupBy(selector.asKeyValueMapper, ev)
-    }
-  }
+  def groupBy[KR](selector: (K, V) => KR)(implicit serialized: Serialized[KR, V]): KGroupedStreamS[KR, V] =
+    inner.groupBy(selector.asKeyValueMapper, serialized)
 
   def join[VO, VR](otherStream: KStreamS[K, VO],
     joiner: (V, VO) => VR,
-    windows: JoinWindows)(implicit joined: Perhaps[Joined[K, V, VO]]): KStreamS[K, VR] = {
-
-    joined.fold[KStreamS[K, VR]] {
-      inner.join[VO, VR](otherStream.inner, joiner.asValueJoiner, windows) } { implicit ev =>
-      inner.join[VO, VR](otherStream.inner, joiner.asValueJoiner, windows, ev)
-    }
-  }
+    windows: JoinWindows)(implicit joined: Joined[K, V, VO]): KStreamS[K, VR] =
+      inner.join[VO, VR](otherStream.inner, joiner.asValueJoiner, windows, joined)
 
   def join[VT, VR](table: KTableS[K, VT],
-    joiner: (V, VT) => VR)(implicit joined: Perhaps[Joined[K, V, VT]]): KStreamS[K, VR] = {
-
-    joined.fold[KStreamS[K, VR]] {
-      inner.leftJoin[VT, VR](table.inner, joiner.asValueJoiner) } { implicit ev =>
-      inner.leftJoin[VT, VR](table.inner, joiner.asValueJoiner, ev)
-    }
-  }
+    joiner: (V, VT) => VR)(implicit joined: Joined[K, V, VT]): KStreamS[K, VR] =
+      inner.leftJoin[VT, VR](table.inner, joiner.asValueJoiner, joined)
 
   def join[GK, GV, RV](globalKTable: GlobalKTable[GK, GV],
     keyValueMapper: (K, V) => GK,
-    joiner: (V, GV) => RV): KStreamS[K, RV] = {
-
-    inner.join[GK, GV, RV](globalKTable, keyValueMapper(_,_), joiner(_,_))
-  }
+    joiner: (V, GV) => RV): KStreamS[K, RV] =
+      inner.join[GK, GV, RV](globalKTable, keyValueMapper(_,_), joiner(_,_))
 
   def leftJoin[VO, VR](otherStream: KStreamS[K, VO],
     joiner: (V, VO) => VR,
-    windows: JoinWindows)(implicit joined: Perhaps[Joined[K, V, VO]]): KStreamS[K, VR] = {
-
-    joined.fold[KStreamS[K, VR]] {
-      inner.leftJoin[VO, VR](otherStream.inner, joiner.asValueJoiner, windows) } { implicit ev =>
-      inner.leftJoin[VO, VR](otherStream.inner, joiner.asValueJoiner, windows, ev)
-    }
-  }
+    windows: JoinWindows)(implicit joined: Joined[K, V, VO]): KStreamS[K, VR] =
+      inner.leftJoin[VO, VR](otherStream.inner, joiner.asValueJoiner, windows, joined)
 
   def leftJoin[VT, VR](table: KTableS[K, VT],
-    joiner: (V, VT) => VR)(implicit joined: Perhaps[Joined[K, V, VT]]): KStreamS[K, VR] = {
-
-    joined.fold[KStreamS[K, VR]] {
-      inner.leftJoin[VT, VR](table.inner, joiner.asValueJoiner) } { implicit ev =>
-      inner.leftJoin[VT, VR](table.inner, joiner.asValueJoiner, ev)
-    }
-  }
+    joiner: (V, VT) => VR)(implicit joined: Joined[K, V, VT]): KStreamS[K, VR] =
+      inner.leftJoin[VT, VR](table.inner, joiner.asValueJoiner, joined)
 
   def leftJoin[GK, GV, RV](globalKTable: GlobalKTable[GK, GV],
     keyValueMapper: (K, V) => GK,
@@ -189,13 +162,8 @@ class KStreamS[K, V](val inner: KStream[K, V]) {
 
   def outerJoin[VO, VR](otherStream: KStreamS[K, VO],
     joiner: (V, VO) => VR,
-    windows: JoinWindows)(implicit joined: Perhaps[Joined[K, V, VO]]): KStreamS[K, VR] = {
-
-    joined.fold[KStreamS[K, VR]] {
-      inner.outerJoin[VO, VR](otherStream.inner, joiner.asValueJoiner, windows) } { implicit ev =>
-      inner.outerJoin[VO, VR](otherStream.inner, joiner.asValueJoiner, windows, ev)
-    }
-  }
+    windows: JoinWindows)(implicit joined: Joined[K, V, VO]): KStreamS[K, VR] =
+      inner.outerJoin[VO, VR](otherStream.inner, joiner.asValueJoiner, windows, joined)
 
   def merge(stream: KStreamS[K, V]): KStreamS[K, V] = inner.merge(stream)
 
