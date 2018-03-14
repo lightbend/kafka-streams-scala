@@ -4,7 +4,7 @@ name := "kafka-streams-scala"
 
 organization := "com.lightbend"
 
-version := "0.1.2"
+version := "0.2.0"
 
 scalaVersion := Versions.Scala_2_12_Version
 
@@ -55,4 +55,4 @@ publishTo := {
 
 publishMavenStyle := true
 
-publishArtifact in Test := false
+publishArtifact in Test := true
