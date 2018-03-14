@@ -4,7 +4,7 @@ name := "kafka-streams-scala"
 
 organization := "com.lightbend"
 
-version := "0.1.2"
+version := "0.2.0"
 
 scalaVersion := Versions.Scala_2_12_Version
 
@@ -23,7 +23,8 @@ libraryDependencies ++= Seq(
   minitest % "test",
   minitestLaws % "test",
   algebird % "test",
-  chill % "test"
+  chill % "test",
+  avro4s % "test"
 )
 
 testFrameworks += new TestFramework("minitest.runner.Framework")
@@ -54,4 +55,4 @@ publishTo := {
 
 publishMavenStyle := true
 
-publishArtifact in Test := false
+publishArtifact in Test := true

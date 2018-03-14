@@ -19,17 +19,17 @@ object Utils {
 
       val files = Files.walk(rootPath, FileVisitOption.FOLLOW_LINKS).sorted(Comparator.reverseOrder()).iterator().asScala
       files.foreach(Files.delete)
-    } 
+    }
   }
 
   def dataDirectory(baseDir: String, directoryName: String): Try[File] = Try {
 
     val dataDirectory = new File(baseDir + directoryName)
 
-    if (dataDirectory.exists() && !dataDirectory.isDirectory())
+    if (dataDirectory.exists() && !dataDirectory.isDirectory()) {
       throw new IllegalArgumentException(
         s"Cannot use $directoryName as a directory name because a file with that name already exists in $dataDirectory.")
-
+    }
     dataDirectory
   }
 }

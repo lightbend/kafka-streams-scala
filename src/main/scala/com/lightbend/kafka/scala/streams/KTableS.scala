@@ -12,7 +12,7 @@ import FunctionConversions._
 
 /**
  * Wraps the Java class KTable and delegates method calls to the underlying Java object.
- */ 
+ */
 class KTableS[K, V](val inner: KTable[K, V]) {
 
   def filter(predicate: (K, V) => Boolean): KTableS[K, V] = {
@@ -21,7 +21,7 @@ class KTableS[K, V](val inner: KTable[K, V]) {
 
   def filter(predicate: (K, V) => Boolean,
     materialized: Materialized[K, V, KeyValueStore[Bytes, Array[Byte]]]): KTableS[K, V] = {
-    inner.filter(predicate(_, _), materialized)
+    inner.filter(predicate.asPredicate, materialized)
   }
 
   def filterNot(predicate: (K, V) => Boolean): KTableS[K, V] = {
@@ -30,7 +30,7 @@ class KTableS[K, V](val inner: KTable[K, V]) {
 
   def filterNot(predicate: (K, V) => Boolean,
     materialized: Materialized[K, V, KeyValueStore[Bytes, Array[Byte]]]): KTableS[K, V] = {
-    inner.filterNot(predicate(_, _), materialized)
+    inner.filterNot(predicate.asPredicate, materialized)
   }
 
   def mapValues[VR](mapper: V => VR): KTableS[K, VR] = {
@@ -48,13 +48,7 @@ class KTableS[K, V](val inner: KTable[K, V]) {
     inner.toStream[KR](mapper.asKeyValueMapper)
   }
 
-  def groupBy[KR, VR](selector: (K, V) => (KR, VR)): KGroupedTableS[KR, VR] = {
-    inner.groupBy(selector.asKeyValueMapper)
-  }
-
-  def groupBy[KR, VR](selector: (K, V) => (KR, VR),
-    serialized: Serialized[KR, VR]): KGroupedTableS[KR, VR] = {
-
+  def groupBy[KR, VR](selector: (K, V) => (KR, VR))(implicit serialized: Serialized[KR, VR]): KGroupedTableS[KR, VR] = {
     inner.groupBy(selector.asKeyValueMapper, serialized)
   }
 

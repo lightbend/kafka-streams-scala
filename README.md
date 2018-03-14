@@ -7,6 +7,7 @@ The library wraps Java APIs in Scala thereby providing:
 1. much better type inference in Scala
 2. less boilerplate in application code
 3. the usual builder-style composition that developers get with the original Java API
+4. complete compile time type safety
 
 The design of the library was inspired by the work started by Alexis Seigneurin in [this repository](https://github.com/aseigneurin/kafka-streams-scala). 
 
@@ -15,7 +16,7 @@ The design of the library was inspired by the work started by Alexis Seigneurin 
 `kafka-streams-scala` is published and cross-built for Scala `2.11`, and `2.12`, so you can just add the following to your build:
 
 ```scala
-val kafka_streams_scala_version = "0.1.1"
+val kafka_streams_scala_version = "0.2.0"
 
 libraryDependencies ++= Seq("com.lightbend" %%
   "kafka-streams-scala" % kafka_streams_scala_version)
@@ -23,16 +24,16 @@ libraryDependencies ++= Seq("com.lightbend" %%
 
 > Note: `kafka-streams-scala` supports onwards Kafka Streams `1.0.0`.
 
-The API docs for `kafka-streams-scala` is available [here](https://developer.lightbend.com/docs/api/kafka-streams-scala/0.1.1/com/lightbend/kafka/scala/streams) for Scala 2.12 and [here](https://developer.lightbend.com/docs/api/kafka-streams-scala_2.11/0.1.1/#package) for Scala 2.11.
+The API docs for `kafka-streams-scala` is available [here](https://developer.lightbend.com/docs/api/kafka-streams-scala/0.2.0/com/lightbend/kafka/scala/streams) for Scala 2.12 and [here](https://developer.lightbend.com/docs/api/kafka-streams-scala_2.11/0.2.0/#package) for Scala 2.11.
 
 ## Running the Tests
 
 The library comes with an embedded Kafka server. To run the tests, simply run `sbt testOnly` and all tests will run on the local embedded server.
 
-> The embedded server is started and stopped for every test and takes quite a bit of resources. Hence it's recommended that you allocate more heap space to `sbt` when running the tests. e.g. `sbt -mem 1500`.
+> The embedded server is started and stopped for every test and takes quite a bit of resources. Hence it's recommended that you allocate more heap space to `sbt` when running the tests. e.g. `sbt -mem 2000`.
 
 ```bash
-$ sbt -mem 1500
+$ sbt -mem 2000
 > +clean
 > +test
 ```
@@ -52,39 +53,56 @@ val clicksPerRegion: KTableS[String, Long] = userClicksStream
   .map((_, regionWithClicks) => regionWithClicks)
 
   // Compute the total per region by summing the individual click counts per region.
-  .groupByKey(Serialized.`with`(stringSerde, longSerde))
+  .groupByKey
   .reduce(_ + _)
 ```
 
-> **Notes:** 
-> 
-> 1. The left quotes around "with" are there because `with` is a Scala keyword. This is the mechanism you use to "escape" a Scala keyword when it's used as a normal identifier in a Java library.
-> 2. Note that some methods, like `map`, take a two-argument function, for key-value pairs, rather than the more typical single argument.
+## Implicit Serdes
 
-## Better Abstraction
+One of the areas where the Java APIs' verbosity can be reduced is through a succinct way to pass serializers and de-serializers to the various functions. The library uses the power of Scala implicits towards this end. The library makes some decisions that help implement more succinct serdes in a type safe manner:
 
-The wrapped Scala APIs also incur less boilerplate by taking advantage of Scala function literals that get converted to Java objects in the implementation of the API. Hence the surface syntax of the client API looks simpler and less noisy.
+1. No use of configuration based default serdes. Java APIs allow the user to define default key and value serdes as part of the configuration. This configuration, being implemented as `java.util.Properties` is type-unsafe and hence can result in runtime errors in case the user misses any of the serdes to be specified or plugs in an incorrect serde. `kafka-streams-scala` makes this completely type-safe by allowing all serdes to be specified through Scala implicits.
+2. The libraty offers implicit conversions from serdes to `Serialized`, `Produced`, `Consumed` or `Joined`. Hence as a user you just have to pass in the implicit serde and all conversions to `Serialized`, `Produced`, `Consumed` or `Joined` will be taken care of automatically.
 
-Here's an example of a snippet built using the Java API from Scala ..
 
-```scala
-val approximateWordCounts: KStream[String, Long] = textLines
-  .flatMapValues(value => value.toLowerCase.split("\\W+").toIterable.asJava)
-  .transform(
-    new TransformerSupplier[Array[Byte], String, KeyValue[String, Long]] {
-      override def get() = new ProbabilisticCounter
-    },
-    cmsStoreName)
-approximateWordCounts.to(outputTopic, Produced.`with`(Serdes.String(), longSerde))
-```
+### Default Serdes
 
-And here's the corresponding snippet using the Scala library. Note how the noise of `TransformerSupplier` has been abstracted out by the function literal syntax of Scala.
+The library offers a module that contains all the default serdes for the primitives. Importing the object will bring in scope all such primitives and helps reduce implicit hell.
 
 ```scala
-textLines
-  .flatMapValues(value => value.toLowerCase.split("\\W+").toIterable)
-  .transform(() => new ProbabilisticCounter, cmsStoreName)
-  .to(outputTopic, Produced.`with`(Serdes.String(), longSerde))
+object DefaultSerdes {
+  implicit val stringSerde: Serde[String] = Serdes.String()
+  implicit val longSerde: Serde[Long] = Serdes.Long().asInstanceOf[Serde[Long]]
+  implicit val byteArraySerde: Serde[Array[Byte]] = Serdes.ByteArray()
+  implicit val bytesSerde: Serde[org.apache.kafka.common.utils.Bytes] = Serdes.Bytes()
+  implicit val floatSerde: Serde[Float] = Serdes.Float().asInstanceOf[Serde[Float]]
+  implicit val doubleSerde: Serde[Double] = Serdes.Double().asInstanceOf[Serde[Double]]
+  implicit val integerSerde: Serde[Int] = Serdes.Integer().asInstanceOf[Serde[Int]]
+}
 ```
 
-Also, the explicit conversion `asJava` from a Scala `Iterable` to a Java `Iterable` is done for you by the Scala library.
+### Compile time typesafe
+
+Not only the serdes, but `DefaultSerdes` also brings into scope implicit  `Serialized`, `Produced`, `Consumed` and `Joined` instances. So all APIs that accept `Serialized`, `Produced`, `Consumed` or `Joined` will get these instances automatically with an `import DefaultSerdes._`.
+
+Just one import of `DefaultSerdes._` and the following code does not need a bit of `Serialized`, `Produced`, `Consumed` or `Joined` to be specified explicitly or through the default config. **And the best part is that for any missing instances of these you get a compilation error.** ..
+
+```scala
+import DefaultSerdes._
+
+val clicksPerRegion: KTableS[String, Long] =
+  userClicksStream
+
+  // Join the stream against the table.
+  .leftJoin(userRegionsTable, (clicks: Long, region: String) => (if (region == null) "UNKNOWN" else region, clicks))
+
+  // Change the stream from <user> -> <region, clicks> to <region> -> <clicks>
+  .map((_, regionWithClicks) => regionWithClicks)
+
+  // Compute the total per region by summing the individual click counts per region.
+  .groupByKey
+  .reduce(_ + _)
+
+  // Write the (continuously updating) results to the output topic.
+  clicksPerRegion.toStream.to(outputTopic)
+```

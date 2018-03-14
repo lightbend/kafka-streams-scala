@@ -11,13 +11,14 @@ import com.lightbend.kafka.scala.server.{KafkaLocalServer, MessageListener, Mess
 import minitest.TestSuite
 import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.apache.kafka.common.serialization._
-import org.apache.kafka.streams.kstream.Produced
 import org.apache.kafka.streams.{KafkaStreams, KeyValue, StreamsConfig}
+import ImplicitConversions._
+import com.typesafe.scalalogging.LazyLogging
 
-object KafkaStreamsTest extends TestSuite[KafkaLocalServer] with WordCountTestData {
+object KafkaStreamsTest extends TestSuite[KafkaLocalServer] with WordCountTestData with LazyLogging {
 
   override def setup(): KafkaLocalServer = {
-    val s = KafkaLocalServer(true, Some(localStateDir))
+    val s = KafkaLocalServer(cleanOnStart = true, Some(localStateDir))
     s.start()
     s
   }
@@ -34,16 +35,13 @@ object KafkaStreamsTest extends TestSuite[KafkaLocalServer] with WordCountTestDa
     //
     // Step 1: Configure and start the processor topology.
     //
-    val stringSerde = Serdes.String()
-    val longSerde: Serde[Long] = Serdes.Long().asInstanceOf[Serde[Long]]
+    import DefaultSerdes._
 
     val streamsConfiguration = new Properties()
     streamsConfiguration.put(StreamsConfig.APPLICATION_ID_CONFIG, s"wordcount-${scala.util.Random.nextInt(100)}")
     streamsConfiguration.put(StreamsConfig.CLIENT_ID_CONFIG, "wordcountgroup")
 
     streamsConfiguration.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, brokers)
-    streamsConfiguration.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.String().getClass().getName())
-    streamsConfiguration.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, Serdes.String().getClass().getName())
     streamsConfiguration.put(StreamsConfig.STATE_DIR_CONFIG, localStateDir)
 
     val builder = new StreamsBuilderS()
@@ -57,9 +55,9 @@ object KafkaStreamsTest extends TestSuite[KafkaLocalServer] with WordCountTestDa
         .groupBy((k, v) => v)
         .count()
 
-    wordCounts.toStream.to(outputTopic, Produced.`with`(stringSerde, longSerde))
+    wordCounts.toStream.to(outputTopic)
 
-    val streams = new KafkaStreams(builder.build, streamsConfiguration)
+    val streams = new KafkaStreams(builder.build(), streamsConfiguration)
     streams.start()
 
     //
@@ -86,7 +84,7 @@ object KafkaStreamsTest extends TestSuite[KafkaLocalServer] with WordCountTestDa
 
   class RecordProcessor extends RecordProcessorTrait[String, Long] {
     override def processRecord(record: ConsumerRecord[String, Long]): Unit = {
-      // println(s"Get Message $record")
+      // logger.info(s"Get Message $record")
     }
   }
 

@@ -25,7 +25,7 @@ class KafkaLocalServer private (kafkaProperties: Properties, zooKeeperServer: Zo
 
   import KafkaLocalServer._
 
-  private var broker = null.asInstanceOf[KafkaServerStartable]
+  private var broker = null.asInstanceOf[KafkaServerStartable] // scalastyle:ignore
   private var zkUtils : ZkUtils =
     ZkUtils.apply(s"localhost:${zooKeeperServer.getPort()}", DEFAULT_ZK_SESSION_TIMEOUT_MS, DEFAULT_ZK_CONNECTION_TIMEOUT_MS, false)
 
@@ -35,6 +35,7 @@ class KafkaLocalServer private (kafkaProperties: Properties, zooKeeperServer: Zo
     broker.startup()
   }
 
+  //scalastyle:off null
   def stop(): Unit = {
     if (broker != null) {
       broker.shutdown()
@@ -42,6 +43,7 @@ class KafkaLocalServer private (kafkaProperties: Properties, zooKeeperServer: Zo
       broker = null.asInstanceOf[KafkaServerStartable]
     }
   }
+ //scalastyle:on null
 
   /**
     * Create a Kafka topic with 1 partition and a replication factor of 1.
@@ -75,7 +77,7 @@ class KafkaLocalServer private (kafkaProperties: Properties, zooKeeperServer: Zo
     AdminUtils.createTopic(zkUtils, topic, partitions, replication, topicConfig, RackAwareMode.Enforced)
   }
 
-  def deleteTopic(topic: String) = AdminUtils.deleteTopic(zkUtils, topic)
+  def deleteTopic(topic: String): Unit = AdminUtils.deleteTopic(zkUtils, topic)
 }
 
 import Utils._
@@ -91,7 +93,7 @@ object KafkaLocalServer extends LazyLogging {
 
   private final val kafkaDataFolderName = "kafka_data"
 
-  def apply(cleanOnStart: Boolean, localStateDir: Option[String] = None): KafkaLocalServer = 
+  def apply(cleanOnStart: Boolean, localStateDir: Option[String] = None): KafkaLocalServer =
     this(DefaultPort, ZooKeeperLocalServer.DefaultPort, cleanOnStart, localStateDir)
 
   def apply(kafkaPort: Int, zookeeperServerPort: Int, cleanOnStart: Boolean, localStateDir: Option[String]): KafkaLocalServer = {
@@ -127,7 +129,7 @@ object KafkaLocalServer extends LazyLogging {
     */
   private def createKafkaProperties(kafkaPort: Int, zookeeperServerPort: Int, dataDir: File): Properties = {
 
-    // TODO: Probably should be externalized into properties. Was rushing this in     
+    // TODO: Probably should be externalized into properties. Was rushing this in
     val kafkaProperties = new Properties
     kafkaProperties.put(KafkaConfig.ListenersProp, s"PLAINTEXT://localhost:$kafkaPort")
     kafkaProperties.put(KafkaConfig.ZkConnectProp, s"localhost:$zookeeperServerPort")
@@ -158,7 +160,7 @@ private class ZooKeeperLocalServer(port: Int, cleanOnStart: Boolean) extends Laz
   import KafkaLocalServer._
   import ZooKeeperLocalServer._
 
-  private var zooKeeper = null.asInstanceOf[TestingServer]
+  private var zooKeeper = null.asInstanceOf[TestingServer] // scalastyle:ignore
 
   def start(): Unit = {
     // delete kafka data dir on clean start
@@ -176,6 +178,7 @@ private class ZooKeeperLocalServer(port: Int, cleanOnStart: Boolean) extends Laz
     zooKeeper.start() // blocking operation
   }
 
+  // scalastyle:off null
   def stop(): Unit = {
     if (zooKeeper != null)
       try {
@@ -186,6 +189,7 @@ private class ZooKeeperLocalServer(port: Int, cleanOnStart: Boolean) extends Laz
         case _: IOException => () // nothing to do if an exception is thrown while shutting down
       }
   }
+  //scalastyle:on null
 
   def getPort() : Int = port
 }
