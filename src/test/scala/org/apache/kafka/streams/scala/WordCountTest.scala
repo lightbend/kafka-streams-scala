@@ -14,6 +14,7 @@ import org.apache.kafka.common.serialization._
 import org.apache.kafka.streams.{KafkaStreams, KeyValue, StreamsConfig}
 import ImplicitConversions._
 import com.typesafe.scalalogging.LazyLogging
+import org.apache.kafka.streams.scala.kstream._
 
 object WordCountTest extends TestSuite[KafkaLocalServer] with WordCountTestData with LazyLogging {
 

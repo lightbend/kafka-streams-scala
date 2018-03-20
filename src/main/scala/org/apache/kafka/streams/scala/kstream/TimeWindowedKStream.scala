@@ -2,14 +2,14 @@
  * Copyright (C) 2018 Lightbend Inc. <https://www.lightbend.com>
  */
 
-package org.apache.kafka.streams.scala
+package org.apache.kafka.streams.scala.kstream
 
 import org.apache.kafka.streams.kstream.{TimeWindowedKStream => TimeWindowedKStreamJ, _}
 import org.apache.kafka.streams.state.WindowStore
 import org.apache.kafka.common.utils.Bytes
 import org.apache.kafka.common.serialization.Serde
-import ImplicitConversions._
-import FunctionConversions._
+import org.apache.kafka.streams.scala.ImplicitConversions._
+import org.apache.kafka.streams.scala.FunctionConversions._
 
 /**
  * Wraps the Java class TimeWindowedKStream and delegates method calls to the underlying Java object.

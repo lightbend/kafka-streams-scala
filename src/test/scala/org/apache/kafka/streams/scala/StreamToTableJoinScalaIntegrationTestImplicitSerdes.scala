@@ -30,6 +30,7 @@ import org.apache.kafka.clients.consumer.ConsumerRecord
 import ImplicitConversions._
 import com.typesafe.scalalogging.LazyLogging
 import _root_.scala.util.Random
+import org.apache.kafka.streams.scala.kstream._
 
 /**
   * End-to-end integration test that demonstrates how to perform a join between a KStream and a

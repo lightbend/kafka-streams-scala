@@ -31,6 +31,7 @@ import org.apache.kafka.common.serialization._
 import org.apache.kafka.streams._
 import ImplicitConversions._
 import _root_.scala.util.Random
+import org.apache.kafka.streams.scala.kstream._
 
 object StreamToTableJoinScalaIntegrationTestImplicitSerdesWithAvro
   extends TestSuite[KafkaLocalServer] with StreamToTableJoinTestData {

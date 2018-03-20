@@ -2,13 +2,13 @@
  * Copyright (C) 2018 Lightbend Inc. <https://www.lightbend.com>
  */
 
-package org.apache.kafka.streams.scala
+package org.apache.kafka.streams.scala.kstream
 
 import org.apache.kafka.streams.kstream.{KTable => KTableJ, _}
 import org.apache.kafka.streams.state.KeyValueStore
 import org.apache.kafka.common.utils.Bytes
-import ImplicitConversions._
-import FunctionConversions._
+import org.apache.kafka.streams.scala.ImplicitConversions._
+import org.apache.kafka.streams.scala.FunctionConversions._
 
 /**
  * Wraps the Java class KTable and delegates method calls to the underlying Java object.

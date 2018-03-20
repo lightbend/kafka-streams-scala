@@ -2,13 +2,13 @@
  * Copyright (C) 2018 Lightbend Inc. <https://www.lightbend.com>
  */
 
-package org.apache.kafka.streams.scala
+package org.apache.kafka.streams.scala.kstream
 
 import org.apache.kafka.streams.KeyValue
 import org.apache.kafka.streams.kstream.{KStream => KStreamJ, _}
 import org.apache.kafka.streams.processor.{Processor, ProcessorContext, ProcessorSupplier}
-import ImplicitConversions._
-import FunctionConversions._
+import org.apache.kafka.streams.scala.ImplicitConversions._
+import org.apache.kafka.streams.scala.FunctionConversions._
 
 import scala.collection.JavaConverters._
 

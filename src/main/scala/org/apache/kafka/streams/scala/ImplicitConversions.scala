@@ -11,6 +11,7 @@ import org.apache.kafka.streams.kstream.{KStream => KStreamJ,
   TimeWindowedKStream => TimeWindowedKStreamJ,
   KGroupedTable => KGroupedTableJ, _}
 
+import org.apache.kafka.streams.scala.kstream._
 import org.apache.kafka.streams.{ KeyValue, Consumed }
 import org.apache.kafka.common.serialization.Serde
 
