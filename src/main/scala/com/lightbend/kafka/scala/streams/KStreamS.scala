@@ -137,7 +137,7 @@ class KStreamS[K, V](val inner: KStream[K, V]) {
 
   def join[VT, VR](table: KTableS[K, VT],
     joiner: (V, VT) => VR)(implicit joined: Joined[K, V, VT]): KStreamS[K, VR] =
-      inner.leftJoin[VT, VR](table.inner, joiner.asValueJoiner, joined)
+      inner.join[VT, VR](table.inner, joiner.asValueJoiner, joined)
 
   def join[GK, GV, RV](globalKTable: GlobalKTable[GK, GV],
     keyValueMapper: (K, V) => GK,
@@ -165,7 +165,7 @@ class KStreamS[K, V](val inner: KStream[K, V]) {
     windows: JoinWindows)(implicit joined: Joined[K, V, VO]): KStreamS[K, VR] =
       inner.outerJoin[VO, VR](otherStream.inner, joiner.asValueJoiner, windows, joined)
 
-  def merge(stream: KStreamS[K, V]): KStreamS[K, V] = inner.merge(stream)
+  def merge(stream: KStreamS[K, V]): KStreamS[K, V] = inner.merge(stream.inner)
 
   def peek(action: (K, V) => Unit): KStreamS[K, V] = {
     inner.peek(action(_,_))
