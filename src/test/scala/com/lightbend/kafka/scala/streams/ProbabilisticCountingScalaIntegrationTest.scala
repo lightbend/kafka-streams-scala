@@ -29,7 +29,7 @@ import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.apache.kafka.common.serialization._
 import org.apache.kafka.streams.kstream.Transformer
 import org.apache.kafka.streams.processor.ProcessorContext
-import org.apache.kafka.streams.{KafkaStreams, KeyValue, StreamsConfig}
+import org.apache.kafka.streams.{ KeyValue, StreamsConfig}
 import ImplicitConversions._
 import com.typesafe.scalalogging.LazyLogging
 
@@ -70,9 +70,7 @@ object ProbabilisticCountingScalaIntegrationTest extends TestSuite[KafkaLocalSer
   with ProbabilisticCountingScalaIntegrationTestData {
 
   override def setup(): KafkaLocalServer = {
-    val s = KafkaLocalServer(cleanOnStart = true, Some(localStateDir))
-    s.start()
-    s
+    KafkaLocalServer(cleanOnStart = true, Some(localStateDir)).start()
   }
 
   override def tearDown(server: KafkaLocalServer): Unit = {
@@ -151,8 +149,7 @@ object ProbabilisticCountingScalaIntegrationTest extends TestSuite[KafkaLocalSer
       .transform(() => new ProbabilisticCounter, cmsStoreName)
       .to(outputTopic)
 
-    val streams: KafkaStreams = new KafkaStreams(builder.build(), streamsConfiguration)
-    streams.start()
+    val streams: KafkaStreamsS = KafkaStreamsS(builder, streamsConfiguration).start()
 
     // Step 2: Publish some input text lines.
     val sender = MessageSender[String, String](brokers, classOf[StringSerializer].getName, classOf[StringSerializer].getName)

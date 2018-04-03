@@ -30,9 +30,10 @@ import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.apache.kafka.common.serialization._
 import org.apache.kafka.streams._
 import ImplicitConversions._
+import com.typesafe.scalalogging.LazyLogging
 
 object StreamToTableJoinScalaIntegrationTestImplicitSerdesWithAvro
-  extends TestSuite[KafkaLocalServer] with StreamToTableJoinTestData {
+  extends TestSuite[KafkaLocalServer] with StreamToTableJoinTestData with LazyLogging{
 
   case class UserClicks(clicks: Long)
 
@@ -82,9 +83,7 @@ object StreamToTableJoinScalaIntegrationTestImplicitSerdesWithAvro
 
 
   override def setup(): KafkaLocalServer = {
-    val s = KafkaLocalServer(true, Some(localStateDir))
-    s.start()
-    s
+    KafkaLocalServer(true, Some(localStateDir)).start()
   }
 
   override def tearDown(server: KafkaLocalServer): Unit = {
@@ -141,28 +140,21 @@ object StreamToTableJoinScalaIntegrationTestImplicitSerdesWithAvro
     // Write the (continuously updating) results to the output topic.
     clicksPerRegion.toStream.to(outputTopic)
 
-    val streams: KafkaStreams = new KafkaStreams(builder.build(), streamsConfiguration)
-
-    streams
-      .setUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
+    val streams: KafkaStreamsS =  KafkaStreamsS(builder.build(), streamsConfiguration)
+    streams.withUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
         override def uncaughtException(t: Thread, e: Throwable): Unit = try {
-          println(
+          logger.error(
             s"Stream terminated because of uncaught exception .. Shutting " +
-              s"down app",
-
-            e)
-          e.printStackTrace
+              s"down app", e)
           val closed = streams.close()
-          println(s"Exiting application after streams close ($closed)")
+          logger.debug(s"Exiting application after streams close ($closed)")
         } catch {
           case x: Exception => x.printStackTrace
         } finally {
-          println("Exiting application ..")
+          logger.debug("Exiting application ..")
           System.exit(-1)
         }
-      })
-
-    streams.start()
+      }).start()
 
     //
     // Step 2: Publish user-region information.
