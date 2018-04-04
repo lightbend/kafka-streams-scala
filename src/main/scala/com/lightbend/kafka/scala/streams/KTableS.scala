@@ -1,5 +1,6 @@
 /**
  * Copyright (C) 2018 Lightbend Inc. <https://www.lightbend.com>
+ * Copyright 2017-2018 Alexis Seigneurin.
  */
 
 package com.lightbend.kafka.scala.streams
