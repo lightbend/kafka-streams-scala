@@ -1,8 +1,7 @@
 /**
- * Copyright (C) 2018 Lightbend Inc. <https://www.lightbend.com>
- * Copyright 2017-2018 Alexis Seigneurin.
- */
-
+  * Copyright (C) 2018 Lightbend Inc. <https://www.lightbend.com>
+  * Copyright 2017-2018 Alexis Seigneurin.
+  */
 package com.lightbend.kafka.scala.streams
 
 import org.apache.kafka.streams.kstream._
@@ -12,85 +11,62 @@ import ImplicitConversions._
 import FunctionConversions._
 
 /**
- * Wraps the Java class KTable and delegates method calls to the underlying Java object.
- */
+  * Wraps the Java class KTable and delegates method calls to the underlying Java object.
+  */
 class KTableS[K, V](val inner: KTable[K, V]) {
 
-  def filter(predicate: (K, V) => Boolean): KTableS[K, V] = {
+  def filter(predicate: (K, V) => Boolean): KTableS[K, V] =
     inner.filter(predicate(_, _))
-  }
 
   def filter(predicate: (K, V) => Boolean,
-    materialized: Materialized[K, V, KeyValueStore[Bytes, Array[Byte]]]): KTableS[K, V] = {
+             materialized: Materialized[K, V, KeyValueStore[Bytes, Array[Byte]]]): KTableS[K, V] =
     inner.filter(predicate.asPredicate, materialized)
-  }
 
-  def filterNot(predicate: (K, V) => Boolean): KTableS[K, V] = {
+  def filterNot(predicate: (K, V) => Boolean): KTableS[K, V] =
     inner.filterNot(predicate(_, _))
-  }
 
   def filterNot(predicate: (K, V) => Boolean,
-    materialized: Materialized[K, V, KeyValueStore[Bytes, Array[Byte]]]): KTableS[K, V] = {
+                materialized: Materialized[K, V, KeyValueStore[Bytes, Array[Byte]]]): KTableS[K, V] =
     inner.filterNot(predicate.asPredicate, materialized)
-  }
 
-  def mapValues[VR](mapper: V => VR): KTableS[K, VR] = {
+  def mapValues[VR](mapper: V => VR): KTableS[K, VR] =
     inner.mapValues[VR](mapper.asValueMapper)
-  }
 
   def mapValues[VR](mapper: V => VR,
-    materialized: Materialized[K, VR, KeyValueStore[Bytes, Array[Byte]]]): KTableS[K, VR] = {
+                    materialized: Materialized[K, VR, KeyValueStore[Bytes, Array[Byte]]]): KTableS[K, VR] =
     inner.mapValues[VR](mapper.asValueMapper, materialized)
-  }
 
   def toStream: KStreamS[K, V] = inner.toStream
 
-  def toStream[KR](mapper: (K, V) => KR): KStreamS[KR, V] = {
+  def toStream[KR](mapper: (K, V) => KR): KStreamS[KR, V] =
     inner.toStream[KR](mapper.asKeyValueMapper)
-  }
 
-  def groupBy[KR, VR](selector: (K, V) => (KR, VR))(implicit serialized: Serialized[KR, VR]): KGroupedTableS[KR, VR] = {
+  def groupBy[KR, VR](selector: (K, V) => (KR, VR))(implicit serialized: Serialized[KR, VR]): KGroupedTableS[KR, VR] =
     inner.groupBy(selector.asKeyValueMapper, serialized)
-  }
 
-  def join[VO, VR](other: KTableS[K, VO],
-    joiner: (V, VO) => VR): KTableS[K, VR] = {
-
+  def join[VO, VR](other: KTableS[K, VO], joiner: (V, VO) => VR): KTableS[K, VR] =
     inner.join[VO, VR](other.inner, joiner.asValueJoiner)
-  }
 
   def join[VO, VR](other: KTableS[K, VO],
-    joiner: (V, VO) => VR,
-    materialized: Materialized[K, VR, KeyValueStore[Bytes, Array[Byte]]]): KTableS[K, VR] = {
-
+                   joiner: (V, VO) => VR,
+                   materialized: Materialized[K, VR, KeyValueStore[Bytes, Array[Byte]]]): KTableS[K, VR] =
     inner.join[VO, VR](other.inner, joiner.asValueJoiner, materialized)
-  }
 
-  def leftJoin[VO, VR](other: KTableS[K, VO],
-    joiner: (V, VO) => VR): KTableS[K, VR] = {
-
+  def leftJoin[VO, VR](other: KTableS[K, VO], joiner: (V, VO) => VR): KTableS[K, VR] =
     inner.leftJoin[VO, VR](other.inner, joiner.asValueJoiner)
-  }
 
   def leftJoin[VO, VR](other: KTableS[K, VO],
-    joiner: (V, VO) => VR,
-    materialized: Materialized[K, VR, KeyValueStore[Bytes, Array[Byte]]]): KTableS[K, VR] = {
-
+                       joiner: (V, VO) => VR,
+                       materialized: Materialized[K, VR, KeyValueStore[Bytes, Array[Byte]]]): KTableS[K, VR] =
     inner.leftJoin[VO, VR](other.inner, joiner.asValueJoiner, materialized)
-  }
 
-  def outerJoin[VO, VR](other: KTableS[K, VO],
-    joiner: (V, VO) => VR): KTableS[K, VR] = {
-
+  def outerJoin[VO, VR](other: KTableS[K, VO], joiner: (V, VO) => VR): KTableS[K, VR] =
     inner.outerJoin[VO, VR](other.inner, joiner.asValueJoiner)
-  }
 
   def outerJoin[VO, VR](other: KTableS[K, VO],
-    joiner: (V, VO) => VR,
-    materialized: Materialized[K, VR, KeyValueStore[Bytes, Array[Byte]]]): KTableS[K, VR] = {
-
+                        joiner: (V, VO) => VR,
+                        materialized: Materialized[K, VR, KeyValueStore[Bytes, Array[Byte]]]): KTableS[K, VR] =
     inner.outerJoin[VO, VR](other.inner, joiner.asValueJoiner, materialized)
-  }
 
   def queryableStoreName: String =
     inner.queryableStoreName

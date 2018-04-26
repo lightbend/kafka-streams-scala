@@ -187,24 +187,19 @@ class CMSStore[T: CMSHasher](override val name: String,
     * Initializes this store, including restoring the store's state from its changelog.
     */
   override def init(context: ProcessorContext, root: StateStore) {
-    val serdes = new StateSerdes[Integer, TopCMS[T]](
-      name,
-      Serdes.Integer(),
-      TopCMSSerde[T])
+    val serdes = new StateSerdes[Integer, TopCMS[T]](name, Serdes.Integer(), TopCMSSerde[T])
     changeLogger = new CMSStoreChangeLogger[Integer, TopCMS[T]](name, context, serdes)
 
     // Note: We must manually guard with `loggingEnabled` here because `context.register()` ignores
     // that parameter.
-    if (root != null && loggingEnabled) {
-      context.register(root, loggingEnabled, (_, value) => {
-        if (value == null) {
-          cms = cmsMonoid.zero
-        }
-        else {
-          cms = serdes.valueFrom(value)
-        }
-      })
-    }
+    if (root != null && loggingEnabled)
+      context.register(root,
+                       loggingEnabled,
+                       (_, value) =>
+                         if (value == null)
+                           cms = cmsMonoid.zero
+                         else
+                           cms = serdes.valueFrom(value))
 
     open = true
   }
@@ -260,9 +255,8 @@ class CMSStore[T: CMSHasher](override val name: String,
     * underlying CMS data structure in its entirety to Kafka.
     */
   override def flush() {
-    if (loggingEnabled) {
+    if (loggingEnabled)
       changeLogger.logChange(changelogKey, cms, timestampOfLastStateStoreUpdate)
-    }
   }
 
   override def close() {

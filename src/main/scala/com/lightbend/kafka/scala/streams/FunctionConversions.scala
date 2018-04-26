@@ -1,30 +1,29 @@
 /**
- * Copyright (C) 2018 Lightbend Inc. <https://www.lightbend.com>
- * Copyright 2017-2018 Alexis Seigneurin.
- */
-
+  * Copyright (C) 2018 Lightbend Inc. <https://www.lightbend.com>
+  * Copyright 2017-2018 Alexis Seigneurin.
+  */
 package com.lightbend.kafka.scala.streams
 
 import org.apache.kafka.streams.KeyValue
 import org.apache.kafka.streams.kstream._
 
 /**
- * Implicit classes that offer conversions of Scala function literals to
- * SAM (Single Abstract Method) objects in Java. These make the Scala APIs much
- * more expressive, with less boilerplate and more succinct.
- */
+  * Implicit classes that offer conversions of Scala function literals to
+  * SAM (Single Abstract Method) objects in Java. These make the Scala APIs much
+  * more expressive, with less boilerplate and more succinct.
+  */
 object FunctionConversions {
 
   implicit class PredicateFromFunction[K, V](val test: (K, V) => Boolean) extends AnyVal {
-    def asPredicate: Predicate[K,V] = test(_,_)
+    def asPredicate: Predicate[K, V] = test(_, _)
   }
 
-  implicit class MapperFromFunction[T, U, V](val f:(T,U) => V) extends AnyVal {
+  implicit class MapperFromFunction[T, U, V](val f: (T, U) => V) extends AnyVal {
     def asKeyValueMapper: KeyValueMapper[T, U, V] = (k: T, v: U) => f(k, v)
-    def asValueJoiner: ValueJoiner[T,U,V] = (v1, v2) => f(v1, v2)
+    def asValueJoiner: ValueJoiner[T, U, V]       = (v1, v2) => f(v1, v2)
   }
 
-  implicit class KeyValueMapperFromFunction[K, V, KR, VR](val f:(K,V) => (KR, VR)) extends AnyVal {
+  implicit class KeyValueMapperFromFunction[K, V, KR, VR](val f: (K, V) => (KR, VR)) extends AnyVal {
     def asKeyValueMapper: KeyValueMapper[K, V, KeyValue[KR, VR]] = (k, v) => {
       val (kr, vr) = f(k, v)
       KeyValue.pair(kr, vr)
@@ -36,10 +35,10 @@ object FunctionConversions {
   }
 
   implicit class AggregatorFromFunction[K, V, VR](val f: (K, V, VR) => VR) extends AnyVal {
-    def asAggregator: Aggregator[K, V, VR] = (k,v,r) => f(k,v,r)
+    def asAggregator: Aggregator[K, V, VR] = (k, v, r) => f(k, v, r)
   }
 
-  implicit class MergerFromFunction[K,VR](val f: (K, VR, VR) => VR) extends  AnyVal {
+  implicit class MergerFromFunction[K, VR](val f: (K, VR, VR) => VR) extends AnyVal {
     def asMerger: Merger[K, VR] = (k, v1, v2) => f(k, v1, v2)
   }
 

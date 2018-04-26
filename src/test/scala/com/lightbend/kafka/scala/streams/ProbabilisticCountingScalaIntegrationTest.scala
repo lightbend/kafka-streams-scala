@@ -2,7 +2,6 @@
   * Copyright (C) 2018 Lightbend Inc. <https://www.lightbend.com>
   * Adapted from Confluent Inc. whose copyright is reproduced below.
   */
-
 /*
  * Copyright Confluent Inc.
  *
@@ -40,9 +39,9 @@ import com.typesafe.scalalogging.LazyLogging
   * Count-Min Sketch data structure.
   */
 trait ProbabilisticCountingScalaIntegrationTestData extends LazyLogging {
-  val brokers = "localhost:9092"
-  val inputTopic = s"inputTopic.${scala.util.Random.nextInt(100)}"
-  val outputTopic = s"output-topic.${scala.util.Random.nextInt(100)}"
+  val brokers       = "localhost:9092"
+  val inputTopic    = s"inputTopic.${scala.util.Random.nextInt(100)}"
+  val outputTopic   = s"output-topic.${scala.util.Random.nextInt(100)}"
   val localStateDir = "local_state_data"
 
   val inputTextLines: Seq[String] = Seq(
@@ -66,8 +65,9 @@ trait ProbabilisticCountingScalaIntegrationTestData extends LazyLogging {
   )
 }
 
-object ProbabilisticCountingScalaIntegrationTest extends TestSuite[KafkaLocalServer]
-  with ProbabilisticCountingScalaIntegrationTestData {
+object ProbabilisticCountingScalaIntegrationTest
+    extends TestSuite[KafkaLocalServer]
+    with ProbabilisticCountingScalaIntegrationTestData {
 
   override def setup(): KafkaLocalServer = {
     val s = KafkaLocalServer(cleanOnStart = true, Some(localStateDir))
@@ -75,12 +75,10 @@ object ProbabilisticCountingScalaIntegrationTest extends TestSuite[KafkaLocalSer
     s
   }
 
-  override def tearDown(server: KafkaLocalServer): Unit = {
+  override def tearDown(server: KafkaLocalServer): Unit =
     server.stop()
-  }
 
   test("shouldProbabilisticallyCountWords") { server =>
-
     server.createTopic(inputTopic)
     server.createTopic(outputTopic)
 
@@ -89,7 +87,8 @@ object ProbabilisticCountingScalaIntegrationTest extends TestSuite[KafkaLocalSer
     //
     val streamsConfiguration: Properties = {
       val p = new Properties()
-      p.put(StreamsConfig.APPLICATION_ID_CONFIG, s"probabilistic-counting-scala-integration-test-${scala.util.Random.nextInt(100)}")
+      p.put(StreamsConfig.APPLICATION_ID_CONFIG,
+            s"probabilistic-counting-scala-integration-test-${scala.util.Random.nextInt(100)}")
       p.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, brokers)
       p.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.ByteArray.getClass.getName)
       p.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, Serdes.String.getClass.getName)
@@ -103,7 +102,7 @@ object ProbabilisticCountingScalaIntegrationTest extends TestSuite[KafkaLocalSer
     val cmsStoreName = "cms-store"
     val cmsStoreBuilder = {
       val changelogConfig: java.util.HashMap[String, String] = {
-        val cfg = new java.util.HashMap[String, String]
+        val cfg              = new java.util.HashMap[String, String]
         val segmentSizeBytes = (20 * 1024 * 1024).toString
         cfg.put("segment.bytes", segmentSizeBytes)
         cfg
@@ -115,7 +114,7 @@ object ProbabilisticCountingScalaIntegrationTest extends TestSuite[KafkaLocalSer
 
     class ProbabilisticCounter extends Transformer[Array[Byte], String, (String, Long)] {
 
-      private var cmsState: CMSStore[String] = _
+      private var cmsState: CMSStore[String]         = _
       private var processorContext: ProcessorContext = _
 
       override def init(processorContext: ProcessorContext): Unit = {
@@ -134,17 +133,16 @@ object ProbabilisticCountingScalaIntegrationTest extends TestSuite[KafkaLocalSer
 
       //scalastyle:off null
       override def punctuate(l: Long): (String, Long) = null
-     //scalastyle:on null
+      //scalastyle:on null
       override def close(): Unit = {}
     }
 
-    implicit val stringSerde: Serde[String] = Serdes.String()
+    implicit val stringSerde: Serde[String]         = Serdes.String()
     implicit val byteArraySerde: Serde[Array[Byte]] = Serdes.ByteArray()
-    implicit val longSerde: Serde[Long] = Serdes.Long().asInstanceOf[Serde[Long]]
+    implicit val longSerde: Serde[Long]             = Serdes.Long().asInstanceOf[Serde[Long]]
 
     // Read the input from Kafka.
     val textLines: KStreamS[Array[Byte], String] = builder.stream(inputTopic)
-
 
     textLines
       .flatMapValues(value => value.toLowerCase.split("\\W+").toIterable)
@@ -155,15 +153,17 @@ object ProbabilisticCountingScalaIntegrationTest extends TestSuite[KafkaLocalSer
     streams.start()
 
     // Step 2: Publish some input text lines.
-    val sender = MessageSender[String, String](brokers, classOf[StringSerializer].getName, classOf[StringSerializer].getName)
+    val sender =
+      MessageSender[String, String](brokers, classOf[StringSerializer].getName, classOf[StringSerializer].getName)
     sender.batchWriteValue(inputTopic, inputTextLines)
     // Step 3: Verify the application's output data.
 
-    val listener = MessageListener(brokers, outputTopic, "probwordcountgroup",
-      classOf[StringDeserializer].getName,
-      classOf[LongDeserializer].getName,
-      new RecordProcessor
-    )
+    val listener = MessageListener(brokers,
+                                   outputTopic,
+                                   "probwordcountgroup",
+                                   classOf[StringDeserializer].getName,
+                                   classOf[LongDeserializer].getName,
+                                   new RecordProcessor)
 
     val l = listener.waitUntilMinKeyValueRecordsReceived(expectedWordCounts.size, 30000)
 

@@ -15,22 +15,26 @@ developers := List(
 organizationName := "lightbend"
 organizationHomepage := Option(url("http://lightbend.com/"))
 homepage := scmInfo.value map (_.browseUrl)
-scmInfo := Option(ScmInfo(url("https://github.com/lightbend/kafka-streams-scala"), "git@github.com:lightbend/kafka-streams-scala.git"))
+scmInfo := Option(
+  ScmInfo(url("https://github.com/lightbend/kafka-streams-scala"), "git@github.com:lightbend/kafka-streams-scala.git")
+)
 
 parallelExecution in Test := false
 testFrameworks += new TestFramework("minitest.runner.Framework")
 
 libraryDependencies ++= Seq(
-  kafkaStreams excludeAll(ExclusionRule("org.slf4j", "slf4j-log4j12"), ExclusionRule("org.apache.zookeeper", "zookeeper")),
+  kafkaStreams excludeAll (ExclusionRule("org.slf4j", "slf4j-log4j12"), ExclusionRule("org.apache.zookeeper",
+                                                                                      "zookeeper")),
   scalaLogging % "test",
-  logback % "test",
-  kafka % "test" excludeAll(ExclusionRule("org.slf4j", "slf4j-log4j12"), ExclusionRule("org.apache.zookeeper", "zookeeper")),
-  curator % "test",
-  minitest % "test",
+  logback      % "test",
+  kafka        % "test" excludeAll (ExclusionRule("org.slf4j", "slf4j-log4j12"), ExclusionRule("org.apache.zookeeper",
+                                                                                        "zookeeper")),
+  curator      % "test",
+  minitest     % "test",
   minitestLaws % "test",
-  algebird % "test",
-  chill % "test",
-  avro4s % "test"
+  algebird     % "test",
+  chill        % "test",
+  avro4s       % "test"
 )
 
 credentials += Credentials(Path.userHome / ".ivy2" / ".credentials")
