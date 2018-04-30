@@ -7,8 +7,8 @@ object Versions {
   val CuratorVersion      = "4.0.0"
   val MinitestVersion     = "2.0.0"
   val JDKVersion          = "1.8"
-  val Scala_2_12_Version  = "2.12.5"
-  val Scala_2_11_Version  = "2.11.11"
+  val Scala_2_12_Version  = "2.12.6"
+  val Scala_2_11_Version  = "2.11.12"
   val Avro4sVersion       = "1.8.3"
   val CrossScalaVersions  = Seq(Scala_2_12_Version, Scala_2_11_Version)
 }

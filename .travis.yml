@@ -3,7 +3,7 @@ sudo: false
 jdk: oraclejdk8
 scala:
 - 2.11.11
-- 2.12.4
+- 2.12.6
 sbt_args: -mem 2000
 script:
 - sbt "++ ${TRAVIS_SCALA_VERSION}!" scalafmtCheck Test/scalafmtCheck scalafmtSbtCheck test
