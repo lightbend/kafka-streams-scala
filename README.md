@@ -1,3 +1,5 @@
+**Note:** *Scala API for Kafka Streams have been accepted for inclusion in Apache Kafka. We have been working with the Kafka team since the last couple of months working towards meeting the standards and guidelines for this activity. Lightbend and Alexis Seigneurin have contributed this library (with some changes) to the Kafka community. This is already available on [Apache Kafka trunk](https://github.com/apache/kafka/tree/trunk/streams/streams-scala) and will be included in the upcoming release of Kafka. Hence it does not make much sense to update this project on a regular basis. For some time however, we will continue to provide support for fixing bugs only.*
+
 # A Thin Scala Wrapper Around the Kafka Streams Java API
 
 [![Build Status](https://secure.travis-ci.org/lightbend/kafka-streams-scala.png)](http://travis-ci.org/lightbend/kafka-streams-scala)
