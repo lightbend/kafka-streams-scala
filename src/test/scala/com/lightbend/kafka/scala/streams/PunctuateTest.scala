@@ -41,8 +41,8 @@ object PunctuateTest extends TestSuite[KafkaLocalServer] with PunctuateTestData 
     streamsConfiguration.put(StreamsConfig.CLIENT_ID_CONFIG, "punctuategroup")
 
     streamsConfiguration.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, brokers)
-    streamsConfiguration.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.String().getClass().getName())
-    streamsConfiguration.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, Serdes.String().getClass().getName())
+    streamsConfiguration.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.string.getClass.getName)
+    streamsConfiguration.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, Serdes.string.getClass.getName)
 
     val topology = new Topology
     // Data input streams

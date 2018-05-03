@@ -66,7 +66,7 @@ object StreamToTableJoinScalaIntegrationTestImplicitSerdes
     // DefaultSerdes brings into scope implicit serdes (mostly for primitives) that will set up all Serialized, Produced,
     // Consumed and Joined instances. So all APIs below that accept Serialized, Produced, Consumed or Joined will
     // get these instances automatically
-    import DefaultSerdes._
+    import Serdes._
 
     // we don't have any serde declared as part of configuration. Even if they are declared here, the
     // Scala APIs will ignore them. But it's possible to declare serdes here and use them through

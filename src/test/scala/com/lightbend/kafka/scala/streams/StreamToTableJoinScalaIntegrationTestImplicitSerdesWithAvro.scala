@@ -36,28 +36,22 @@ object StreamToTableJoinScalaIntegrationTestImplicitSerdesWithAvro
 
   case class UserClicks(clicks: Long)
 
-  // adopted from Openshine implementation
-  class AvroSerde[T >: Null: SchemaFor: FromRecord: ToRecord] extends StatelessScalaSerde[T] {
-
-    override def serialize(data: T): Array[Byte] = {
+  /** Our implicit Serde implementation for the values we want to serialize
+    * as avro
+    */
+  implicit def avroSerde[T >: Null: SchemaFor: FromRecord: ToRecord]: Serde[T] = Serdes.fromFn(
+    { data: T =>
       val baos   = new ByteArrayOutputStream()
       val output = AvroOutputStream.binary[T](baos)
       output.write(data)
       output.close()
       baos.toByteArray
-    }
-
-    override def deserialize(data: Array[Byte]): Option[T] = {
+    }, { data =>
       val in    = new ByteArrayInputStream(data)
       val input = AvroInputStream.binary[T](in)
       input.iterator.toSeq.headOption
     }
-  }
-
-  /** Our implicit Serde implementation for the values we want to serialize
-    * as avro
-    */
-  implicit val userClicksSerde: Serde[UserClicks] = new AvroSerde
+  )
 
   /**
     * End-to-end integration test that demonstrates how to perform a join
@@ -95,7 +89,7 @@ object StreamToTableJoinScalaIntegrationTestImplicitSerdesWithAvro
     // DefaultSerdes brings into scope implicit serdes (mostly for primitives) that will set up all Serialized, Produced,
     // Consumed and Joined instances. So all APIs below that accept Serialized, Produced, Consumed or Joined will
     // get these instances automatically
-    import DefaultSerdes._
+    import Serdes._
 
     //
     // Step 1: Configure and start the processor topology.
@@ -147,11 +141,11 @@ object StreamToTableJoinScalaIntegrationTestImplicitSerdesWithAvro
             println(s"Stream terminated because of uncaught exception .. Shutting " +
                       s"down app",
                     e)
-            e.printStackTrace
+            e.printStackTrace()
             val closed = streams.close()
             println(s"Exiting application after streams close ($closed)")
           } catch {
-            case x: Exception => x.printStackTrace
+            case x: Exception => x.printStackTrace()
           } finally {
             println("Exiting application ..")
             System.exit(-1)
@@ -180,13 +174,12 @@ object StreamToTableJoinScalaIntegrationTestImplicitSerdesWithAvro
                                                      classOf[StringSerializer].getName,
                                                      classOf[ByteArraySerializer].getName)
     userClicks
-      .map(
-        kv =>
-          new KeyValue[String, Array[Byte]](
-            kv.key,
-            new AvroSerde[UserClicks].serialize(UserClicks(kv.value))
+      .map { kv =>
+        new KeyValue[String, Array[Byte]](
+          kv.key,
+          avroSerde[UserClicks].serializer().serialize("", UserClicks(kv.value))
         )
-      )
+      }
       .foreach(r => sender2.writeKeyValue(userClicksTopic, r.key, r.value))
 
     //
