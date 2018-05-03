@@ -15,14 +15,9 @@ import FunctionConversions._
   */
 class KGroupedTableS[K, V](inner: KGroupedTable[K, V]) {
 
-  type ByteArrayKVStore = KeyValueStore[Bytes, Array[Byte]]
+  def count(): KTableS[K, Long] = inner.count().asInstanceOf[KTable[K, Long]]
 
-  def count(): KTableS[K, Long] = {
-    val c: KTableS[K, java.lang.Long] = inner.count()
-    c.mapValues[Long](Long2long(_))
-  }
-
-  def count(materialized: Materialized[K, Long, ByteArrayKVStore]): KTableS[K, Long] =
+  def count(materialized: Materialized[K, Long, KeyValueStore[Bytes, Array[Byte]]]): KTableS[K, Long] =
     inner.count(materialized)
 
   def reduce(adder: (V, V) => V, subTractor: (V, V) => V): KTableS[K, V] =
@@ -32,7 +27,7 @@ class KGroupedTableS[K, V](inner: KGroupedTable[K, V]) {
 
   def reduce(adder: (V, V) => V,
              subtractor: (V, V) => V,
-             materialized: Materialized[K, V, ByteArrayKVStore]): KTableS[K, V] =
+             materialized: Materialized[K, V, KeyValueStore[Bytes, Array[Byte]]]): KTableS[K, V] =
     // need this explicit asReducer for Scala 2.11 or else the SAM conversion doesn't take place
     // works perfectly with Scala 2.12 though
     inner.reduce(((v1, v2) => adder(v1, v2)).asReducer, ((v1, v2) => subtractor(v1, v2)).asReducer, materialized)
@@ -43,6 +38,6 @@ class KGroupedTableS[K, V](inner: KGroupedTable[K, V]) {
   def aggregate[VR](initializer: () => VR,
                     adder: (K, V, VR) => VR,
                     subtractor: (K, V, VR) => VR,
-                    materialized: Materialized[K, VR, ByteArrayKVStore]): KTableS[K, VR] =
+                    materialized: Materialized[K, VR, KeyValueStore[Bytes, Array[Byte]]]): KTableS[K, VR] =
     inner.aggregate(initializer.asInitializer, adder.asAggregator, subtractor.asAggregator, materialized)
 }

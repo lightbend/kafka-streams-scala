@@ -8,7 +8,7 @@ import java.util.regex.Pattern
 
 import com.lightbend.kafka.scala.streams.ImplicitConversions._
 import org.apache.kafka.common.utils.Bytes
-import org.apache.kafka.streams.kstream.{GlobalKTable, Materialized}
+import org.apache.kafka.streams.kstream.{GlobalKTable, Materialized => JavaMaterialized}
 import org.apache.kafka.streams.processor.{ProcessorSupplier, StateStore}
 import org.apache.kafka.streams.state.{KeyValueStore, StoreBuilder}
 import org.apache.kafka.streams.{Consumed, StreamsBuilder, Topology}
@@ -32,7 +32,7 @@ class StreamsBuilderS(inner: StreamsBuilder = new StreamsBuilder) {
   def table[K, V](topic: String)(implicit consumed: Consumed[K, V]): KTableS[K, V] =
     inner.table[K, V](topic, consumed)
 
-  def table[K, V](topic: String, materialized: Materialized[K, V, KeyValueStore[Bytes, Array[Byte]]])(
+  def table[K, V](topic: String, materialized: JavaMaterialized[K, V, KeyValueStore[Bytes, Array[Byte]]])(
     implicit consumed: Consumed[K, V]
   ): KTableS[K, V] =
     inner.table[K, V](topic, consumed, materialized)
@@ -40,7 +40,7 @@ class StreamsBuilderS(inner: StreamsBuilder = new StreamsBuilder) {
   def globalTable[K, V](topic: String)(implicit consumed: Consumed[K, V]): GlobalKTable[K, V] =
     inner.globalTable(topic, consumed)
 
-  def globalTable[K, V](topic: String, materialized: Materialized[K, V, KeyValueStore[Bytes, Array[Byte]]])(
+  def globalTable[K, V](topic: String, materialized: JavaMaterialized[K, V, KeyValueStore[Bytes, Array[Byte]]])(
     implicit consumed: Consumed[K, V]
   ): GlobalKTable[K, V] =
     inner.globalTable(topic, consumed, materialized)
