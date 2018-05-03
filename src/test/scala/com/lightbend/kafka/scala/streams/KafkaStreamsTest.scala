@@ -32,7 +32,7 @@ object KafkaStreamsTest extends TestSuite[KafkaLocalServer] with WordCountTestDa
     //
     // Step 1: Configure and start the processor topology.
     //
-    import DefaultSerdes._
+    import Serdes._
 
     val streamsConfiguration = new Properties()
     streamsConfiguration.put(StreamsConfig.APPLICATION_ID_CONFIG, s"wordcount-${scala.util.Random.nextInt(100)}")

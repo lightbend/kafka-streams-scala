@@ -7,7 +7,6 @@ package com.lightbend.kafka.scala.streams
 import org.apache.kafka.streams.kstream._
 import org.apache.kafka.streams.{Consumed, KeyValue}
 import org.apache.kafka.common.serialization.Serde
-
 import scala.language.implicitConversions
 
 /**

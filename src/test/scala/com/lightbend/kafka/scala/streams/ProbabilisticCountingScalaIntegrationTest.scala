@@ -90,8 +90,8 @@ object ProbabilisticCountingScalaIntegrationTest
       p.put(StreamsConfig.APPLICATION_ID_CONFIG,
             s"probabilistic-counting-scala-integration-test-${scala.util.Random.nextInt(100)}")
       p.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, brokers)
-      p.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.ByteArray.getClass.getName)
-      p.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, Serdes.String.getClass.getName)
+      p.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.byteArray.getClass.getName)
+      p.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, Serdes.string.getClass.getName)
       p.put(StreamsConfig.COMMIT_INTERVAL_MS_CONFIG, "10000")
       p.put(StreamsConfig.STATE_DIR_CONFIG, localStateDir)
       p
@@ -107,7 +107,7 @@ object ProbabilisticCountingScalaIntegrationTest
         cfg.put("segment.bytes", segmentSizeBytes)
         cfg
       }
-      new CMSStoreBuilder[String](cmsStoreName, Serdes.String())
+      new CMSStoreBuilder[String](cmsStoreName, Serdes.string)
         .withLoggingEnabled(changelogConfig)
     }
     builder.addStateStore(cmsStoreBuilder)
@@ -137,9 +137,9 @@ object ProbabilisticCountingScalaIntegrationTest
       override def close(): Unit = {}
     }
 
-    implicit val stringSerde: Serde[String]         = Serdes.String()
-    implicit val byteArraySerde: Serde[Array[Byte]] = Serdes.ByteArray()
-    implicit val longSerde: Serde[Long]             = Serdes.Long().asInstanceOf[Serde[Long]]
+    implicit val stringSerde: Serde[String]         = Serdes.string
+    implicit val byteArraySerde: Serde[Array[Byte]] = Serdes.byteArray
+    implicit val longSerde: Serde[Long]             = Serdes.long
 
     // Read the input from Kafka.
     val textLines: KStreamS[Array[Byte], String] = builder.stream(inputTopic)
