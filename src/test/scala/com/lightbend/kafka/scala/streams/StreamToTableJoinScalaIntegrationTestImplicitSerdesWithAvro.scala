@@ -32,8 +32,9 @@ import ImplicitConversions._
 import com.typesafe.scalalogging.LazyLogging
 
 object StreamToTableJoinScalaIntegrationTestImplicitSerdesWithAvro
-  extends TestSuite[KafkaLocalServer] with StreamToTableJoinTestData with LazyLogging{
-
+    extends TestSuite[KafkaLocalServer]
+    with StreamToTableJoinTestData
+    with LazyLogging {
 
   case class UserClicks(clicks: Long)
 
@@ -79,9 +80,8 @@ object StreamToTableJoinScalaIntegrationTestImplicitSerdesWithAvro
     * must be `static` and `public`) to a workaround combination of `@Rule
     * def` and a `private val`.
     */
-  override def setup(): KafkaLocalServer = {
+  override def setup(): KafkaLocalServer =
     KafkaLocalServer(true, Some(localStateDir)).start()
-  }
 
   override def tearDown(server: KafkaLocalServer): Unit =
     server.stop()
@@ -137,21 +137,24 @@ object StreamToTableJoinScalaIntegrationTestImplicitSerdesWithAvro
     // Write the (continuously updating) results to the output topic.
     clicksPerRegion.toStream.to(outputTopic)
 
-    val streams: KafkaStreamsS =  KafkaStreamsS(builder.build(), streamsConfiguration)
-    streams.withUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
-        override def uncaughtException(t: Thread, e: Throwable): Unit = try {
-          logger.error(
-            s"Stream terminated because of uncaught exception .. Shutting " +
-              s"down app", e)
-          val closed = streams.close()
-          logger.debug(s"Exiting application after streams close ($closed)")
-        } catch {
-          case x: Exception => x.printStackTrace
-        } finally {
-          logger.debug("Exiting application ..")
-          System.exit(-1)
-        }
-      }).start()
+    val streams: KafkaStreamsS = KafkaStreamsS(builder.build(), streamsConfiguration)
+    streams
+      .withUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
+        override def uncaughtException(t: Thread, e: Throwable): Unit =
+          try {
+            logger.error(s"Stream terminated because of uncaught exception .. Shutting " +
+                           s"down app",
+                         e)
+            val closed = streams.close()
+            logger.debug(s"Exiting application after streams close ($closed)")
+          } catch {
+            case x: Exception => x.printStackTrace
+          } finally {
+            logger.debug("Exiting application ..")
+            System.exit(-1)
+          }
+      })
+      .start()
 
     //
     // Step 2: Publish user-region information.
