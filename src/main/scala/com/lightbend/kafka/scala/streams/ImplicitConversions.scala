@@ -1,19 +1,19 @@
 /**
- * Copyright (C) 2018 Lightbend Inc. <https://www.lightbend.com>
- */
-
+  * Copyright (C) 2018 Lightbend Inc. <https://www.lightbend.com>
+  * Copyright 2017-2018 Alexis Seigneurin.
+  */
 package com.lightbend.kafka.scala.streams
 
 import org.apache.kafka.streams.kstream._
-import org.apache.kafka.streams.{ KeyValue, Consumed }
+import org.apache.kafka.streams.{Consumed, KeyValue}
 import org.apache.kafka.common.serialization.Serde
 
 import scala.language.implicitConversions
 
 /**
- * Implicit conversions between the Scala wrapper objects and the underlying Java
- * objects.
- */
+  * Implicit conversions between the Scala wrapper objects and the underlying Java
+  * objects.
+  */
 object ImplicitConversions {
 
   implicit def wrapKStream[K, V](inner: KStream[K, V]): KStreamS[K, V] =
@@ -49,7 +49,8 @@ object ImplicitConversions {
   implicit def producedFromSerde[K, V](implicit keySerde: Serde[K], valueSerde: Serde[V]): Produced[K, V] =
     Produced.`with`(keySerde, valueSerde)
 
-  implicit def joinedFromKVOSerde[K, V, VO](implicit keySerde: Serde[K], valueSerde: Serde[V],
+  implicit def joinedFromKVOSerde[K, V, VO](implicit keySerde: Serde[K],
+                                            valueSerde: Serde[V],
                                             otherValueSerde: Serde[VO]): Joined[K, V, VO] =
     Joined.`with`(keySerde, valueSerde, otherValueSerde)
 }

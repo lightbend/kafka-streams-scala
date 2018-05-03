@@ -1,12 +1,10 @@
 /**
- * Copyright (C) 2018 Lightbend Inc. <https://www.lightbend.com>
- */
-
+  * Copyright (C) 2018 Lightbend Inc. <https://www.lightbend.com>
+  */
 package com.lightbend.kafka.scala.server
 
-
 import java.io.File
-import java.nio.file.{ FileVisitOption, Files, Paths }
+import java.nio.file.{FileVisitOption, Files, Paths}
 import java.util.Comparator
 
 import scala.util.Try
@@ -17,7 +15,8 @@ object Utils {
     if (directory.exists()) {
       val rootPath = Paths.get(directory.getAbsolutePath)
 
-      val files = Files.walk(rootPath, FileVisitOption.FOLLOW_LINKS).sorted(Comparator.reverseOrder()).iterator().asScala
+      val files =
+        Files.walk(rootPath, FileVisitOption.FOLLOW_LINKS).sorted(Comparator.reverseOrder()).iterator().asScala
       files.foreach(Files.delete)
     }
   }
@@ -26,10 +25,10 @@ object Utils {
 
     val dataDirectory = new File(baseDir + directoryName)
 
-    if (dataDirectory.exists() && !dataDirectory.isDirectory()) {
+    if (dataDirectory.exists() && !dataDirectory.isDirectory())
       throw new IllegalArgumentException(
-        s"Cannot use $directoryName as a directory name because a file with that name already exists in $dataDirectory.")
-    }
+        s"Cannot use $directoryName as a directory name because a file with that name already exists in $dataDirectory."
+      )
     dataDirectory
   }
 }

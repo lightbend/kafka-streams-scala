@@ -10,21 +10,24 @@ import com.lightbend.kafka.scala.server.{KafkaLocalServer, MessageListener, Mess
 import minitest.TestSuite
 import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.apache.kafka.common.serialization._
-import org.apache.kafka.streams.{ KeyValue, StreamsConfig}
+import org.apache.kafka.streams.{KafkaStreams, KeyValue, StreamsConfig}
 import ImplicitConversions._
 import com.typesafe.scalalogging.LazyLogging
 
-object KafkaStreamsTest extends TestSuite[KafkaLocalServer] with WordCountTestData with LazyLogging {
+object KafkaStreamsMergeTest extends TestSuite[KafkaLocalServer] with WordCountMergeTestData with LazyLogging {
 
   override def setup(): KafkaLocalServer = {
-    KafkaLocalServer(cleanOnStart = true, Some(localStateDir)).start()
+    val s = KafkaLocalServer(cleanOnStart = true, Some(localStateDir))
+    s.start()
+    s
   }
 
   override def tearDown(server: KafkaLocalServer): Unit =
     server.stop()
 
   test("should count words") { server =>
-    server.createTopic(inputTopic)
+    server.createTopic(inputTopic1)
+    server.createTopic(inputTopic2)
     server.createTopic(outputTopic)
 
     //
@@ -41,7 +44,10 @@ object KafkaStreamsTest extends TestSuite[KafkaLocalServer] with WordCountTestDa
 
     val builder = new StreamsBuilderS()
 
-    val textLines = builder.stream[String, String](inputTopic)
+    val textLines1 = builder.stream[String, String](inputTopic1)
+    val textLines2 = builder.stream[String, String](inputTopic2)
+
+    val textLines = textLines1.merge(textLines2)
 
     val pattern = Pattern.compile("\\W+", Pattern.UNICODE_CHARACTER_CLASS)
 
@@ -53,15 +59,16 @@ object KafkaStreamsTest extends TestSuite[KafkaLocalServer] with WordCountTestDa
 
     wordCounts.toStream.to(outputTopic)
 
-    val streams =  KafkaStreamsS(builder, streamsConfiguration).start()
-
+    val streams = new KafkaStreams(builder.build(), streamsConfiguration)
+    streams.start()
 
     //
-    // Step 2: Produce some input data to the input topic.
+    // Step 2: Produce some input data to the input topics.
     //
     val sender =
       MessageSender[String, String](brokers, classOf[StringSerializer].getName, classOf[StringSerializer].getName)
-    val mvals = sender.batchWriteValue(inputTopic, inputValues)
+    val mvals1 = sender.batchWriteValue(inputTopic1, inputValues)
+    val mvals2 = sender.batchWriteValue(inputTopic2, inputValues)
 
     //
     // Step 3: Verify the application's output data.
@@ -88,9 +95,10 @@ object KafkaStreamsTest extends TestSuite[KafkaLocalServer] with WordCountTestDa
 
 }
 
-trait WordCountTestData {
-  val inputTopic    = s"inputTopic.${scala.util.Random.nextInt(100)}"
-  val outputTopic   = s"outputTopic.${scala.util.Random.nextInt(100)}"
+trait WordCountMergeTestData {
+  val inputTopic1   = s"inputTopic1.${scala.util.Random.nextInt(100)}"
+  val inputTopic2   = s"inputTopic2.${scala.util.Random.nextInt(100)}"
+  val outputTopic   = s"outputTpic.${scala.util.Random.nextInt(100)}"
   val brokers       = "localhost:9092"
   val localStateDir = "local_state_data"
 
@@ -102,18 +110,18 @@ trait WordCountTestData {
   )
 
   val expectedWordCounts: List[KeyValue[String, Long]] = List(
-    new KeyValue("hello", 1L),
-    new KeyValue("all", 1L),
-    new KeyValue("streams", 2L),
-    new KeyValue("lead", 1L),
-    new KeyValue("to", 1L),
-    new KeyValue("join", 1L),
-    new KeyValue("kafka", 3L),
-    new KeyValue("summit", 1L),
-    new KeyValue("и", 1L),
-    new KeyValue("теперь", 1L),
-    new KeyValue("пошли", 1L),
-    new KeyValue("русские", 1L),
-    new KeyValue("слова", 1L)
+    new KeyValue("hello", 2L),
+    new KeyValue("all", 2L),
+    new KeyValue("streams", 4L),
+    new KeyValue("lead", 2L),
+    new KeyValue("to", 2L),
+    new KeyValue("join", 2L),
+    new KeyValue("kafka", 6L),
+    new KeyValue("summit", 2L),
+    new KeyValue("и", 2L),
+    new KeyValue("теперь", 2L),
+    new KeyValue("пошли", 2L),
+    new KeyValue("русские", 2L),
+    new KeyValue("слова", 2L)
   )
 }

@@ -1,3 +1,5 @@
+**Note:** *Scala API for Kafka Streams have been accepted for inclusion in Apache Kafka. We have been working with the Kafka team since the last couple of months working towards meeting the standards and guidelines for this activity. Lightbend and Alexis Seigneurin have contributed this library (with some changes) to the Kafka community. This is already available on [Apache Kafka trunk](https://github.com/apache/kafka/tree/trunk/streams/streams-scala) and will be included in the upcoming release of Kafka. Hence it does not make much sense to update this project on a regular basis. For some time however, we will continue to provide support for fixing bugs only.*
+
 # A Thin Scala Wrapper Around the Kafka Streams Java API
 
 [![Build Status](https://secure.travis-ci.org/lightbend/kafka-streams-scala.png)](http://travis-ci.org/lightbend/kafka-streams-scala)
@@ -16,7 +18,7 @@ The design of the library was inspired by the work started by Alexis Seigneurin 
 `kafka-streams-scala` is published and cross-built for Scala `2.11`, and `2.12`, so you can just add the following to your build:
 
 ```scala
-val kafka_streams_scala_version = "0.2.0"
+val kafka_streams_scala_version = "0.2.1"
 
 libraryDependencies ++= Seq("com.lightbend" %%
   "kafka-streams-scala" % kafka_streams_scala_version)
@@ -24,7 +26,7 @@ libraryDependencies ++= Seq("com.lightbend" %%
 
 > Note: `kafka-streams-scala` supports onwards Kafka Streams `1.0.0`.
 
-The API docs for `kafka-streams-scala` is available [here](https://developer.lightbend.com/docs/api/kafka-streams-scala/0.2.0/com/lightbend/kafka/scala/streams) for Scala 2.12 and [here](https://developer.lightbend.com/docs/api/kafka-streams-scala_2.11/0.2.0/#package) for Scala 2.11.
+The API docs for `kafka-streams-scala` is available [here](https://developer.lightbend.com/docs/api/kafka-streams-scala/0.2.1/com/lightbend/kafka/scala/streams) for Scala 2.12 and [here](https://developer.lightbend.com/docs/api/kafka-streams-scala_2.11/0.2.1/#package) for Scala 2.11.
 
 ## Running the Tests
 
