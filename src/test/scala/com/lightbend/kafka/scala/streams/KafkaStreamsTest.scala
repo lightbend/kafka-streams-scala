@@ -10,15 +10,14 @@ import com.lightbend.kafka.scala.server.{KafkaLocalServer, MessageListener, Mess
 import minitest.TestSuite
 import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.apache.kafka.common.serialization._
-import org.apache.kafka.streams.{ KeyValue, StreamsConfig}
+import org.apache.kafka.streams.{KeyValue, StreamsConfig}
 import ImplicitConversions._
 import com.typesafe.scalalogging.LazyLogging
 
 object KafkaStreamsTest extends TestSuite[KafkaLocalServer] with WordCountTestData with LazyLogging {
 
-  override def setup(): KafkaLocalServer = {
+  override def setup(): KafkaLocalServer =
     KafkaLocalServer(cleanOnStart = true, Some(localStateDir)).start()
-  }
 
   override def tearDown(server: KafkaLocalServer): Unit =
     server.stop()
@@ -53,8 +52,7 @@ object KafkaStreamsTest extends TestSuite[KafkaLocalServer] with WordCountTestDa
 
     wordCounts.toStream.to(outputTopic)
 
-    val streams =  KafkaStreamsS(builder, streamsConfiguration).start()
-
+    val streams = KafkaStreamsS(builder, streamsConfiguration).start()
 
     //
     // Step 2: Produce some input data to the input topic.
