@@ -1,7 +1,6 @@
 /**
- * Copyright (C) 2018 Lightbend Inc. <https://www.lightbend.com>
- */
-
+  * Copyright (C) 2018 Lightbend Inc. <https://www.lightbend.com>
+  */
 package com.lightbend.kafka.scala.server
 
 import org.apache.kafka.clients.consumer.ConsumerRecord

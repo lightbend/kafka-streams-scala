@@ -1,7 +1,6 @@
 /**
   * Copyright (C) 2018 Lightbend Inc. <https://www.lightbend.com>
   */
-
 package com.lightbend.kafka.scala.streams
 
 import java.util.Properties
@@ -19,7 +18,6 @@ import org.apache.kafka.streams.{KafkaStreams, StreamsConfig, Topology}
   * This code is based on the article "Problems With Kafka Streams:
   * The Saga Continues" (https://dzone.com/articles/problems-with-kafka-streams-the-saga-continues)
   */
-
 object PunctuateTest extends TestSuite[KafkaLocalServer] with PunctuateTestData with LazyLogging {
 
   override def setup(): KafkaLocalServer = {
@@ -28,12 +26,10 @@ object PunctuateTest extends TestSuite[KafkaLocalServer] with PunctuateTestData 
     s
   }
 
-  override def tearDown(server: KafkaLocalServer): Unit = {
+  override def tearDown(server: KafkaLocalServer): Unit =
     server.stop()
-  }
 
   test("should punctuate execution") { server =>
-
     server.createTopic(inputTopic)
 
     //
@@ -58,31 +54,31 @@ object PunctuateTest extends TestSuite[KafkaLocalServer] with PunctuateTestData 
     // Allpw time for the streams to start up
     Thread.sleep(5000L)
 
-
     //
     // Step 2: Produce some input data to the input topic.
     //
-    val sender = MessageSender[String, String](brokers, classOf[StringSerializer].getName, classOf[StringSerializer].getName)
-    for (i <- 0 to 15){
+    val sender =
+      MessageSender[String, String](brokers, classOf[StringSerializer].getName, classOf[StringSerializer].getName)
+    for (i <- 0 to 15) {
       sender.writeValue(inputTopic, i.toString)
-      Thread.sleep(1000L)     // sleep for 1 sec
+      Thread.sleep(1000L) // sleep for 1 sec
     }
 
     // End test
-    Thread.sleep(5000L)     // sleep for 10 sec
+    Thread.sleep(5000L) // sleep for 10 sec
     streams.close()
   }
 
   class SampleProcessor(punctuateTime: Long) extends AbstractProcessor[String, String] {
 
     var ctx: ProcessorContext = _
-    var message = ""
+    var message               = ""
 
     override def init(context: ProcessorContext): Unit = {
       ctx = context
-      ctx.schedule(punctuateTime, PunctuationType.STREAM_TIME, (timestamp: Long) => {
-        logger.info(s"Punctuator called at $timestamp, current message $message")
-      })
+      ctx.schedule(punctuateTime,
+                   PunctuationType.STREAM_TIME,
+                   (timestamp: Long) => logger.info(s"Punctuator called at $timestamp, current message $message"))
     }
 
     override def process(key: String, value: String): Unit = {
@@ -93,9 +89,8 @@ object PunctuateTest extends TestSuite[KafkaLocalServer] with PunctuateTestData 
 }
 
 trait PunctuateTestData {
-  val inputTopic = s"inputTopic.${scala.util.Random.nextInt(100)}"
-  val outputTopic = s"outputTopic.${scala.util.Random.nextInt(100)}"
-  val brokers = "localhost:9092"
+  val inputTopic    = s"inputTopic.${scala.util.Random.nextInt(100)}"
+  val outputTopic   = s"outputTopic.${scala.util.Random.nextInt(100)}"
+  val brokers       = "localhost:9092"
   val localStateDir = "local_state_data"
 }
-
