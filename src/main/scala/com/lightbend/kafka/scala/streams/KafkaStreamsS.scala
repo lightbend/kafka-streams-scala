@@ -11,42 +11,34 @@ import scala.collection.JavaConverters._
 
 class KafkaStreamsS(inner: KafkaStreams) {
 
-  def allMetadata(): Iterable[StreamsMetadata] = {
+  def allMetadata(): Iterable[StreamsMetadata] =
     inner.allMetadata().asScala
-  }
 
-  def allMetadataForStore(storeName: String): Iterable[StreamsMetadata] = {
+  def allMetadataForStore(storeName: String): Iterable[StreamsMetadata] =
     inner.allMetadataForStore(storeName).asScala
-  }
 
   def cleanUp() = {
     inner.cleanUp()
     this
   }
 
-  def close() = {
+  def close() =
     inner.close()
-  }
 
-  def close(timeout: Long, timeUnit: java.util.concurrent.TimeUnit) = {
+  def close(timeout: Long, timeUnit: java.util.concurrent.TimeUnit) =
     inner.close(timeout, timeUnit)
-  }
 
-  def localThreadsMetadata(): Set[ThreadMetadata] = {
+  def localThreadsMetadata(): Set[ThreadMetadata] =
     inner.localThreadsMetadata.asScala.toSet
-  }
 
-  def metadataForKey[K](storeName: String, key: K, keySerializer: Serializer[K]): StreamsMetadata = {
+  def metadataForKey[K](storeName: String, key: K, keySerializer: Serializer[K]): StreamsMetadata =
     inner.metadataForKey(storeName, key, keySerializer)
-  }
 
-  def metadataForKey[K](storeName: String, key: K, partitioner: StreamPartitioner[_ >: K, _]): StreamsMetadata = {
+  def metadataForKey[K](storeName: String, key: K, partitioner: StreamPartitioner[_ >: K, _]): StreamsMetadata =
     inner.metadataForKey(storeName, key, partitioner)
-  }
 
-  def metrics(): Map[MetricName, _ <: Metric] = {
+  def metrics(): Map[MetricName, _ <: Metric] =
     inner.metrics().asScala.toMap
-  }
 
   def withGlobalStateRestoreListener(globalStateRestoreListener: StateRestoreListener) = {
     inner.setGlobalStateRestoreListener(globalStateRestoreListener)
@@ -68,13 +60,11 @@ class KafkaStreamsS(inner: KafkaStreams) {
     this
   }
 
-  def state(): KafkaStreams.State = {
+  def state(): KafkaStreams.State =
     inner.state()
-  }
 
-  def store[T](storeName: String, queryableStoreType: QueryableStoreType[T]) = {
+  def store[T](storeName: String, queryableStoreType: QueryableStoreType[T]) =
     inner.store(storeName, queryableStoreType)
-  }
 }
 
 object KafkaStreamsS {
@@ -84,6 +74,7 @@ object KafkaStreamsS {
 
   def apply(topology: Topology, config: StreamsConfig) = new KafkaStreamsS(new KafkaStreams(topology, config))
 
-  def apply(topology: Topology, config: StreamsConfig, clientSupplier: KafkaClientSupplier) = new KafkaStreamsS(new KafkaStreams(topology, config, clientSupplier))
+  def apply(topology: Topology, config: StreamsConfig, clientSupplier: KafkaClientSupplier) =
+    new KafkaStreamsS(new KafkaStreams(topology, config, clientSupplier))
 
 }
