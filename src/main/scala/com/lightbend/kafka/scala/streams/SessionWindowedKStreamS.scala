@@ -8,7 +8,6 @@ import org.apache.kafka.streams.kstream._
 import org.apache.kafka.streams.state.SessionStore
 import org.apache.kafka.common.utils.Bytes
 import FunctionConversions._
-
 import ImplicitConversions._
 
 /**
@@ -27,10 +26,7 @@ class SessionWindowedKStreamS[K, V](val inner: SessionWindowedKStream[K, V]) {
                     materialized: Materialized[K, VR, SessionStore[Bytes, Array[Byte]]]): KTableS[Windowed[K], VR] =
     inner.aggregate(initializer.asInitializer, aggregator.asAggregator, merger.asMerger, materialized)
 
-  def count(): KTableS[Windowed[K], Long] = {
-    val c: KTableS[Windowed[K], java.lang.Long] = inner.count()
-    c.mapValues[Long](Long2long(_))
-  }
+  def count(): KTableS[K, Long] = inner.count().asInstanceOf[KTable[K, Long]]
 
   def count(materialized: Materialized[K, Long, SessionStore[Bytes, Array[Byte]]]): KTableS[Windowed[K], Long] =
     inner.count(materialized)
