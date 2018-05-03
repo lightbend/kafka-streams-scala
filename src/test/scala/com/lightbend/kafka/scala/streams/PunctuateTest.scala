@@ -10,7 +10,7 @@ import com.typesafe.scalalogging.LazyLogging
 import minitest.TestSuite
 import org.apache.kafka.common.serialization._
 import org.apache.kafka.streams.processor.{AbstractProcessor, ProcessorContext, PunctuationType}
-import org.apache.kafka.streams.{ StreamsConfig, Topology}
+import org.apache.kafka.streams.{StreamsConfig, Topology}
 
 /**
   * This sample is using usage of punctuate, which is significantly changed in version 1.0 and
@@ -20,9 +20,8 @@ import org.apache.kafka.streams.{ StreamsConfig, Topology}
   */
 object PunctuateTest extends TestSuite[KafkaLocalServer] with PunctuateTestData with LazyLogging {
 
-  override def setup(): KafkaLocalServer = {
+  override def setup(): KafkaLocalServer =
     KafkaLocalServer(cleanOnStart = true, Some(localStateDir)).start()
-  }
 
   override def tearDown(server: KafkaLocalServer): Unit =
     server.stop()
@@ -47,7 +46,7 @@ object PunctuateTest extends TestSuite[KafkaLocalServer] with PunctuateTestData 
     topology.addSource("data", inputTopic)
     // Processors
     topology.addProcessor("data processor", () => new SampleProcessor(5000), "data")
-    val streams =  KafkaStreamsS(topology, streamsConfiguration).start()
+    val streams = KafkaStreamsS(topology, streamsConfiguration).start()
     // Allpw time for the streams to start up
     Thread.sleep(5000L)
 

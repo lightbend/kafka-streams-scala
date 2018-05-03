@@ -28,7 +28,7 @@ import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.apache.kafka.common.serialization._
 import org.apache.kafka.streams.kstream.Transformer
 import org.apache.kafka.streams.processor.ProcessorContext
-import org.apache.kafka.streams.{ KeyValue, StreamsConfig}
+import org.apache.kafka.streams.{KeyValue, StreamsConfig}
 import ImplicitConversions._
 import com.typesafe.scalalogging.LazyLogging
 
@@ -69,9 +69,8 @@ object ProbabilisticCountingScalaIntegrationTest
     extends TestSuite[KafkaLocalServer]
     with ProbabilisticCountingScalaIntegrationTestData {
 
-  override def setup(): KafkaLocalServer = {
+  override def setup(): KafkaLocalServer =
     KafkaLocalServer(cleanOnStart = true, Some(localStateDir)).start()
-  }
 
   override def tearDown(server: KafkaLocalServer): Unit =
     server.stop()
