@@ -1,8 +1,7 @@
 /**
- * Copyright (C) 2018 Lightbend Inc. <https://www.lightbend.com>
- * Adapted from Confluent Inc. whose copyright is reproduced below.
- */
-
+  * Copyright (C) 2018 Lightbend Inc. <https://www.lightbend.com>
+  * Adapted from Confluent Inc. whose copyright is reproduced below.
+  */
 /*
  * Copyright Confluent Inc.
  *
@@ -32,16 +31,16 @@ import org.apache.kafka.streams._
 import ImplicitConversions._
 
 object StreamToTableJoinScalaIntegrationTestImplicitSerdesWithAvro
-  extends TestSuite[KafkaLocalServer] with StreamToTableJoinTestData {
+    extends TestSuite[KafkaLocalServer]
+    with StreamToTableJoinTestData {
 
   case class UserClicks(clicks: Long)
 
   // adopted from Openshine implementation
-  class AvroSerde[T >: Null : SchemaFor : FromRecord : ToRecord]
-    extends StatelessScalaSerde[T] {
+  class AvroSerde[T >: Null: SchemaFor: FromRecord: ToRecord] extends StatelessScalaSerde[T] {
 
     override def serialize(data: T): Array[Byte] = {
-      val baos = new ByteArrayOutputStream()
+      val baos   = new ByteArrayOutputStream()
       val output = AvroOutputStream.binary[T](baos)
       output.write(data)
       output.close()
@@ -49,7 +48,7 @@ object StreamToTableJoinScalaIntegrationTestImplicitSerdesWithAvro
     }
 
     override def deserialize(data: Array[Byte]): Option[T] = {
-      val in = new ByteArrayInputStream(data)
+      val in    = new ByteArrayInputStream(data)
       val input = AvroInputStream.binary[T](in)
       input.iterator.toSeq.headOption
     }
@@ -79,25 +78,21 @@ object StreamToTableJoinScalaIntegrationTestImplicitSerdesWithAvro
     * must be `static` and `public`) to a workaround combination of `@Rule
     * def` and a `private val`.
     */
-
-
   override def setup(): KafkaLocalServer = {
     val s = KafkaLocalServer(true, Some(localStateDir))
     s.start()
     s
   }
 
-  override def tearDown(server: KafkaLocalServer): Unit = {
+  override def tearDown(server: KafkaLocalServer): Unit =
     server.stop()
-  }
 
   test("should count clicks per region") { server =>
-
     server.createTopic(userClicksTopic)
     server.createTopic(userRegionsTopic)
     server.createTopic(outputTopic)
 
-    // DefaultSerdes brings into scope implicit serdes (mostly for primitives) that will set up all Serialized, Produced, 
+    // DefaultSerdes brings into scope implicit serdes (mostly for primitives) that will set up all Serialized, Produced,
     // Consumed and Joined instances. So all APIs below that accept Serialized, Produced, Consumed or Joined will
     // get these instances automatically
     import DefaultSerdes._
@@ -110,7 +105,8 @@ object StreamToTableJoinScalaIntegrationTestImplicitSerdesWithAvro
     // Java APIs
     val streamsConfiguration: Properties = {
       val p = new Properties()
-      p.put(StreamsConfig.APPLICATION_ID_CONFIG, s"stream-table-join-scala-integration-test-implicit-serdes-${scala.util.Random.nextInt(100)}")
+      p.put(StreamsConfig.APPLICATION_ID_CONFIG,
+            s"stream-table-join-scala-integration-test-implicit-serdes-${scala.util.Random.nextInt(100)}")
       p.put(StreamsConfig.CLIENT_ID_CONFIG, "join-scala-integration-test-implicit-serdes-standard-consumer")
       p.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, brokers)
       p.put(StreamsConfig.COMMIT_INTERVAL_MS_CONFIG, "100")
@@ -128,8 +124,9 @@ object StreamToTableJoinScalaIntegrationTestImplicitSerdesWithAvro
     val clicksPerRegion: KTableS[String, Long] =
       userClicksStream
 
-        // Join the stream against the table.
-        .leftJoin(userRegionsTable, (clicks: UserClicks, region: String) => (if (region == null) "UNKNOWN" else region, clicks.clicks))
+      // Join the stream against the table.
+        .leftJoin(userRegionsTable,
+                  (clicks: UserClicks, region: String) => (if (region == null) "UNKNOWN" else region, clicks.clicks))
 
         // Change the stream from <user> -> <region, clicks> to <region> -> <clicks>
         .map((_, regionWithClicks) => regionWithClicks)
@@ -145,21 +142,20 @@ object StreamToTableJoinScalaIntegrationTestImplicitSerdesWithAvro
 
     streams
       .setUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
-        override def uncaughtException(t: Thread, e: Throwable): Unit = try {
-          println(
-            s"Stream terminated because of uncaught exception .. Shutting " +
-              s"down app",
-
-            e)
-          e.printStackTrace
-          val closed = streams.close()
-          println(s"Exiting application after streams close ($closed)")
-        } catch {
-          case x: Exception => x.printStackTrace
-        } finally {
-          println("Exiting application ..")
-          System.exit(-1)
-        }
+        override def uncaughtException(t: Thread, e: Throwable): Unit =
+          try {
+            println(s"Stream terminated because of uncaught exception .. Shutting " +
+                      s"down app",
+                    e)
+            e.printStackTrace
+            val closed = streams.close()
+            println(s"Exiting application after streams close ($closed)")
+          } catch {
+            case x: Exception => x.printStackTrace
+          } finally {
+            println("Exiting application ..")
+            System.exit(-1)
+          }
       })
 
     streams.start()
@@ -173,28 +169,32 @@ object StreamToTableJoinScalaIntegrationTestImplicitSerdesWithAvro
     // practice though,
     // data records would typically be arriving concurrently in both input
     // streams/topics.
-    val sender1 = MessageSender[String, String](brokers, classOf[StringSerializer].getName, classOf[StringSerializer].getName)
+    val sender1 =
+      MessageSender[String, String](brokers, classOf[StringSerializer].getName, classOf[StringSerializer].getName)
     userRegions.foreach(r => sender1.writeKeyValue(userRegionsTopic, r.key, r.value))
-
-
 
     //
     // Step 3: Publish some user click events.
     //
     val sender2 = MessageSender[String, Array[Byte]](brokers,
-      classOf[StringSerializer].getName, classOf[ByteArraySerializer].getName)
+                                                     classOf[StringSerializer].getName,
+                                                     classOf[ByteArraySerializer].getName)
     userClicks
-      .map(kv =>
-        new KeyValue[String, Array[Byte]](
-          kv.key,
-          new AvroSerde[UserClicks].serialize(UserClicks(kv.value))
-        ))
+      .map(
+        kv =>
+          new KeyValue[String, Array[Byte]](
+            kv.key,
+            new AvroSerde[UserClicks].serialize(UserClicks(kv.value))
+        )
+      )
       .foreach(r => sender2.writeKeyValue(userClicksTopic, r.key, r.value))
 
     //
     // Step 4: Verify the application's output data.
     //
-    val listener = MessageListener(brokers, outputTopic,
+    val listener = MessageListener(
+      brokers,
+      outputTopic,
       "join-scala-integration-test-standard-consumer",
       classOf[StringDeserializer].getName,
       classOf[LongDeserializer].getName,
@@ -202,8 +202,7 @@ object StreamToTableJoinScalaIntegrationTestImplicitSerdesWithAvro
     )
 
     val l = listener
-      .waitUntilMinKeyValueRecordsReceived(expectedClicksPerRegion.size,
-        30000)
+      .waitUntilMinKeyValueRecordsReceived(expectedClicksPerRegion.size, 30000)
     streams.close()
     assertEquals(l.sortBy(_.key), expectedClicksPerRegion.sortBy(_.key))
   }

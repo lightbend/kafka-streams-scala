@@ -1,7 +1,6 @@
 /**
   * Copyright (C) 2018 Lightbend Inc. <https://www.lightbend.com>
   */
-
 package com.lightbend.kafka.scala.streams
 
 import java.util.Properties
@@ -23,12 +22,10 @@ object KafkaStreamsMergeTest extends TestSuite[KafkaLocalServer] with WordCountM
     s
   }
 
-  override def tearDown(server: KafkaLocalServer): Unit = {
+  override def tearDown(server: KafkaLocalServer): Unit =
     server.stop()
-  }
 
   test("should count words") { server =>
-
     server.createTopic(inputTopic1)
     server.createTopic(inputTopic2)
     server.createTopic(outputTopic)
@@ -55,7 +52,8 @@ object KafkaStreamsMergeTest extends TestSuite[KafkaLocalServer] with WordCountM
     val pattern = Pattern.compile("\\W+", Pattern.UNICODE_CHARACTER_CLASS)
 
     val wordCounts: KTableS[String, Long] =
-      textLines.flatMapValues(v => pattern.split(v.toLowerCase))
+      textLines
+        .flatMapValues(v => pattern.split(v.toLowerCase))
         .groupBy((k, v) => v)
         .count()
 
@@ -67,18 +65,20 @@ object KafkaStreamsMergeTest extends TestSuite[KafkaLocalServer] with WordCountM
     //
     // Step 2: Produce some input data to the input topics.
     //
-    val sender = MessageSender[String, String](brokers, classOf[StringSerializer].getName, classOf[StringSerializer].getName)
+    val sender =
+      MessageSender[String, String](brokers, classOf[StringSerializer].getName, classOf[StringSerializer].getName)
     val mvals1 = sender.batchWriteValue(inputTopic1, inputValues)
     val mvals2 = sender.batchWriteValue(inputTopic2, inputValues)
 
     //
     // Step 3: Verify the application's output data.
     //
-    val listener = MessageListener(brokers, outputTopic, "wordcountgroup",
-      classOf[StringDeserializer].getName,
-      classOf[LongDeserializer].getName,
-      new RecordProcessor
-    )
+    val listener = MessageListener(brokers,
+                                   outputTopic,
+                                   "wordcountgroup",
+                                   classOf[StringDeserializer].getName,
+                                   classOf[LongDeserializer].getName,
+                                   new RecordProcessor)
 
     val l = listener.waitUntilMinKeyValueRecordsReceived(expectedWordCounts.size, 30000)
 
@@ -96,10 +96,10 @@ object KafkaStreamsMergeTest extends TestSuite[KafkaLocalServer] with WordCountM
 }
 
 trait WordCountMergeTestData {
-  val inputTopic1 = s"inputTopic1.${scala.util.Random.nextInt(100)}"
-  val inputTopic2 = s"inputTopic2.${scala.util.Random.nextInt(100)}"
-  val outputTopic = s"outputTpic.${scala.util.Random.nextInt(100)}"
-  val brokers = "localhost:9092"
+  val inputTopic1   = s"inputTopic1.${scala.util.Random.nextInt(100)}"
+  val inputTopic2   = s"inputTopic2.${scala.util.Random.nextInt(100)}"
+  val outputTopic   = s"outputTpic.${scala.util.Random.nextInt(100)}"
+  val brokers       = "localhost:9092"
   val localStateDir = "local_state_data"
 
   val inputValues = List(
@@ -125,5 +125,3 @@ trait WordCountMergeTestData {
     new KeyValue("слова", 2L)
   )
 }
-
-

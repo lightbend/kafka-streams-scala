@@ -1,8 +1,7 @@
 /**
- * Copyright (C) 2018 Lightbend Inc. <https://www.lightbend.com>
- * Adapted from Confluent Inc. whose copyright is reproduced below.
- */
-
+  * Copyright (C) 2018 Lightbend Inc. <https://www.lightbend.com>
+  * Adapted from Confluent Inc. whose copyright is reproduced below.
+  */
 /*
  * Copyright Confluent Inc.
  *
@@ -25,10 +24,10 @@ import org.apache.kafka.streams.KeyValue
 trait StreamToTableJoinTestData {
   val brokers = "localhost:9092"
 
-  val userClicksTopic = s"user-clicks.${scala.util.Random.nextInt(100)}"
+  val userClicksTopic  = s"user-clicks.${scala.util.Random.nextInt(100)}"
   val userRegionsTopic = s"user-regions.${scala.util.Random.nextInt(100)}"
-  val outputTopic = s"output-topic.${scala.util.Random.nextInt(100)}"
-  val localStateDir = "local_state_data"
+  val outputTopic      = s"output-topic.${scala.util.Random.nextInt(100)}"
+  val localStateDir    = "local_state_data"
 
   // Input 1: Clicks per user (multiple records allowed per user).
   val userClicks: Seq[KeyValue[String, Long]] = Seq(
@@ -59,4 +58,3 @@ trait StreamToTableJoinTestData {
     new KeyValue("asia", 124L)
   )
 }
-

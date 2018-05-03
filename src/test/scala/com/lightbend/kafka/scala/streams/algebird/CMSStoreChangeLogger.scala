@@ -34,19 +34,17 @@ class CMSStoreChangeLogger[K, V](val storeName: String,
                                  val partition: Int,
                                  val serialization: StateSerdes[K, V]) {
 
-  private val topic = ProcessorStateManager.storeChangelogTopic(context.applicationId, storeName)
+  private val topic     = ProcessorStateManager.storeChangelogTopic(context.applicationId, storeName)
   private val collector = context.asInstanceOf[RecordCollector.Supplier].recordCollector
 
-  def this(storeName: String, context: ProcessorContext, serialization: StateSerdes[K, V]) {
+  def this(storeName: String, context: ProcessorContext, serialization: StateSerdes[K, V]) =
     this(storeName, context, context.taskId.partition, serialization)
-  }
 
-  def logChange(key: K, value: V, timestamp: Long) {
+  def logChange(key: K, value: V, timestamp: Long) =
     if (collector != null) {
-      val keySerializer = serialization.keySerializer
+      val keySerializer   = serialization.keySerializer
       val valueSerializer = serialization.valueSerializer
       collector.send(this.topic, key, value, this.partition, timestamp, keySerializer, valueSerializer)
     }
-  }
 
 }

@@ -1,7 +1,6 @@
 /**
   * Copyright (C) 2018 Lightbend Inc. <https://www.lightbend.com>
   */
-
 package com.lightbend.kafka.scala.streams
 
 import java.util.Properties
@@ -23,12 +22,10 @@ object KafkaStreamsTest extends TestSuite[KafkaLocalServer] with WordCountTestDa
     s
   }
 
-  override def tearDown(server: KafkaLocalServer): Unit = {
+  override def tearDown(server: KafkaLocalServer): Unit =
     server.stop()
-  }
 
   test("should count words") { server =>
-
     server.createTopic(inputTopic)
     server.createTopic(outputTopic)
 
@@ -51,7 +48,8 @@ object KafkaStreamsTest extends TestSuite[KafkaLocalServer] with WordCountTestDa
     val pattern = Pattern.compile("\\W+", Pattern.UNICODE_CHARACTER_CLASS)
 
     val wordCounts: KTableS[String, Long] =
-      textLines.flatMapValues(v => pattern.split(v.toLowerCase))
+      textLines
+        .flatMapValues(v => pattern.split(v.toLowerCase))
         .groupBy((k, v) => v)
         .count()
 
@@ -63,17 +61,19 @@ object KafkaStreamsTest extends TestSuite[KafkaLocalServer] with WordCountTestDa
     //
     // Step 2: Produce some input data to the input topic.
     //
-    val sender = MessageSender[String, String](brokers, classOf[StringSerializer].getName, classOf[StringSerializer].getName)
+    val sender =
+      MessageSender[String, String](brokers, classOf[StringSerializer].getName, classOf[StringSerializer].getName)
     val mvals = sender.batchWriteValue(inputTopic, inputValues)
 
     //
     // Step 3: Verify the application's output data.
     //
-    val listener = MessageListener(brokers, outputTopic, "wordcountgroup",
-      classOf[StringDeserializer].getName,
-      classOf[LongDeserializer].getName,
-      new RecordProcessor
-    )
+    val listener = MessageListener(brokers,
+                                   outputTopic,
+                                   "wordcountgroup",
+                                   classOf[StringDeserializer].getName,
+                                   classOf[LongDeserializer].getName,
+                                   new RecordProcessor)
 
     val l = listener.waitUntilMinKeyValueRecordsReceived(expectedWordCounts.size, 30000)
 
@@ -91,9 +91,9 @@ object KafkaStreamsTest extends TestSuite[KafkaLocalServer] with WordCountTestDa
 }
 
 trait WordCountTestData {
-  val inputTopic = s"inputTopic.${scala.util.Random.nextInt(100)}"
-  val outputTopic = s"outputTopic.${scala.util.Random.nextInt(100)}"
-  val brokers = "localhost:9092"
+  val inputTopic    = s"inputTopic.${scala.util.Random.nextInt(100)}"
+  val outputTopic   = s"outputTopic.${scala.util.Random.nextInt(100)}"
+  val brokers       = "localhost:9092"
   val localStateDir = "local_state_data"
 
   val inputValues = List(
@@ -119,4 +119,3 @@ trait WordCountTestData {
     new KeyValue("слова", 1L)
   )
 }
-

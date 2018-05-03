@@ -1,13 +1,12 @@
 /**
- * Copyright (C) 2018 Lightbend Inc. <https://www.lightbend.com>
- */
-
+  * Copyright (C) 2018 Lightbend Inc. <https://www.lightbend.com>
+  */
 package com.lightbend.kafka.scala.server
 
 // Loosely based on Lagom implementation at
 //  https://github.com/lagom/lagom/blob/master/dev/kafka-server/src/main/scala/com/lightbend/lagom/internal/kafka/KafkaLocalServer.scala
 
-import java.io.{ IOException, File }
+import java.io.{File, IOException}
 import java.util.Properties
 
 import org.apache.curator.test.TestingServer
@@ -15,19 +14,22 @@ import com.typesafe.scalalogging.LazyLogging
 
 import kafka.server.{KafkaConfig, KafkaServerStartable}
 
-import scala.util.{ Try, Success, Failure }
+import scala.util.{Failure, Success, Try}
 
 import kafka.admin.{AdminUtils, RackAwareMode}
 import kafka.utils.ZkUtils
 
 class KafkaLocalServer private (kafkaProperties: Properties, zooKeeperServer: ZooKeeperLocalServer)
-  extends LazyLogging {
+    extends LazyLogging {
 
   import KafkaLocalServer._
 
   private var broker = null.asInstanceOf[KafkaServerStartable] // scalastyle:ignore
-  private var zkUtils : ZkUtils =
-    ZkUtils.apply(s"localhost:${zooKeeperServer.getPort()}", DEFAULT_ZK_SESSION_TIMEOUT_MS, DEFAULT_ZK_CONNECTION_TIMEOUT_MS, false)
+  private var zkUtils: ZkUtils =
+    ZkUtils.apply(s"localhost:${zooKeeperServer.getPort()}",
+                  DEFAULT_ZK_SESSION_TIMEOUT_MS,
+                  DEFAULT_ZK_CONNECTION_TIMEOUT_MS,
+                  false)
 
   def start(): Unit = {
 
@@ -36,23 +38,21 @@ class KafkaLocalServer private (kafkaProperties: Properties, zooKeeperServer: Zo
   }
 
   //scalastyle:off null
-  def stop(): Unit = {
+  def stop(): Unit =
     if (broker != null) {
       broker.shutdown()
       zooKeeperServer.stop()
       broker = null.asInstanceOf[KafkaServerStartable]
     }
-  }
- //scalastyle:on null
+  //scalastyle:on null
 
   /**
     * Create a Kafka topic with 1 partition and a replication factor of 1.
     *
     * @param topic The name of the topic.
     */
-  def createTopic(topic: String): Unit = {
+  def createTopic(topic: String): Unit =
     createTopic(topic, 1, 1, new Properties)
-  }
 
   /**
     * Create a Kafka topic with the given parameters.
@@ -61,9 +61,8 @@ class KafkaLocalServer private (kafkaProperties: Properties, zooKeeperServer: Zo
     * @param partitions  The number of partitions for this topic.
     * @param replication The replication factor for (the partitions of) this topic.
     */
-  def createTopic(topic: String, partitions: Int, replication: Int): Unit = {
+  def createTopic(topic: String, partitions: Int, replication: Int): Unit =
     createTopic(topic, partitions, replication, new Properties)
-  }
 
   /**
     * Create a Kafka topic with the given parameters.
@@ -73,9 +72,8 @@ class KafkaLocalServer private (kafkaProperties: Properties, zooKeeperServer: Zo
     * @param replication The replication factor for (partitions of) this topic.
     * @param topicConfig Additional topic-level configuration settings.
     */
-  def createTopic(topic: String, partitions: Int, replication: Int, topicConfig: Properties): Unit = {
+  def createTopic(topic: String, partitions: Int, replication: Int, topicConfig: Properties): Unit =
     AdminUtils.createTopic(zkUtils, topic, partitions, replication, topicConfig, RackAwareMode.Enforced)
-  }
 
   def deleteTopic(topic: String): Unit = AdminUtils.deleteTopic(zkUtils, topic)
 }
@@ -83,27 +81,30 @@ class KafkaLocalServer private (kafkaProperties: Properties, zooKeeperServer: Zo
 import Utils._
 
 object KafkaLocalServer extends LazyLogging {
-  final val DefaultPort = 9092
-  final val DefaultResetOnStart = true
-  private val DEFAULT_ZK_CONNECT = "localhost:2181"
-  private val DEFAULT_ZK_SESSION_TIMEOUT_MS = 10 * 1000
+  final val DefaultPort                        = 9092
+  final val DefaultResetOnStart                = true
+  private val DEFAULT_ZK_CONNECT               = "localhost:2181"
+  private val DEFAULT_ZK_SESSION_TIMEOUT_MS    = 10 * 1000
   private val DEFAULT_ZK_CONNECTION_TIMEOUT_MS = 8 * 1000
 
   final val basDir = "tmp/"
 
-  private final val kafkaDataFolderName = "kafka_data"
+  final private val kafkaDataFolderName = "kafka_data"
 
   def apply(cleanOnStart: Boolean, localStateDir: Option[String] = None): KafkaLocalServer =
     this(DefaultPort, ZooKeeperLocalServer.DefaultPort, cleanOnStart, localStateDir)
 
-  def apply(kafkaPort: Int, zookeeperServerPort: Int, cleanOnStart: Boolean, localStateDir: Option[String]): KafkaLocalServer = {
+  def apply(kafkaPort: Int,
+            zookeeperServerPort: Int,
+            cleanOnStart: Boolean,
+            localStateDir: Option[String]): KafkaLocalServer = {
 
     // delete kafka data dir on clean start
     val kafkaDataDir: File = (for {
       kdir <- dataDirectory(basDir, kafkaDataFolderName)
       _    <- if (cleanOnStart) deleteDirectory(kdir) else Try(())
     } yield kdir) match {
-      case Success(d) => d
+      case Success(d)  => d
       case Failure(ex) => throw ex
     }
 
@@ -168,7 +169,7 @@ private class ZooKeeperLocalServer(port: Int, cleanOnStart: Boolean) extends Laz
       zdir <- dataDirectory(basDir, zookeeperDataFolderName)
       _    <- if (cleanOnStart) deleteDirectory(zdir) else Try(())
     } yield zdir) match {
-      case Success(d) => d
+      case Success(d)  => d
       case Failure(ex) => throw ex
     }
     logger.info(s"Zookeeper data directory is $zookeeperDataDir.")
@@ -179,22 +180,20 @@ private class ZooKeeperLocalServer(port: Int, cleanOnStart: Boolean) extends Laz
   }
 
   // scalastyle:off null
-  def stop(): Unit = {
+  def stop(): Unit =
     if (zooKeeper != null)
       try {
         zooKeeper.stop()
         zooKeeper = null.asInstanceOf[TestingServer]
-      }
-      catch {
+      } catch {
         case _: IOException => () // nothing to do if an exception is thrown while shutting down
       }
-  }
   //scalastyle:on null
 
-  def getPort() : Int = port
+  def getPort(): Int = port
 }
 
 object ZooKeeperLocalServer {
-  final val DefaultPort = 2181
-  private final val zookeeperDataFolderName = "zookeeper_data"
+  final val DefaultPort                     = 2181
+  final private val zookeeperDataFolderName = "zookeeper_data"
 }
