@@ -53,4 +53,6 @@ object ImplicitConversions {
                                             valueSerde: Serde[V],
                                             otherValueSerde: Serde[VO]): Joined[K, V, VO] =
     Joined.`with`(keySerde, valueSerde, otherValueSerde)
+
+  implicit def longToSessionWindows(x: Long): SessionWindows = SessionWindows.`with`(x)
 }
