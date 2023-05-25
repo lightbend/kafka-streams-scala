@@ -46,11 +46,8 @@ object StreamToTableJoinScalaIntegrationTestImplicitSerdes
     with StreamToTableJoinTestData
     with LazyLogging {
 
-  override def setup(): KafkaLocalServer = {
-    val s = KafkaLocalServer(cleanOnStart = true, Some(localStateDir))
-    s.start()
-    s
-  }
+  override def setup(): KafkaLocalServer =
+    KafkaLocalServer(cleanOnStart = true, Some(localStateDir)).start()
 
   override def tearDown(server: KafkaLocalServer): Unit =
     server.stop()
@@ -106,24 +103,24 @@ object StreamToTableJoinScalaIntegrationTestImplicitSerdes
     // Write the (continuously updating) results to the output topic.
     clicksPerRegion.toStream.to(outputTopic)
 
-    val streams: KafkaStreams = new KafkaStreams(builder.build(), streamsConfiguration)
+    val streams: KafkaStreamsS = KafkaStreamsS(builder, streamsConfiguration)
 
-    streams.setUncaughtExceptionHandler(
-      (_: Thread, e: Throwable) =>
-        try {
-          logger.error(s"Stream terminated because of uncaught exception .. Shutting down app", e)
-          e.printStackTrace()
-          val closed: Unit = streams.close()
-          logger.info(s"Exiting application after streams close ($closed)")
-        } catch {
-          case x: Exception => x.printStackTrace()
-        } finally {
-          logger.debug("Exiting application ..")
-          System.exit(-1)
-      }
-    )
-
-    streams.start()
+    streams
+      .withUncaughtExceptionHandler(
+        (_: Thread, e: Throwable) =>
+          try {
+            logger.error(s"Stream terminated because of uncaught exception .. Shutting down app", e)
+            e.printStackTrace()
+            val closed = streams.close()
+            logger.info(s"Exiting application after streams close ($closed)")
+          } catch {
+            case x: Exception => x.printStackTrace()
+          } finally {
+            logger.debug("Exiting application ..")
+            System.exit(-1)
+        }
+      )
+      .start()
 
     //
     // Step 2: Publish user-region information.

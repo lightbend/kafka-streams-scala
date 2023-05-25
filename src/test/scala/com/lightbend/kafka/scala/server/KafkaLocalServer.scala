@@ -31,10 +31,11 @@ class KafkaLocalServer private (kafkaProperties: Properties, zooKeeperServer: Zo
                   DEFAULT_ZK_CONNECTION_TIMEOUT_MS,
                   false)
 
-  def start(): Unit = {
+  def start(): KafkaLocalServer = {
 
     broker = KafkaServerStartable.fromProps(kafkaProperties)
     broker.startup()
+    this
   }
 
   //scalastyle:off null
